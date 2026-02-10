@@ -5,6 +5,10 @@ function normalizeClassId(value) {
   return String(value || "").trim();
 }
 
+function resolveClassKey(data = {}) {
+  return normalizeClassId(data.classId || data.className || data.name || data.id);
+}
+
 export async function listClasses() {
   const classesCollection = collection(db, "classes");
   const classesSnap = await getDocs(query(classesCollection, orderBy("name", "asc")));
@@ -13,8 +17,8 @@ export async function listClasses() {
     return classesSnap.docs
       .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
       .map((c) => ({
-        classId: normalizeClassId(c.classId || c.id),
-        name: c.name || c.classId || c.id,
+        classId: resolveClassKey(c),
+        name: c.name || c.className || c.classId || c.id,
       }))
       .filter((c) => c.classId);
   }
@@ -24,7 +28,7 @@ export async function listClasses() {
 
   studentsSnap.forEach((docSnap) => {
     const data = docSnap.data();
-    const classId = normalizeClassId(data.classId || data.className);
+    const classId = resolveClassKey(data);
     if (!classId) return;
     if (!classesMap.has(classId)) {
       classesMap.set(classId, {
