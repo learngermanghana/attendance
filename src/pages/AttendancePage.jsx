@@ -1,7 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import dayjs from "dayjs";
-import QRCode from "qrcode.react";
+import { QRCodeCanvas } from "qrcode.react";
 import { useAuth } from "../context/AuthContext";
 import { listStudentsByClass } from "../services/studentsService";
 import { loadAttendanceSession, saveAttendance } from "../services/attendanceService";
@@ -198,7 +198,7 @@ export default function AttendancePage() {
         {sessionOpen && (
           <div style={{ marginTop: 12, display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
             <div style={{ padding: 10, border: "1px solid #eee", borderRadius: 10 }}>
-              <QRCode value={checkinUrl} size={170} />
+              <QRCodeCanvas value={checkinUrl} size={170} />
               <div style={{ fontSize: 12, opacity: 0.8, marginTop: 8, wordBreak: "break-all" }}>
                 {checkinUrl}
               </div>
