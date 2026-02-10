@@ -1,10 +1,10 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import dayjs from "dayjs";
 import { QRCodeCanvas } from "qrcode.react";
 import { useAuth } from "../context/AuthContext";
 import { listStudentsByClass } from "../services/studentsService";
-import { loadAttendanceSession, saveAttendance } from "../services/attendanceService";
+import { listSessionCheckins, loadAttendanceSession, saveAttendance } from "../services/attendanceService";
 
 const STATUSES = ["present", "absent", "late", "excused"];
 
@@ -19,20 +19,19 @@ export default function AttendancePage() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
 
-  // QR / Session state
   const [pin, setPin] = useState("");
   const [sessionOpen, setSessionOpen] = useState(false);
   const [sessionBusy, setSessionBusy] = useState(false);
 
   const checkinUrl = useMemo(() => {
     const base = window.location.origin;
-    const qs = new URLSearchParams({ className: classId, date }).toString();
+    const qs = new URLSearchParams({ classId, date }).toString();
     return `${base}/checkin?${qs}`;
   }, [classId, date]);
 
   const defaultsFromStudents = (st) =>
     st.map((s) => ({
-      studentId: s.id,
+      studentId: s.uid || s.id,
       studentName: s.name,
       status: "present",
     }));
@@ -48,14 +47,22 @@ export default function AttendancePage() {
         const st = await listStudentsByClass(classId);
         setStudents(st);
 
-        const session = await loadAttendanceSession({ classId, date });
-        if (session?.records?.length) {
-          setRecords(session.records);
-        } else {
-          setRecords(defaultsFromStudents(st));
+        const [session, checkins] = await Promise.all([
+          loadAttendanceSession({ classId, date }),
+          listSessionCheckins({ classId, date }),
+        ]);
+
+        let nextRecords = session?.records?.length ? session.records : defaultsFromStudents(st);
+
+        if (checkins.length > 0) {
+          const checkedInIds = new Set(checkins.map((c) => c.uid || c.id));
+          nextRecords = nextRecords.map((r) =>
+            checkedInIds.has(r.studentId) ? { ...r, status: "present" } : r
+          );
         }
 
-        // If a session exists and is opened, reflect it (optional)
+        setRecords(nextRecords);
+
         if (session?.opened) {
           setSessionOpen(true);
         }
@@ -68,9 +75,7 @@ export default function AttendancePage() {
   }, [classId, date]);
 
   const updateStatus = (studentId, status) => {
-    setRecords((prev) =>
-      prev.map((r) => (r.studentId === studentId ? { ...r, status } : r))
-    );
+    setRecords((prev) => prev.map((r) => (r.studentId === studentId ? { ...r, status } : r)));
   };
 
   const summary = useMemo(() => {
@@ -109,9 +114,8 @@ export default function AttendancePage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          className: classId,
+          classId,
           date,
-          // Change if you want longer/shorter window
           windowMinutes: 180,
           action: "open",
         }),
@@ -142,7 +146,7 @@ export default function AttendancePage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          className: classId,
+          classId,
           date,
           action: "close",
         }),
@@ -168,8 +172,7 @@ export default function AttendancePage() {
 
       <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12 }}>
         <label>
-          Date:{" "}
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          Date: <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </label>
 
         <div style={{ marginLeft: "auto", fontSize: 12, opacity: 0.85 }}>
@@ -177,7 +180,6 @@ export default function AttendancePage() {
         </div>
       </div>
 
-      {/* QR CHECK-IN PANEL */}
       <div style={{ border: "1px solid #ddd", borderRadius: 10, padding: 12, marginBottom: 14 }}>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <div style={{ fontWeight: 700 }}>Student QR Check-in</div>
@@ -199,16 +201,12 @@ export default function AttendancePage() {
           <div style={{ marginTop: 12, display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
             <div style={{ padding: 10, border: "1px solid #eee", borderRadius: 10 }}>
               <QRCodeCanvas value={checkinUrl} size={170} />
-              <div style={{ fontSize: 12, opacity: 0.8, marginTop: 8, wordBreak: "break-all" }}>
-                {checkinUrl}
-              </div>
+              <div style={{ fontSize: 12, opacity: 0.8, marginTop: 8, wordBreak: "break-all" }}>{checkinUrl}</div>
             </div>
 
             <div style={{ minWidth: 240 }}>
               <div style={{ fontSize: 12, opacity: 0.8 }}>Secret PIN</div>
-              <div style={{ fontSize: 34, fontWeight: 800, letterSpacing: 2 }}>
-                {pin || "----"}
-              </div>
+              <div style={{ fontSize: 34, fontWeight: 800, letterSpacing: 2 }}>{pin || "----"}</div>
               <div style={{ fontSize: 12, opacity: 0.8 }}>
                 Students must enter their <b>studentCode</b> + this PIN to mark present.
               </div>
@@ -218,7 +216,7 @@ export default function AttendancePage() {
       </div>
 
       {students.length === 0 ? (
-        <div>No students found for this class. Add to <b>students</b> with classId = {classId}.</div>
+        <div>No students found for this class. Add students with classId = {classId}.</div>
       ) : (
         <div style={{ display: "grid", gap: 8 }}>
           {records.map((r) => (
