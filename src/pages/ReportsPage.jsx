@@ -58,10 +58,7 @@ export default function ReportsPage() {
         const mergedBase = baseRecords.length > 0 ? baseRecords : studentMapRecords;
 
         const byStudent = new Map(
-          mergedBase.map((r) => [
-            r.studentId,
-            { ...r, method: "manual", classId: session.classId, date: session.date || session.id, lesson: session.lesson || session.title || "" },
-          ])
+          baseRecords.map((r) => [r.studentId, { ...r, method: "manual", classId: session.classId, date: session.date, lesson: session.lesson || "" }])
         );
 
         const checkins = await listSessionCheckins({ classId: session.classId, date: session.date });
@@ -73,8 +70,8 @@ export default function ReportsPage() {
             status: "present",
             method: "qr",
             classId: session.classId,
-            date: session.date || session.id,
-            lesson: c.lesson || session.lesson || session.title || "",
+            date: session.date,
+            lesson: c.lesson || session.lesson || "",
           });
         }
 

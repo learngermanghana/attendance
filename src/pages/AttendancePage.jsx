@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import dayjs from "dayjs";
+import { classSchedules } from "../data/classSchedules";
 import { QRCodeCanvas } from "qrcode.react";
 import { classSchedules } from "../data/classSchedules";
 import { useAuth } from "../context/AuthContext";
@@ -44,8 +45,10 @@ export default function AttendancePage() {
   const { classId } = useParams();
   const { user } = useAuth();
 
-  const [selectedSessionId, setSelectedSessionId] = useState("0");
-  const [attendanceMap, setAttendanceMap] = useState({});
+  const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
+  const [lesson, setLesson] = useState("");
+  const [students, setStudents] = useState([]);
+  const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
@@ -70,13 +73,31 @@ export default function AttendancePage() {
 
   const checkinUrl = useMemo(() => {
     const base = window.location.origin;
-    const qs = new URLSearchParams({
-      classId,
-      date: selectedSessionId,
-      lesson: selectedSession.title || "",
-    }).toString();
+    const qs = new URLSearchParams({ classId, date, lesson }).toString();
     return `${base}/checkin?${qs}`;
-  }, [classId, selectedSessionId, selectedSession.title]);
+  }, [classId, date, lesson]);
+
+  const defaultsFromStudents = (st) =>
+    st.map((s) => ({
+      studentId: s.uid || s.id,
+      studentName: s.name,
+      status: "present",
+    }));
+
+  const lessons = useMemo(() => {
+    const schedule = classSchedules[classId] || [];
+    return schedule.map((item) => ({
+      value: `${item.day} - ${item.topic}`,
+      label: `${item.day}: ${item.topic}`,
+    }));
+  }, [classId]);
+
+
+  useEffect(() => {
+    if (!lesson && lessons.length > 0) {
+      setLesson(lessons[0].value);
+    }
+  }, [lesson, lessons]);
 
   useEffect(() => {
     (async () => {
@@ -90,38 +111,17 @@ export default function AttendancePage() {
           loadAttendanceFromFirestore(classId),
         ]);
 
-        const rosterMap = {};
-        students.forEach((student) => {
-          const studentCode = resolveStudentCode(student);
-          if (!studentCode) return;
-          rosterMap[studentCode] = {
-            name: String(student.name || "").trim(),
-            present: false,
-          };
-        });
+        let nextRecords = session?.records?.length ? session.records : defaultsFromStudents(st);
 
-        const scheduleMap = buildScheduleMap(classId);
-        const mergedSessionIds = new Set([...Object.keys(scheduleMap), ...Object.keys(storedAttendance)]);
-        const nextAttendanceMap = {};
+        if (session?.lesson) {
+          setLesson(session.lesson);
+        }
 
-        for (const sessionId of mergedSessionIds) {
-          const scheduled = scheduleMap[sessionId] || {};
-          const stored = storedAttendance[sessionId] || {};
-          const storedStudents = stored.students || {};
-
-          const mergedStudents = { ...rosterMap };
-          for (const [studentCode, entry] of Object.entries(storedStudents)) {
-            mergedStudents[studentCode] = {
-              name: String(entry?.name || mergedStudents[studentCode]?.name || "").trim(),
-              present: Boolean(entry?.present),
-            };
-          }
-
-          nextAttendanceMap[sessionId] = {
-            title: String(stored.title || scheduled.title || "").trim(),
-            date: String(stored.date || scheduled.date || "").trim(),
-            students: mergedStudents,
-          };
+        if (checkins.length > 0) {
+          const checkedInIds = new Set(checkins.map((c) => c.uid || c.id));
+          nextRecords = nextRecords.map((r) =>
+            checkedInIds.has(r.studentId) ? { ...r, status: "present" } : r
+          );
         }
 
         const sortedIds = [...mergedSessionIds].sort((a, b) => Number(a) - Number(b));
@@ -178,7 +178,13 @@ export default function AttendancePage() {
     setMsg("");
     setSaving(true);
     try {
-      await saveAttendanceToFirestore(classId, attendanceMap);
+      await saveAttendance({
+        classId,
+        date,
+        teacherUid: user.uid,
+        lesson,
+        records,
+      });
       setMsg("✅ Attendance saved");
     } catch (e) {
       setMsg(e?.message || "Save failed");
@@ -200,8 +206,8 @@ export default function AttendancePage() {
         },
         body: JSON.stringify({
           classId,
-          date: selectedSessionId,
-          lesson: selectedSession.title || "",
+          date,
+          lesson,
           windowMinutes: 180,
           action: "open",
         }),
@@ -254,6 +260,7 @@ export default function AttendancePage() {
   return (
     <div style={{ padding: 16, maxWidth: 900 }}>
       <h2>Attendance: {classId}</h2>
+      {lesson && <div style={{ marginBottom: 8, fontSize: 13, opacity: 0.85 }}>Lesson: {lesson}</div>}
 
       <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
         <label>
@@ -267,8 +274,20 @@ export default function AttendancePage() {
           </select>
         </label>
 
-        <div style={{ fontSize: 13, opacity: 0.85 }}>
-          Date: {selectedSession.date || "-"}
+        <label>
+          Lesson:{" "}
+          <select value={lesson} onChange={(e) => setLesson(e.target.value)}>
+            <option value="">Select lesson</option>
+            {lessons.map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div style={{ marginLeft: "auto", fontSize: 12, opacity: 0.85 }}>
+          Present: {summary.present} · Absent: {summary.absent} · Late: {summary.late} · Excused: {summary.excused}
         </div>
       </div>
 
