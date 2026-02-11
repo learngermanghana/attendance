@@ -5,18 +5,16 @@ export default function CheckinPage() {
   const [sp] = useSearchParams();
   const classId = sp.get("classId") || sp.get("className") || "";
   const date = sp.get("date") || "";
-  const [studentCode, setStudentCode] = useState("");
-  const [pin, setPin] = useState("");
-  const [showPin, setShowPin] = useState(false);
+  const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
 
   const validationError = useMemo(() => {
-    if (!studentCode.trim()) return "Student code or email is required.";
-    if (!pin.trim()) return "PIN is required.";
-    if (pin.trim().length < 4) return "PIN must be at least 4 characters.";
+    if (!email.trim()) return "Email is required.";
+    if (!phoneNumber.trim()) return "Phone number is required.";
     return "";
-  }, [studentCode, pin]);
+  }, [email, phoneNumber]);
 
   const canSubmit = useMemo(() => {
     return classId && date && !validationError;
@@ -38,15 +36,15 @@ export default function CheckinPage() {
         body: JSON.stringify({
           classId,
           date,
-          studentCodeOrEmail: studentCode.trim(),
-          pin: pin.trim(),
+          email: email.trim(),
+          phoneNumber: phoneNumber.trim(),
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || "Check-in failed");
       setMsg("✅ Check-in successful. You are marked present.");
-      setStudentCode("");
-      setPin("");
+      setEmail("");
+      setPhoneNumber("");
     } catch (err) {
       setMsg("❌ " + (err?.message || "Error"));
     } finally {
@@ -75,23 +73,19 @@ export default function CheckinPage() {
 
       <form onSubmit={submit} style={{ display: "grid", gap: 10 }}>
         <input
-          placeholder="Student code (or email)"
-          value={studentCode}
-          onChange={(e) => setStudentCode(e.target.value)}
-          aria-label="Student code"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          aria-label="Email"
+          type="email"
         />
-        <div>
-          <input
-            placeholder="Secret PIN"
-            type={showPin ? "text" : "password"}
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-            aria-label="PIN"
-          />
-          <label style={{ fontSize: 12, marginTop: 4, display: "block" }}>
-            <input type="checkbox" checked={showPin} onChange={(e) => setShowPin(e.target.checked)} /> Show PIN
-          </label>
-        </div>
+        <input
+          placeholder="Phone number"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value)}
+          aria-label="Phone number"
+          type="tel"
+        />
 
         {!canSubmit && classId && date && <div style={{ color: "#a00000", fontSize: 12 }}>{validationError}</div>}
 

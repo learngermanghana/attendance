@@ -41,15 +41,28 @@ function normalizeClassId(value) {
   return String(value || "").trim();
 }
 
-function hashPin(pin) {
-  return crypto
-    .createHash("sha256")
-    .update(`${pinSalt}::${String(pin).trim()}`)
-    .digest("hex");
+function normalizeText(value) {
+  return String(value || "").trim().toLowerCase();
 }
 
-function generatePin() {
-  return String(Math.floor(1000 + Math.random() * 9000));
+function normalizePhone(value) {
+  return String(value || "").replace(/\D+/g, "");
+}
+
+function buildSecretCode({ classId, date, email, phone }) {
+  const payload = [normalizeClassId(classId), String(date || "").trim(), normalizeText(email), normalizePhone(phone)].join("::");
+  return crypto.createHash("sha256").update(`${pinSalt}::${payload}`).digest("hex").slice(0, 10).toUpperCase();
+}
+
+function resolveStudentPhone(student = {}) {
+  return (
+    student.phone ||
+    student.phoneNumber ||
+    student.phone_number ||
+    student.contactNumber ||
+    student.contactNo ||
+    ""
+  );
 }
 
 async function requireAuth(req) {
@@ -105,7 +118,6 @@ app.post("/openSession", async (req, res) => {
       return res.json({ ok: true, opened: false });
     }
 
-    const pin = generatePin();
     const now = admin.firestore.Timestamp.now();
     const mins = Number(windowMinutes || 180);
     const openTo = admin.firestore.Timestamp.fromMillis(now.toMillis() + mins * 60 * 1000);
@@ -115,7 +127,6 @@ app.post("/openSession", async (req, res) => {
       classId,
       date,
       opened: true,
-      pinHash: hashPin(pin),
       openFrom: now,
       openTo,
       createdBy: user.uid,
@@ -128,7 +139,7 @@ app.post("/openSession", async (req, res) => {
 
     await ref.set(payload, { merge: true });
 
-    return res.json({ ok: true, opened: true, pin, openFrom: now.toMillis(), openTo: openTo.toMillis() });
+    return res.json({ ok: true, opened: true, openFrom: now.toMillis(), openTo: openTo.toMillis() });
   } catch (e) {
     return res.status(401).json({ error: e?.message || "Unauthorized" });
   }
@@ -138,10 +149,10 @@ app.post("/checkin", async (req, res) => {
   try {
     const body = req.body || {};
     const classId = normalizeClassId(body.classId || body.className);
-    const { date, studentCodeOrEmail, pin } = body;
+    const { date, email, phoneNumber } = body;
 
-    if (!classId || !date || !studentCodeOrEmail || !pin) {
-      return res.status(400).json({ error: "classId, date, studentCodeOrEmail, pin are required" });
+    if (!classId || !date || !email || !phoneNumber) {
+      return res.status(400).json({ error: "classId, date, email, phoneNumber are required" });
     }
 
     const sessionRef = sessionDocRef(classId, date);
@@ -158,25 +169,27 @@ app.post("/checkin", async (req, res) => {
     if (openFrom && now.toMillis() < openFrom.toMillis()) return res.status(400).json({ error: "Check-in not started" });
     if (openTo && now.toMillis() > openTo.toMillis()) return res.status(400).json({ error: "Check-in time ended" });
 
-    const incomingHash = hashPin(pin);
-    if (!session.pinHash || incomingHash !== session.pinHash) {
-      return res.status(400).json({ error: "Invalid PIN" });
+    const rawEmail = String(email || "").trim();
+    const normalizedEmail = normalizeText(rawEmail);
+    const normalizedPhone = normalizePhone(phoneNumber);
+
+    async function findStudentByEmail(candidateEmail) {
+      const qs = await db.collection(STUDENTS_COLLECTION).where("email", "==", candidateEmail).limit(1).get();
+      return qs.empty ? null : qs.docs[0];
     }
 
-    const key = String(studentCodeOrEmail).trim();
-
-    async function findBy(field) {
-      const qs = await db.collection(STUDENTS_COLLECTION).where(field, "==", key).limit(1).get();
-      if (!qs.empty) return qs.docs[0];
-      return null;
+    let studentDoc = await findStudentByEmail(rawEmail);
+    if (!studentDoc && normalizedEmail !== rawEmail) {
+      studentDoc = await findStudentByEmail(normalizedEmail);
     }
-
-    let studentDoc = await findBy("studentCode");
-    if (!studentDoc) studentDoc = await findBy("studentcode");
-    if (!studentDoc) studentDoc = await findBy("email");
     if (!studentDoc) return res.status(404).json({ error: "Student not found" });
 
     const st = studentDoc.data();
+    const storedPhone = normalizePhone(resolveStudentPhone(st));
+    if (!storedPhone) return res.status(400).json({ error: "Student phone is missing in records" });
+    if (!normalizedPhone || storedPhone !== normalizedPhone) {
+      return res.status(400).json({ error: "Email and phone number do not match student records" });
+    }
 
     if (String(st.role || "").toLowerCase() !== "student") return res.status(400).json({ error: "Not a student account" });
     if (String(st.status || "").toLowerCase() !== "active") return res.status(400).json({ error: "Student not active" });
@@ -194,6 +207,8 @@ app.post("/checkin", async (req, res) => {
       studentCode: st.studentCode || st.studentcode || "",
       name: st.name || "",
       email: st.email || "",
+      phoneNumber: resolveStudentPhone(st),
+      secretCode: buildSecretCode({ classId, date, email: st.email || normalizedEmail, phone: storedPhone }),
       classId,
       date,
       status: "present",
