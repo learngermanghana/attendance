@@ -11,8 +11,12 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 
+function normalizeClassId(classId) {
+  return String(classId || "").trim();
+}
+
 function sessionRefFor(classId, sessionId) {
-  return doc(collection(db, `attendance/${classId}/sessions`), String(sessionId));
+  return doc(collection(db, "attendance", normalizeClassId(classId), "sessions"), String(sessionId));
 }
 
 function normalizeStudentEntry(studentCode, value) {
@@ -62,7 +66,10 @@ function normalizeSessionDoc(data = {}) {
 }
 
 export async function loadAttendanceFromFirestore(classId) {
-  const snap = await getDocs(collection(db, `attendance/${classId}/sessions`));
+  const safeClassId = normalizeClassId(classId);
+  if (!safeClassId) return {};
+
+  const snap = await getDocs(collection(db, "attendance", safeClassId, "sessions"));
   const attendanceMap = {};
 
   snap.forEach((docSnap) => {
@@ -73,16 +80,21 @@ export async function loadAttendanceFromFirestore(classId) {
 }
 
 export async function saveAttendanceToFirestore(classId, attendanceMap) {
+  const safeClassId = normalizeClassId(classId);
+  if (!safeClassId) {
+    throw new Error("Missing classId. Unable to save attendance.");
+  }
+
   const writes = Object.entries(attendanceMap).map(async ([sessionId, session]) => {
     const payload = {
-      classId,
+      classId: safeClassId,
       title: String(session?.title || "").trim(),
       date: String(session?.date || "").trim(),
       students: session?.students || {},
       updatedAt: serverTimestamp(),
     };
 
-    const ref = sessionRefFor(classId, sessionId);
+    const ref = sessionRefFor(safeClassId, sessionId);
     const snap = await getDoc(ref);
     if (!snap.exists()) {
       payload.createdAt = serverTimestamp();
@@ -105,7 +117,7 @@ export async function saveAttendance({ classId, date, teacherUid, lesson, record
   const snap = await getDoc(sessionRef);
 
   const payload = {
-    classId,
+    classId: normalizeClassId(classId),
     date,
     markedBy: teacherUid,
     lesson: String(lesson || "").trim(),
@@ -133,6 +145,9 @@ export async function listAttendanceSessions({ classId, dateFrom, dateTo }) {
 }
 
 export async function listSessionCheckins({ classId, date }) {
-  const snap = await getDocs(collection(db, `attendance/${classId}/sessions/${date}/checkins`));
+  const safeClassId = normalizeClassId(classId);
+  if (!safeClassId) return [];
+
+  const snap = await getDocs(collection(db, "attendance", safeClassId, "sessions", String(date), "checkins"));
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
