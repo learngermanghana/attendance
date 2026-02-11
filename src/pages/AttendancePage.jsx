@@ -117,7 +117,8 @@ export default function AttendancePage() {
           };
         }
 
-        const nextAttendanceMap = { ...buildScheduleMap(classId), ...storedAttendance };
+        const scheduleAttendanceMap = buildScheduleMap(classId);
+        const nextAttendanceMap = { ...scheduleAttendanceMap, ...storedAttendance };
 
         if (Object.keys(nextAttendanceMap).length === 0) {
           nextAttendanceMap["0"] = {
@@ -128,9 +129,13 @@ export default function AttendancePage() {
         }
 
         for (const sessionId of Object.keys(nextAttendanceMap)) {
+          const scheduleSession = scheduleAttendanceMap[sessionId] || {};
+          const existingSession = nextAttendanceMap[sessionId] || {};
           const baseStudents = nextAttendanceMap[sessionId]?.students || {};
           nextAttendanceMap[sessionId] = {
-            ...nextAttendanceMap[sessionId],
+            ...existingSession,
+            title: String(existingSession.title || "").trim() || scheduleSession.title || `Session ${Number(sessionId) + 1}`,
+            date: String(existingSession.date || "").trim() || scheduleSession.date || dayjs().format("YYYY-MM-DD"),
             students: {
               ...studentTemplate,
               ...baseStudents,

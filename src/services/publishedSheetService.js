@@ -80,6 +80,10 @@ export function readPublishedClassName(row) {
   return row.classname || "";
 }
 
+export function readPublishedLevel(row) {
+  return row.level || "";
+}
+
 export function readPublishedStatus(row) {
   return row.status || "";
 }
