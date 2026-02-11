@@ -4,6 +4,7 @@ const cors = require("cors");
 const crypto = require("crypto");
 const { onRequest } = require("firebase-functions/v2/https");
 const { setGlobalOptions } = require("firebase-functions/v2");
+const { defineSecret } = require("firebase-functions/params");
 
 setGlobalOptions({ region: "us-central1" });
 
@@ -15,6 +16,7 @@ app.use(cors({ origin: true }));
 app.use(express.json());
 
 const STUDENTS_COLLECTION = "students";
+const attendancePinSaltSecret = defineSecret("ATTENDANCE_PIN_SALT");
 
 function parseRuntimeConfig() {
   const raw = process.env.CLOUD_RUNTIME_CONFIG || "{}";
@@ -27,14 +29,18 @@ function parseRuntimeConfig() {
 
 const runtimeConfig = parseRuntimeConfig();
 const attendanceConfig = runtimeConfig.attendance || {};
-const teacherAllowlist = String(attendanceConfig.teacher_emails || "")
+const teacherAllowlist = String(attendanceConfig.teacher_emails || process.env.ATTENDANCE_TEACHER_EMAILS || "")
   .split(",")
   .map((s) => s.trim().toLowerCase())
   .filter(Boolean);
-const pinSalt = String(attendanceConfig.pin_salt || process.env.ATTENDANCE_PIN_SALT || "").trim();
 
-if (!pinSalt) {
-  console.warn("Missing runtime config: attendance.pin_salt (or ATTENDANCE_PIN_SALT env var)");
+function resolvePinSalt() {
+  return String(
+    attendancePinSaltSecret.value() ||
+      attendanceConfig.pin_salt ||
+      process.env.ATTENDANCE_PIN_SALT ||
+      ""
+  ).trim();
 }
 
 function normalizeClassId(value) {
@@ -54,8 +60,9 @@ function normalizePhone(value) {
 }
 
 function buildSecretCode({ classId, date, email, phone }) {
+  const pinSalt = resolvePinSalt();
   if (!pinSalt) {
-    throw new Error("Missing required runtime config: attendance.pin_salt");
+    throw new Error("Missing required secret: ATTENDANCE_PIN_SALT");
   }
 
   const payload = [normalizeClassId(classId), String(date || "").trim(), normalizeText(email), normalizePhone(phone)].join("::");
@@ -239,4 +246,4 @@ app.post("/checkin", async (req, res) => {
   }
 });
 
-exports.api = onRequest(app);
+exports.api = onRequest({ secrets: [attendancePinSaltSecret] }, app);
