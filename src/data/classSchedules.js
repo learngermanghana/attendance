@@ -87,4 +87,25 @@ export const classSchedules = {
   ],
 };
 
+const KNOWN_SCHEDULE_KEYS = Object.keys(classSchedules);
+
+export function resolveScheduleKey(classId) {
+  const normalized = String(classId || "").trim();
+  if (!normalized) return "";
+  if (classSchedules[normalized]) return normalized;
+
+  const upper = normalized.toUpperCase();
+  const inferred = KNOWN_SCHEDULE_KEYS.find((key) => {
+    const token = key.toUpperCase();
+    return upper === token || upper.startsWith(`${token} `) || upper.includes(` ${token} `);
+  });
+
+  return inferred || "";
+}
+
+export function getClassSchedule(classId) {
+  const scheduleKey = resolveScheduleKey(classId);
+  return scheduleKey ? classSchedules[scheduleKey] || [] : [];
+}
+
 export default classSchedules;
