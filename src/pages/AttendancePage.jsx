@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import dayjs from "dayjs";
-import { classSchedules } from "../data/classSchedules";
+import { getClassSchedule } from "../data/classSchedules";
 import { QRCodeCanvas } from "qrcode.react";
 import { useAuth } from "../context/AuthContext";
 import { listStudentsByClass } from "../services/studentsService";
@@ -18,7 +18,7 @@ function normalizeScheduleDate(raw) {
 }
 
 function buildScheduleMap(classId) {
-  const schedule = classSchedules[classId] || [];
+  const schedule = getClassSchedule(classId);
   const map = {};
 
   schedule.forEach((item, index) => {
@@ -82,7 +82,7 @@ export default function AttendancePage() {
   }, [classId, selectedSessionId, lesson]);
 
   const lessons = useMemo(() => {
-    const schedule = classSchedules[classId] || [];
+    const schedule = getClassSchedule(classId);
     return schedule.map((item) => ({
       value: `${item.day} - ${item.topic}`,
       label: `${item.day}: ${item.topic}`,

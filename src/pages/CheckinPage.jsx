@@ -1,11 +1,30 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { getClassSchedule } from "../data/classSchedules";
 
 export default function CheckinPage() {
   const [sp] = useSearchParams();
   const classId = sp.get("classId") || sp.get("className") || "";
   const date = sp.get("date") || "";
   const lesson = sp.get("lesson") || "";
+
+  const scheduleInfo = useMemo(() => {
+    const sessionIndex = Number.parseInt(String(date || ""), 10);
+    if (!Number.isInteger(sessionIndex) || sessionIndex < 0) return null;
+
+    const schedule = getClassSchedule(classId);
+    const item = schedule[sessionIndex];
+    if (!item) return null;
+
+    return {
+      dateLabel: item.date || String(date || ""),
+      lessonLabel: `${item.day || ""} - ${item.topic || ""}`.trim().replace(/^\s*-\s*/, ""),
+    };
+  }, [classId, date]);
+
+  const dateLabel = scheduleInfo?.dateLabel || date || "";
+  const lessonLabel = lesson || scheduleInfo?.lessonLabel || "";
+
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [busy, setBusy] = useState(false);
@@ -39,7 +58,7 @@ export default function CheckinPage() {
           date,
           email: email.trim(),
           phoneNumber: phoneNumber.trim(),
-          lesson,
+          lesson: lessonLabel,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -63,10 +82,10 @@ export default function CheckinPage() {
           <b>Class:</b> {classId || "-"}
         </div>
         <div>
-          <b>Date:</b> {date || "-"}
+          <b>Date:</b> {dateLabel || "-"}
         </div>
         <div>
-          <b>Lesson:</b> {lesson || "-"}
+          <b>Lesson:</b> {lessonLabel || "-"}
         </div>
       </div>
 
