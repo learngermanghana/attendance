@@ -21,7 +21,7 @@ export async function loadAttendanceSession({ classId, date }) {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 
-export async function saveAttendance({ classId, date, teacherUid, records }) {
+export async function saveAttendance({ classId, date, teacherUid, lesson, records }) {
   const sessionRef = sessionRefFor(classId, date);
   const snap = await getDoc(sessionRef);
 
@@ -29,6 +29,7 @@ export async function saveAttendance({ classId, date, teacherUid, records }) {
     classId,
     date,
     markedBy: teacherUid,
+    lesson: String(lesson || "").trim(),
     updatedAt: serverTimestamp(),
     records,
   };

@@ -5,6 +5,7 @@ export default function CheckinPage() {
   const [sp] = useSearchParams();
   const classId = sp.get("classId") || sp.get("className") || "";
   const date = sp.get("date") || "";
+  const lesson = sp.get("lesson") || "";
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [busy, setBusy] = useState(false);
@@ -38,6 +39,7 @@ export default function CheckinPage() {
           date,
           email: email.trim(),
           phoneNumber: phoneNumber.trim(),
+          lesson,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -62,6 +64,9 @@ export default function CheckinPage() {
         </div>
         <div>
           <b>Date:</b> {date || "-"}
+        </div>
+        <div>
+          <b>Lesson:</b> {lesson || "-"}
         </div>
       </div>
 

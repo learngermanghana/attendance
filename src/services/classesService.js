@@ -6,7 +6,7 @@ function normalizeClassId(value) {
 }
 
 function resolveClassKey(data = {}) {
-  return normalizeClassId(data.classId || data.className || data.name || data.id);
+  return normalizeClassId(data.classId || data.className || data.group || data.groupId || data.groupName || data.name || data.id);
 }
 
 export async function listClasses() {
@@ -33,7 +33,7 @@ export async function listClasses() {
     if (!classesMap.has(classId)) {
       classesMap.set(classId, {
         classId,
-        name: data.className || classId,
+        name: data.className || data.groupName || data.group || classId,
       });
     }
   });
