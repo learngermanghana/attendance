@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import dayjs from "dayjs";
 import { classSchedules } from "../data/classSchedules";
 import { QRCodeCanvas } from "qrcode.react";
-import { classSchedules } from "../data/classSchedules";
 import { useAuth } from "../context/AuthContext";
 import { listStudentsByClass } from "../services/studentsService";
 import {
