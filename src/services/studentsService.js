@@ -7,6 +7,7 @@ import {
   readPublishedStudentCode,
   readPublishedStudentName,
 } from "./publishedSheetService";
+import { resolveWithSheetFallback } from "./fallbackResolvers";
 
 function isActiveStudent(data) {
   return String(data?.status || "").toLowerCase() === "active" && String(data?.role || "").toLowerCase() === "student";
@@ -20,11 +21,11 @@ function normalize(value) {
   return String(value || "").trim();
 }
 
-async function listPublishedStudentsByClass(classId) {
+export async function listPublishedStudentsByClassWithLoader(classId, loadRows = loadPublishedStudentRows) {
   const targetClassName = normalize(classId).toLowerCase();
   if (!targetClassName) return [];
 
-  const rows = await loadPublishedStudentRows();
+  const rows = await loadRows();
 
   return rows
     .filter((row) => normalize(readPublishedClassName(row)).toLowerCase() === targetClassName)
@@ -45,22 +46,26 @@ async function listPublishedStudentsByClass(classId) {
     .sort(byNameAsc);
 }
 
-async function loadStudentsByField(fieldName, classId) {
-  const q = query(collection(db, "students"), where(fieldName, "==", classId));
-  const snap = await getDocs(q);
+export async function loadStudentsByFieldWithFirestore(fieldName, classId, firestore = { collection, getDocs, query, where, db }) {
+  const q = firestore.query(firestore.collection(firestore.db, "students"), firestore.where(fieldName, "==", classId));
+  const snap = await firestore.getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter(isActiveStudent).sort(byNameAsc);
 }
 
+export async function listStudentsByClassWithDeps(
+  classId,
+  {
+    loadPublishedStudentsByClass = listPublishedStudentsByClassWithLoader,
+    loadStudentsByField = loadStudentsByFieldWithFirestore,
+  } = {},
+) {
+  return resolveWithSheetFallback({
+    loadFromSheet: () => loadPublishedStudentsByClass(classId),
+    loadFromFallbackFields: (field) => loadStudentsByField(field, classId),
+    fallbackFields: ["classId", "className", "group", "groupId", "groupName"],
+  });
+}
+
 export async function listStudentsByClass(classId) {
-  const publishedStudents = await listPublishedStudentsByClass(classId);
-  if (publishedStudents.length > 0) return publishedStudents;
-
-  const candidateFields = ["classId", "className", "group", "groupId", "groupName"];
-
-  for (const field of candidateFields) {
-    const matches = await loadStudentsByField(field, classId);
-    if (matches.length > 0) return matches;
-  }
-
-  return [];
+  return listStudentsByClassWithDeps(classId);
 }
