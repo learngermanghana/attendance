@@ -41,6 +41,10 @@ function normalizeClassId(value) {
   return String(value || "").trim();
 }
 
+function resolveStudentClassId(student = {}) {
+  return normalizeClassId(student.classId || student.className || student.group || student.groupId || student.groupName);
+}
+
 function normalizeText(value) {
   return String(value || "").trim().toLowerCase();
 }
@@ -96,7 +100,7 @@ app.post("/openSession", async (req, res) => {
 
     const body = req.body || {};
     const classId = normalizeClassId(body.classId || body.className);
-    const { date, action, windowMinutes } = body;
+    const { date, action, windowMinutes, lesson } = body;
 
     if (!classId || !date) {
       return res.status(400).json({ error: "classId and date are required" });
@@ -126,6 +130,7 @@ app.post("/openSession", async (req, res) => {
     const payload = {
       classId,
       date,
+      lesson: String(lesson || "").trim(),
       opened: true,
       openFrom: now,
       openTo,
@@ -149,7 +154,7 @@ app.post("/checkin", async (req, res) => {
   try {
     const body = req.body || {};
     const classId = normalizeClassId(body.classId || body.className);
-    const { date, email, phoneNumber } = body;
+    const { date, email, phoneNumber, lesson } = body;
 
     if (!classId || !date || !email || !phoneNumber) {
       return res.status(400).json({ error: "classId, date, email, phoneNumber are required" });
@@ -194,7 +199,7 @@ app.post("/checkin", async (req, res) => {
     if (String(st.role || "").toLowerCase() !== "student") return res.status(400).json({ error: "Not a student account" });
     if (String(st.status || "").toLowerCase() !== "active") return res.status(400).json({ error: "Student not active" });
 
-    const studentClassId = normalizeClassId(st.classId || st.className);
+    const studentClassId = resolveStudentClassId(st);
     if (studentClassId !== classId) return res.status(400).json({ error: "Student not in this class" });
 
     const uid = st.uid || studentDoc.id;
@@ -211,6 +216,7 @@ app.post("/checkin", async (req, res) => {
       secretCode: buildSecretCode({ classId, date, email: st.email || normalizedEmail, phone: storedPhone }),
       classId,
       date,
+      lesson: String(lesson || session.lesson || "").trim(),
       status: "present",
       method: "qr",
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),

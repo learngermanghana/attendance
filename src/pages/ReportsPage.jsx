@@ -48,7 +48,7 @@ export default function ReportsPage() {
       for (const session of sessions) {
         const baseRecords = Array.isArray(session.records) ? session.records : [];
         const byStudent = new Map(
-          baseRecords.map((r) => [r.studentId, { ...r, method: "manual", classId: session.classId, date: session.date }])
+          baseRecords.map((r) => [r.studentId, { ...r, method: "manual", classId: session.classId, date: session.date, lesson: session.lesson || "" }])
         );
 
         const checkins = await listSessionCheckins({ classId: session.classId, date: session.date });
@@ -61,6 +61,7 @@ export default function ReportsPage() {
             method: "qr",
             classId: session.classId,
             date: session.date,
+            lesson: c.lesson || session.lesson || "",
           });
         }
 
