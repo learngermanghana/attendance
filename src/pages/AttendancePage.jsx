@@ -42,7 +42,8 @@ function byStudentName(a, b) {
 }
 
 export default function AttendancePage() {
-  const { classId } = useParams();
+  const { classId: routeClassId } = useParams();
+  const classId = decodeURIComponent(routeClassId || "");
   const { user } = useAuth();
 
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
