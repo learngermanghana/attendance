@@ -47,6 +47,16 @@ export default function ReportsPage() {
 
       for (const session of sessions) {
         const baseRecords = Array.isArray(session.records) ? session.records : [];
+        const studentMapRecords =
+          session.students && typeof session.students === "object"
+            ? Object.entries(session.students).map(([studentCode, entry]) => ({
+                studentId: studentCode,
+                studentName: entry?.name || "",
+                status: entry?.present ? "present" : "absent",
+              }))
+            : [];
+        const mergedBase = baseRecords.length > 0 ? baseRecords : studentMapRecords;
+
         const byStudent = new Map(
           baseRecords.map((r) => [r.studentId, { ...r, method: "manual", classId: session.classId, date: session.date, lesson: session.lesson || "" }])
         );

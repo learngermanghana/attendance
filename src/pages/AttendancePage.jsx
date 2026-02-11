@@ -3,11 +3,43 @@ import { useParams } from "react-router-dom";
 import dayjs from "dayjs";
 import { classSchedules } from "../data/classSchedules";
 import { QRCodeCanvas } from "qrcode.react";
+import { classSchedules } from "../data/classSchedules";
 import { useAuth } from "../context/AuthContext";
 import { listStudentsByClass } from "../services/studentsService";
-import { listSessionCheckins, loadAttendanceSession, saveAttendance } from "../services/attendanceService";
+import {
+  listSessionCheckins,
+  loadAttendanceFromFirestore,
+  saveAttendanceToFirestore,
+} from "../services/attendanceService";
 
-const STATUSES = ["present", "absent", "late", "excused"];
+function normalizeScheduleDate(raw) {
+  if (!raw) return "";
+  const parsed = dayjs(raw, ["dddd, DD MMMM YYYY", "YYYY-MM-DD"], true);
+  return parsed.isValid() ? parsed.format("YYYY-MM-DD") : "";
+}
+
+function buildScheduleMap(classId) {
+  const schedule = classSchedules[classId] || [];
+  const map = {};
+
+  schedule.forEach((item, index) => {
+    const sessionId = String(index);
+    map[sessionId] = {
+      title: `${item.week}: ${item.topic}`,
+      date: normalizeScheduleDate(item.date),
+    };
+  });
+
+  return map;
+}
+
+function resolveStudentCode(student) {
+  return String(student.studentCode || student.studentcode || student.uid || student.id || "").trim();
+}
+
+function byStudentName(a, b) {
+  return String(a?.name || "").localeCompare(String(b?.name || ""));
+}
 
 export default function AttendancePage() {
   const { classId } = useParams();
@@ -20,9 +52,24 @@ export default function AttendancePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
-
   const [sessionOpen, setSessionOpen] = useState(false);
   const [sessionBusy, setSessionBusy] = useState(false);
+
+  const sessionIds = useMemo(() => {
+    return Object.keys(attendanceMap).sort((a, b) => Number(a) - Number(b));
+  }, [attendanceMap]);
+
+  const selectedSession = attendanceMap[selectedSessionId] || { title: "", date: "", students: {} };
+
+  const studentRows = useMemo(() => {
+    return Object.entries(selectedSession.students || {})
+      .map(([studentCode, entry]) => ({
+        studentCode,
+        name: entry?.name || "",
+        present: Boolean(entry?.present),
+      }))
+      .sort(byStudentName);
+  }, [selectedSession]);
 
   const checkinUrl = useMemo(() => {
     const base = window.location.origin;
@@ -59,12 +106,9 @@ export default function AttendancePage() {
       setSessionOpen(false);
 
       try {
-        const st = await listStudentsByClass(classId);
-        setStudents(st);
-
-        const [session, checkins] = await Promise.all([
-          loadAttendanceSession({ classId, date }),
-          listSessionCheckins({ classId, date }),
+        const [students, storedAttendance] = await Promise.all([
+          listStudentsByClass(classId),
+          loadAttendanceFromFirestore(classId),
         ]);
 
         let nextRecords = session?.records?.length ? session.records : defaultsFromStudents(st);
@@ -80,10 +124,31 @@ export default function AttendancePage() {
           );
         }
 
-        setRecords(nextRecords);
+        const sortedIds = [...mergedSessionIds].sort((a, b) => Number(a) - Number(b));
+        const firstSessionId = sortedIds[0] || "0";
 
-        if (session?.opened) {
-          setSessionOpen(true);
+        setAttendanceMap(nextAttendanceMap);
+        setSelectedSessionId((prev) => (nextAttendanceMap[prev] ? prev : firstSessionId));
+
+        if (nextAttendanceMap[firstSessionId]?.date) {
+          const checkins = await listSessionCheckins({ classId, date: firstSessionId });
+          if (checkins.length > 0) {
+            setAttendanceMap((current) => {
+              const updated = { ...current };
+              const base = updated[firstSessionId] || { students: {} };
+              const studentsCopy = { ...(base.students || {}) };
+              for (const c of checkins) {
+                const code = String(c.studentCode || c.uid || c.id || "").trim();
+                if (!code) continue;
+                studentsCopy[code] = {
+                  name: String(c.name || studentsCopy[code]?.name || "").trim(),
+                  present: true,
+                };
+              }
+              updated[firstSessionId] = { ...base, students: studentsCopy };
+              return updated;
+            });
+          }
         }
       } catch (e) {
         setMsg(e?.message || "Failed to load");
@@ -91,17 +156,23 @@ export default function AttendancePage() {
         setLoading(false);
       }
     })();
-  }, [classId, date]);
+  }, [classId]);
 
-  const updateStatus = (studentId, status) => {
-    setRecords((prev) => prev.map((r) => (r.studentId === studentId ? { ...r, status } : r)));
+  const setStudentPresent = (studentCode, present) => {
+    setAttendanceMap((prev) => ({
+      ...prev,
+      [selectedSessionId]: {
+        ...(prev[selectedSessionId] || {}),
+        students: {
+          ...((prev[selectedSessionId] || {}).students || {}),
+          [studentCode]: {
+            ...(((prev[selectedSessionId] || {}).students || {})[studentCode] || {}),
+            present,
+          },
+        },
+      },
+    }));
   };
-
-  const summary = useMemo(() => {
-    const s = { present: 0, absent: 0, late: 0, excused: 0 };
-    for (const r of records) if (s[r.status] !== undefined) s[r.status] += 1;
-    return s;
-  }, [records]);
 
   const onSave = async () => {
     setMsg("");
@@ -146,7 +217,7 @@ export default function AttendancePage() {
       if (!res.ok) throw new Error(data?.error || "Failed to open check-in");
 
       setSessionOpen(true);
-      setMsg("✅ Check-in opened. Students can scan QR and validate with email + phone number.");
+      setMsg("✅ Check-in opened.");
     } catch (e) {
       setMsg("❌ " + (e?.message || "Error"));
     } finally {
@@ -167,7 +238,7 @@ export default function AttendancePage() {
         },
         body: JSON.stringify({
           classId,
-          date,
+          date: selectedSessionId,
           action: "close",
         }),
       });
@@ -191,9 +262,16 @@ export default function AttendancePage() {
       <h2>Attendance: {classId}</h2>
       {lesson && <div style={{ marginBottom: 8, fontSize: 13, opacity: 0.85 }}>Lesson: {lesson}</div>}
 
-      <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12 }}>
+      <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
         <label>
-          Date: <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          Session:{" "}
+          <select value={selectedSessionId} onChange={(e) => setSelectedSessionId(e.target.value)}>
+            {sessionIds.map((sessionId) => (
+              <option key={sessionId} value={sessionId}>
+                {sessionId}: {attendanceMap[sessionId]?.title || "Untitled"}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label>
@@ -213,6 +291,10 @@ export default function AttendancePage() {
         </div>
       </div>
 
+      <div style={{ marginBottom: 12 }}>
+        <b>Title:</b> {selectedSession.title || "-"}
+      </div>
+
       <div style={{ border: "1px solid #ddd", borderRadius: 10, padding: 12, marginBottom: 14 }}>
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <div style={{ fontWeight: 700 }}>Student QR Check-in</div>
@@ -225,9 +307,7 @@ export default function AttendancePage() {
             {sessionBusy && sessionOpen ? "Closing..." : "Close Check-in"}
           </button>
 
-          <div style={{ marginLeft: "auto", fontSize: 12, opacity: 0.85 }}>
-            Status: {sessionOpen ? "OPEN" : "CLOSED"}
-          </div>
+          <div style={{ marginLeft: "auto", fontSize: 12, opacity: 0.85 }}>Status: {sessionOpen ? "OPEN" : "CLOSED"}</div>
         </div>
 
         {sessionOpen && (
@@ -236,25 +316,17 @@ export default function AttendancePage() {
               <QRCodeCanvas value={checkinUrl} size={170} />
               <div style={{ fontSize: 12, opacity: 0.8, marginTop: 8, wordBreak: "break-all" }}>{checkinUrl}</div>
             </div>
-
-            <div style={{ minWidth: 240 }}>
-              <div style={{ fontSize: 12, opacity: 0.8 }}>Validation required</div>
-              <div style={{ fontSize: 16, fontWeight: 700 }}>Email + Phone Number</div>
-              <div style={{ fontSize: 12, opacity: 0.8 }}>
-                Students must enter their registered <b>email</b> and <b>phone number</b> to mark present.
-              </div>
-            </div>
           </div>
         )}
       </div>
 
-      {students.length === 0 ? (
-        <div>No students found for this class. Add students with classId = {classId}.</div>
+      {studentRows.length === 0 ? (
+        <div>No students found for this class.</div>
       ) : (
         <div style={{ display: "grid", gap: 8 }}>
-          {records.map((r) => (
+          {studentRows.map((row) => (
             <div
-              key={r.studentId}
+              key={row.studentCode}
               style={{
                 border: "1px solid #ddd",
                 borderRadius: 8,
@@ -265,35 +337,23 @@ export default function AttendancePage() {
               }}
             >
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700 }}>{r.studentName}</div>
-                <div style={{ fontSize: 12, opacity: 0.7 }}>{r.studentId}</div>
+                <div style={{ fontWeight: 700 }}>{row.name || row.studentCode}</div>
+                <div style={{ fontSize: 12, opacity: 0.7 }}>{row.studentCode}</div>
               </div>
 
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {STATUSES.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => updateStatus(r.studentId, s)}
-                    style={{
-                      padding: "6px 10px",
-                      borderRadius: 8,
-                      border: "1px solid #ccc",
-                      background: r.status === s ? "#111" : "white",
-                      color: r.status === s ? "white" : "black",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
+              <button onClick={() => setStudentPresent(row.studentCode, true)} style={{ background: row.present ? "#111" : "white", color: row.present ? "white" : "black" }}>
+                Present
+              </button>
+              <button onClick={() => setStudentPresent(row.studentCode, false)} style={{ background: !row.present ? "#111" : "white", color: !row.present ? "white" : "black" }}>
+                Absent
+              </button>
             </div>
           ))}
         </div>
       )}
 
       <div style={{ marginTop: 14, display: "flex", gap: 10, alignItems: "center" }}>
-        <button disabled={saving || records.length === 0} onClick={onSave}>
+        <button disabled={saving || sessionIds.length === 0} onClick={onSave}>
           {saving ? "Saving..." : "Save Attendance"}
         </button>
         {msg && <div style={{ fontSize: 13 }}>{msg}</div>}
