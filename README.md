@@ -2,7 +2,7 @@
 
 Attendance management app for teachers with two capture modes:
 - Manual attendance marking in the dashboard.
-- Student self check-in via QR + PIN through Firebase Cloud Functions.
+- Student self check-in via QR with email + phone validation through Firebase Cloud Functions.
 
 ## Architecture
 
@@ -78,9 +78,9 @@ firebase deploy --only functions
 ## Operational Flow
 
 1. Teacher signs in and opens a class attendance page.
-2. Teacher opens check-in to generate QR URL + PIN.
-3. Student scans QR (`/checkin?classId=...&date=...`) and submits student code/email + PIN.
-4. Function validates session window, PIN, and class membership, then writes check-in.
+2. Teacher opens check-in to generate a QR URL.
+3. Student scans QR (`/checkin?classId=...&date=...`) and submits email + phone number.
+4. Function validates session window, student record match, and class membership, then writes check-in with an auto-generated secret code.
 5. Teacher can save manual attendance records and run reports with CSV export.
 
 ## Reports

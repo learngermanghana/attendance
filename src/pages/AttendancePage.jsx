@@ -19,7 +19,6 @@ export default function AttendancePage() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
 
-  const [pin, setPin] = useState("");
   const [sessionOpen, setSessionOpen] = useState(false);
   const [sessionBusy, setSessionBusy] = useState(false);
 
@@ -40,7 +39,6 @@ export default function AttendancePage() {
     (async () => {
       setLoading(true);
       setMsg("");
-      setPin("");
       setSessionOpen(false);
 
       try {
@@ -124,9 +122,8 @@ export default function AttendancePage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || "Failed to open check-in");
 
-      setPin(data.pin || "");
       setSessionOpen(true);
-      setMsg("✅ Check-in opened. Show QR + PIN to students.");
+      setMsg("✅ Check-in opened. Students can scan QR and validate with email + phone number.");
     } catch (e) {
       setMsg("❌ " + (e?.message || "Error"));
     } finally {
@@ -205,10 +202,10 @@ export default function AttendancePage() {
             </div>
 
             <div style={{ minWidth: 240 }}>
-              <div style={{ fontSize: 12, opacity: 0.8 }}>Secret PIN</div>
-              <div style={{ fontSize: 34, fontWeight: 800, letterSpacing: 2 }}>{pin || "----"}</div>
+              <div style={{ fontSize: 12, opacity: 0.8 }}>Validation required</div>
+              <div style={{ fontSize: 16, fontWeight: 700 }}>Email + Phone Number</div>
               <div style={{ fontSize: 12, opacity: 0.8 }}>
-                Students must enter their <b>studentCode</b> + this PIN to mark present.
+                Students must enter their registered <b>email</b> and <b>phone number</b> to mark present.
               </div>
             </div>
           </div>
