@@ -26,6 +26,7 @@ function buildScheduleMap(classId) {
     map[sessionId] = {
       title: `${item.week}: ${item.topic}`,
       date: normalizeScheduleDate(item.date),
+      students: {},
     };
   });
 
@@ -46,17 +47,15 @@ export default function AttendancePage() {
 
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [lesson, setLesson] = useState("");
-  const [students, setStudents] = useState([]);
-  const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [sessionOpen, setSessionOpen] = useState(false);
   const [sessionBusy, setSessionBusy] = useState(false);
+  const [attendanceMap, setAttendanceMap] = useState({});
+  const [selectedSessionId, setSelectedSessionId] = useState("0");
 
-  const sessionIds = useMemo(() => {
-    return Object.keys(attendanceMap).sort((a, b) => Number(a) - Number(b));
-  }, [attendanceMap]);
+  const sessionIds = useMemo(() => Object.keys(attendanceMap).sort((a, b) => Number(a) - Number(b)), [attendanceMap]);
 
   const selectedSession = attendanceMap[selectedSessionId] || { title: "", date: "", students: {} };
 
@@ -70,18 +69,17 @@ export default function AttendancePage() {
       .sort(byStudentName);
   }, [selectedSession]);
 
+  const summary = useMemo(() => {
+    const present = studentRows.filter((row) => row.present).length;
+    const absent = studentRows.length - present;
+    return { present, absent, late: 0, excused: 0 };
+  }, [studentRows]);
+
   const checkinUrl = useMemo(() => {
     const base = window.location.origin;
-    const qs = new URLSearchParams({ classId, date, lesson }).toString();
+    const qs = new URLSearchParams({ classId, date: selectedSessionId, lesson }).toString();
     return `${base}/checkin?${qs}`;
-  }, [classId, date, lesson]);
-
-  const defaultsFromStudents = (st) =>
-    st.map((s) => ({
-      studentId: s.uid || s.id,
-      studentName: s.name,
-      status: "present",
-    }));
+  }, [classId, selectedSessionId, lesson]);
 
   const lessons = useMemo(() => {
     const schedule = classSchedules[classId] || [];
@@ -90,7 +88,6 @@ export default function AttendancePage() {
       label: `${item.day}: ${item.topic}`,
     }));
   }, [classId]);
-
 
   useEffect(() => {
     if (!lesson && lessons.length > 0) {
@@ -110,45 +107,43 @@ export default function AttendancePage() {
           loadAttendanceFromFirestore(classId),
         ]);
 
-        let nextRecords = session?.records?.length ? session.records : defaultsFromStudents(st);
-
-        if (session?.lesson) {
-          setLesson(session.lesson);
+        const studentTemplate = {};
+        for (const student of students) {
+          const code = resolveStudentCode(student);
+          if (!code) continue;
+          studentTemplate[code] = {
+            name: String(student.name || "").trim(),
+            present: false,
+          };
         }
 
-        if (checkins.length > 0) {
-          const checkedInIds = new Set(checkins.map((c) => c.uid || c.id));
-          nextRecords = nextRecords.map((r) =>
-            checkedInIds.has(r.studentId) ? { ...r, status: "present" } : r
-          );
+        const nextAttendanceMap = { ...buildScheduleMap(classId), ...storedAttendance };
+
+        if (Object.keys(nextAttendanceMap).length === 0) {
+          nextAttendanceMap["0"] = {
+            title: "Session 1",
+            date: dayjs().format("YYYY-MM-DD"),
+            students: {},
+          };
         }
 
-        const sortedIds = [...mergedSessionIds].sort((a, b) => Number(a) - Number(b));
+        for (const sessionId of Object.keys(nextAttendanceMap)) {
+          const baseStudents = nextAttendanceMap[sessionId]?.students || {};
+          nextAttendanceMap[sessionId] = {
+            ...nextAttendanceMap[sessionId],
+            students: {
+              ...studentTemplate,
+              ...baseStudents,
+            },
+          };
+        }
+
+        const sortedIds = Object.keys(nextAttendanceMap).sort((a, b) => Number(a) - Number(b));
         const firstSessionId = sortedIds[0] || "0";
 
         setAttendanceMap(nextAttendanceMap);
         setSelectedSessionId((prev) => (nextAttendanceMap[prev] ? prev : firstSessionId));
-
-        if (nextAttendanceMap[firstSessionId]?.date) {
-          const checkins = await listSessionCheckins({ classId, date: firstSessionId });
-          if (checkins.length > 0) {
-            setAttendanceMap((current) => {
-              const updated = { ...current };
-              const base = updated[firstSessionId] || { students: {} };
-              const studentsCopy = { ...(base.students || {}) };
-              for (const c of checkins) {
-                const code = String(c.studentCode || c.uid || c.id || "").trim();
-                if (!code) continue;
-                studentsCopy[code] = {
-                  name: String(c.name || studentsCopy[code]?.name || "").trim(),
-                  present: true,
-                };
-              }
-              updated[firstSessionId] = { ...base, students: studentsCopy };
-              return updated;
-            });
-          }
-        }
+        setDate(nextAttendanceMap[firstSessionId]?.date || dayjs().format("YYYY-MM-DD"));
       } catch (e) {
         setMsg(e?.message || "Failed to load");
       } finally {
@@ -156,6 +151,37 @@ export default function AttendancePage() {
       }
     })();
   }, [classId]);
+
+  useEffect(() => {
+    if (!classId || !selectedSessionId || !attendanceMap[selectedSessionId]) return;
+
+    (async () => {
+      try {
+        const checkins = await listSessionCheckins({ classId, date: selectedSessionId });
+        if (checkins.length === 0) return;
+
+        setAttendanceMap((current) => {
+          const updated = { ...current };
+          const base = updated[selectedSessionId] || { students: {} };
+          const studentsCopy = { ...(base.students || {}) };
+
+          for (const c of checkins) {
+            const code = String(c.studentCode || c.uid || c.id || "").trim();
+            if (!code) continue;
+            studentsCopy[code] = {
+              name: String(c.name || studentsCopy[code]?.name || "").trim(),
+              present: true,
+            };
+          }
+
+          updated[selectedSessionId] = { ...base, students: studentsCopy };
+          return updated;
+        });
+      } catch {
+        // Non-blocking: class page should still render if check-ins fail to load.
+      }
+    })();
+  }, [classId, selectedSessionId]);
 
   const setStudentPresent = (studentCode, present) => {
     setAttendanceMap((prev) => ({
@@ -177,13 +203,7 @@ export default function AttendancePage() {
     setMsg("");
     setSaving(true);
     try {
-      await saveAttendance({
-        classId,
-        date,
-        teacherUid: user.uid,
-        lesson,
-        records,
-      });
+      await saveAttendanceToFirestore(classId, attendanceMap);
       setMsg("✅ Attendance saved");
     } catch (e) {
       setMsg(e?.message || "Save failed");
@@ -205,7 +225,7 @@ export default function AttendancePage() {
         },
         body: JSON.stringify({
           classId,
-          date,
+          date: selectedSessionId,
           lesson,
           windowMinutes: 180,
           action: "open",
@@ -264,7 +284,14 @@ export default function AttendancePage() {
       <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
         <label>
           Session:{" "}
-          <select value={selectedSessionId} onChange={(e) => setSelectedSessionId(e.target.value)}>
+          <select
+            value={selectedSessionId}
+            onChange={(e) => {
+              const nextSessionId = e.target.value;
+              setSelectedSessionId(nextSessionId);
+              setDate(attendanceMap[nextSessionId]?.date || dayjs().format("YYYY-MM-DD"));
+            }}
+          >
             {sessionIds.map((sessionId) => (
               <option key={sessionId} value={sessionId}>
                 {sessionId}: {attendanceMap[sessionId]?.title || "Untitled"}
