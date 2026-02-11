@@ -11,10 +11,10 @@ function resolveClassKey(data = {}) {
   return normalizeClassId(data.classId || data.className || data.group || data.groupId || data.groupName || data.name || data.id);
 }
 
-function resolvePublishedLevelOrClassName(row) {
-  const level = normalizeClassId(readPublishedLevel(row));
-  if (level) return level;
-  return normalizeClassId(readPublishedClassName(row));
+function resolvePublishedClassIdentifier(row) {
+  const className = normalizeClassId(readPublishedClassName(row));
+  if (className) return className;
+  return normalizeClassId(readPublishedLevel(row));
 }
 
 export async function listClassesFromPublishedSheetWithLoader(loadRows = loadPublishedStudentRows) {
@@ -22,13 +22,13 @@ export async function listClassesFromPublishedSheetWithLoader(loadRows = loadPub
   const classesMap = new Map();
 
   rows.forEach((row) => {
-    const className = resolvePublishedLevelOrClassName(row);
-    if (!className) return;
+    const classIdentifier = resolvePublishedClassIdentifier(row);
+    if (!classIdentifier) return;
 
-    if (!classesMap.has(className)) {
-      classesMap.set(className, {
-        classId: className,
-        name: className,
+    if (!classesMap.has(classIdentifier)) {
+      classesMap.set(classIdentifier, {
+        classId: classIdentifier,
+        name: classIdentifier,
       });
     }
   });
