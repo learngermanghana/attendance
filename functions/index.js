@@ -31,10 +31,10 @@ const teacherAllowlist = String(attendanceConfig.teacher_emails || "")
   .split(",")
   .map((s) => s.trim().toLowerCase())
   .filter(Boolean);
-const pinSalt = String(attendanceConfig.pin_salt || "").trim();
+const pinSalt = String(attendanceConfig.pin_salt || process.env.ATTENDANCE_PIN_SALT || "").trim();
 
 if (!pinSalt) {
-  throw new Error("Missing required runtime config: attendance.pin_salt");
+  console.warn("Missing runtime config: attendance.pin_salt (or ATTENDANCE_PIN_SALT env var)");
 }
 
 function normalizeClassId(value) {
@@ -54,6 +54,10 @@ function normalizePhone(value) {
 }
 
 function buildSecretCode({ classId, date, email, phone }) {
+  if (!pinSalt) {
+    throw new Error("Missing required runtime config: attendance.pin_salt");
+  }
+
   const payload = [normalizeClassId(classId), String(date || "").trim(), normalizeText(email), normalizePhone(phone)].join("::");
   return crypto.createHash("sha256").update(`${pinSalt}::${payload}`).digest("hex").slice(0, 10).toUpperCase();
 }
