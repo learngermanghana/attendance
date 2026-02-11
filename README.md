@@ -45,6 +45,7 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=...
 VITE_FIREBASE_APP_ID=...
 VITE_OPEN_SESSION_API_URL=https://<region>-<project>.cloudfunctions.net/api/openSession
 VITE_CHECKIN_API_URL=https://<region>-<project>.cloudfunctions.net/api/checkin
+VITE_STUDENTS_SHEET_CSV_URL=https://docs.google.com/spreadsheets/d/e/<published-sheet-id>/pub?output=csv
 ```
 
 3. Run locally:
