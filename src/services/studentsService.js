@@ -16,8 +16,12 @@ async function loadStudentsByField(fieldName, classId) {
 }
 
 export async function listStudentsByClass(classId) {
-  const preferred = await loadStudentsByField("classId", classId);
-  if (preferred.length > 0) return preferred;
+  const candidateFields = ["classId", "className", "group", "groupId", "groupName"];
 
-  return loadStudentsByField("className", classId);
+  for (const field of candidateFields) {
+    const matches = await loadStudentsByField(field, classId);
+    if (matches.length > 0) return matches;
+  }
+
+  return [];
 }

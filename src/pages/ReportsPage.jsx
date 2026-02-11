@@ -47,8 +47,21 @@ export default function ReportsPage() {
 
       for (const session of sessions) {
         const baseRecords = Array.isArray(session.records) ? session.records : [];
+        const studentMapRecords =
+          session.students && typeof session.students === "object"
+            ? Object.entries(session.students).map(([studentCode, entry]) => ({
+                studentId: studentCode,
+                studentName: entry?.name || "",
+                status: entry?.present ? "present" : "absent",
+              }))
+            : [];
+        const mergedBase = baseRecords.length > 0 ? baseRecords : studentMapRecords;
+
         const byStudent = new Map(
-          baseRecords.map((r) => [r.studentId, { ...r, method: "manual", classId: session.classId, date: session.date }])
+          mergedBase.map((r) => [
+            r.studentId,
+            { ...r, method: "manual", classId: session.classId, date: session.date || session.id, lesson: session.lesson || session.title || "" },
+          ])
         );
 
         const checkins = await listSessionCheckins({ classId: session.classId, date: session.date });
@@ -60,7 +73,8 @@ export default function ReportsPage() {
             status: "present",
             method: "qr",
             classId: session.classId,
-            date: session.date,
+            date: session.date || session.id,
+            lesson: c.lesson || session.lesson || session.title || "",
           });
         }
 
