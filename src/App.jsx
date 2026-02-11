@@ -6,6 +6,7 @@ import AttendancePage from "./pages/AttendancePage";
 import ReportsPage from "./pages/ReportsPage";
 import CheckinPage from "./pages/CheckinPage";
 import CourseSchedulePage from "./pages/CourseSchedulePage";
+import MarkingPage from "./pages/MarkingPage";
 import { useAuth } from "./context/AuthContext";
 import "./App.css";
 
@@ -22,6 +23,7 @@ function TopBar() {
           <Link to="/">Dashboard</Link>
           <Link to="/reports">Reports</Link>
           <Link to="/course-schedule">Course Schedule</Link>
+          <Link to="/marking">Mark Work</Link>
         </div>
 
         <div className="topbar-user">
@@ -74,6 +76,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <CourseSchedulePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/marking"
+            element={
+              <ProtectedRoute>
+                <MarkingPage />
               </ProtectedRoute>
             }
           />

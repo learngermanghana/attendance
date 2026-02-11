@@ -46,6 +46,9 @@ VITE_FIREBASE_APP_ID=...
 VITE_OPEN_SESSION_API_URL=https://<region>-<project>.cloudfunctions.net/api/openSession
 VITE_CHECKIN_API_URL=https://<region>-<project>.cloudfunctions.net/api/checkin
 VITE_STUDENTS_SHEET_CSV_URL=https://docs.google.com/spreadsheets/d/e/<published-sheet-id>/pub?output=csv
+VITE_MARKING_ROSTER_CSV_URL=https://docs.google.com/spreadsheets/d/<sheet-id>/gviz/tq?tqx=out:csv&sheet=Students
+VITE_SCORES_WEBHOOK_URL=https://script.google.com/macros/s/<deployment-id>/exec
+VITE_ENABLE_SCORE_FIRESTORE=false
 ```
 
 3. Run locally:
@@ -96,3 +99,14 @@ Reports page supports:
 
 - `createdAt` fields are only set on first write; subsequent writes only update `updatedAt`.
 - The app still accepts legacy `className` values in API/query params for migration compatibility, but `classId` is the canonical term.
+
+## Marking Console
+
+The app includes a **Mark Work** page with a 5-stage marking workflow:
+1. Pick a student from roster CSV (Google Sheet with local `public/students.csv` fallback).
+2. Pick a reference answer from `src/data/answers_dictionary.json`.
+3. Load the student submission from Firestore (`submissions` + legacy nested fallbacks).
+4. Enter manual score/feedback.
+5. Save to Google Sheets webhook, with optional Firestore mirror into `scores`.
+
+The target score row schema is: `studentcode, name, assignment, score, comments, date, level, link`.
