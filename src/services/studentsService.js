@@ -1,13 +1,14 @@
 import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "../firebase";
+import { db } from "../firebase.js";
 import {
   loadPublishedStudentRows,
   readPublishedClassName,
+  readPublishedLevel,
   readPublishedStatus,
   readPublishedStudentCode,
   readPublishedStudentName,
-} from "./publishedSheetService";
-import { resolveWithSheetFallback } from "./fallbackResolvers";
+} from "./publishedSheetService.js";
+import { resolveWithSheetFallback } from "./fallbackResolvers.js";
 
 function isActiveStudent(data) {
   return String(data?.status || "").toLowerCase() === "active" && String(data?.role || "").toLowerCase() === "student";
@@ -21,6 +22,12 @@ function normalize(value) {
   return String(value || "").trim();
 }
 
+function resolvePublishedClass(row) {
+  const level = normalize(readPublishedLevel(row));
+  if (level) return level;
+  return normalize(readPublishedClassName(row));
+}
+
 export async function listPublishedStudentsByClassWithLoader(classId, loadRows = loadPublishedStudentRows) {
   const targetClassName = normalize(classId).toLowerCase();
   if (!targetClassName) return [];
@@ -28,7 +35,7 @@ export async function listPublishedStudentsByClassWithLoader(classId, loadRows =
   const rows = await loadRows();
 
   return rows
-    .filter((row) => normalize(readPublishedClassName(row)).toLowerCase() === targetClassName)
+    .filter((row) => normalize(resolvePublishedClass(row)).toLowerCase() === targetClassName)
     .filter((row) => {
       const status = normalize(readPublishedStatus(row)).toLowerCase();
       return !status || status === "active";
@@ -37,7 +44,7 @@ export async function listPublishedStudentsByClassWithLoader(classId, loadRows =
       id: normalize(readPublishedStudentCode(row) || readPublishedStudentName(row)),
       uid: normalize(readPublishedStudentCode(row)),
       studentCode: normalize(readPublishedStudentCode(row)),
-      className: normalize(readPublishedClassName(row)),
+      className: normalize(resolvePublishedClass(row)),
       name: normalize(readPublishedStudentName(row)),
       status: normalize(readPublishedStatus(row)) || "Active",
       role: "student",

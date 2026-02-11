@@ -1,7 +1,7 @@
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import { db } from "../firebase";
-import { loadPublishedStudentRows, readPublishedClassName } from "./publishedSheetService";
-import { resolveWithSheetThenFirestore } from "./fallbackResolvers";
+import { db } from "../firebase.js";
+import { loadPublishedStudentRows, readPublishedClassName, readPublishedLevel } from "./publishedSheetService.js";
+import { resolveWithSheetThenFirestore } from "./fallbackResolvers.js";
 
 function normalizeClassId(value) {
   return String(value || "").trim();
@@ -11,12 +11,18 @@ function resolveClassKey(data = {}) {
   return normalizeClassId(data.classId || data.className || data.group || data.groupId || data.groupName || data.name || data.id);
 }
 
+function resolvePublishedLevelOrClassName(row) {
+  const level = normalizeClassId(readPublishedLevel(row));
+  if (level) return level;
+  return normalizeClassId(readPublishedClassName(row));
+}
+
 export async function listClassesFromPublishedSheetWithLoader(loadRows = loadPublishedStudentRows) {
   const rows = await loadRows();
   const classesMap = new Map();
 
   rows.forEach((row) => {
-    const className = normalizeClassId(readPublishedClassName(row));
+    const className = resolvePublishedLevelOrClassName(row);
     if (!className) return;
 
     if (!classesMap.has(className)) {
