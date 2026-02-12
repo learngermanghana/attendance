@@ -8,6 +8,7 @@ import CheckinPage from "./pages/CheckinPage";
 import CourseSchedulePage from "./pages/CourseSchedulePage";
 import MarkingPage from "./pages/MarkingPage";
 import { useAuth } from "./context/AuthContext";
+import { useToast } from "./context/ToastContext";
 import "./App.css";
 
 function TopBar() {
@@ -42,10 +43,28 @@ function TopBar() {
   );
 }
 
+function ToastViewport() {
+  const { toasts, dismissToast } = useToast();
+
+  return (
+    <div className="toast-viewport" aria-live="polite" aria-atomic="true">
+      {toasts.map((toast) => (
+        <div key={toast.id} className={`toast-item toast-item-${toast.type}`}>
+          <span>{toast.message}</span>
+          <button className="toast-dismiss" onClick={() => dismissToast(toast.id)} aria-label="Dismiss notification">
+            ×
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <>
       <TopBar />
+      <ToastViewport />
 
       <main className="page-shell">
         <Routes>

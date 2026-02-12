@@ -10,6 +10,7 @@ import {
   loadAttendanceFromFirestore,
   saveAttendanceToFirestore,
 } from "../services/attendanceService";
+import { useToast } from "../context/ToastContext.jsx";
 
 function normalizeScheduleDate(raw) {
   if (!raw) return "";
@@ -45,12 +46,11 @@ export default function AttendancePage() {
   const { classId: routeClassId } = useParams();
   const classId = decodeURIComponent(routeClassId || "");
   const { user } = useAuth();
+  const { success, error, info } = useToast();
 
-  const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [lesson, setLesson] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState("");
   const [sessionOpen, setSessionOpen] = useState(false);
   const [sessionBusy, setSessionBusy] = useState(false);
   const [attendanceMap, setAttendanceMap] = useState({});
@@ -99,7 +99,6 @@ export default function AttendancePage() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      setMsg("");
       setSessionOpen(false);
 
       try {
@@ -149,9 +148,8 @@ export default function AttendancePage() {
 
         setAttendanceMap(nextAttendanceMap);
         setSelectedSessionId((prev) => (nextAttendanceMap[prev] ? prev : firstSessionId));
-        setDate(nextAttendanceMap[firstSessionId]?.date || dayjs().format("YYYY-MM-DD"));
       } catch (e) {
-        setMsg(e?.message || "Failed to load");
+        error(e?.message || "Failed to load attendance");
       } finally {
         setLoading(false);
       }
@@ -203,23 +201,28 @@ export default function AttendancePage() {
         },
       },
     }));
+
+    const studentName = selectedSession?.students?.[studentCode]?.name || studentCode;
+    if (present) {
+      success(`${studentName} marked present.`);
+    } else {
+      info(`${studentName} marked absent.`);
+    }
   };
 
   const onSave = async () => {
-    setMsg("");
     setSaving(true);
     try {
       await saveAttendanceToFirestore(classId, attendanceMap);
-      setMsg("✅ Attendance saved");
+      success("Attendance saved.");
     } catch (e) {
-      setMsg(e?.message || "Save failed");
+      error(e?.message || "Save failed");
     } finally {
       setSaving(false);
     }
   };
 
   async function openCheckin() {
-    setMsg("");
     setSessionBusy(true);
     try {
       const token = await user.getIdToken();
@@ -242,16 +245,15 @@ export default function AttendancePage() {
       if (!res.ok) throw new Error(data?.error || "Failed to open check-in");
 
       setSessionOpen(true);
-      setMsg("✅ Check-in opened.");
+      success("Check-in opened.");
     } catch (e) {
-      setMsg("❌ " + (e?.message || "Error"));
+      error(e?.message || "Error opening check-in");
     } finally {
       setSessionBusy(false);
     }
   }
 
   async function closeCheckin() {
-    setMsg("");
     setSessionBusy(true);
     try {
       const token = await user.getIdToken();
@@ -272,9 +274,9 @@ export default function AttendancePage() {
       if (!res.ok) throw new Error(data?.error || "Failed to close check-in");
 
       setSessionOpen(false);
-      setMsg("✅ Check-in closed.");
+      success("Check-in closed.");
     } catch (e) {
-      setMsg("❌ " + (e?.message || "Error"));
+      error(e?.message || "Error closing check-in");
     } finally {
       setSessionBusy(false);
     }
@@ -295,7 +297,6 @@ export default function AttendancePage() {
             onChange={(e) => {
               const nextSessionId = e.target.value;
               setSelectedSessionId(nextSessionId);
-              setDate(attendanceMap[nextSessionId]?.date || dayjs().format("YYYY-MM-DD"));
             }}
           >
             {sessionIds.map((sessionId) => (
@@ -371,12 +372,15 @@ export default function AttendancePage() {
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700 }}>{row.name || row.studentCode}</div>
                 <div style={{ fontSize: 12, opacity: 0.7 }}>{row.studentCode}</div>
+                <div style={{ marginTop: 6, fontSize: 12, fontWeight: 600, color: row.present ? "#147848" : "#6b7280" }}>
+                  {row.present ? "Present" : "Absent"}
+                </div>
               </div>
 
-              <button onClick={() => setStudentPresent(row.studentCode, true)} style={{ background: row.present ? "#111" : "white", color: row.present ? "white" : "black" }}>
+              <button onClick={() => setStudentPresent(row.studentCode, true)} style={{ minWidth: 90, background: row.present ? "#147848" : "white", color: row.present ? "white" : "black", borderColor: row.present ? "#147848" : "#c9d1e4" }}>
                 Present
               </button>
-              <button onClick={() => setStudentPresent(row.studentCode, false)} style={{ background: !row.present ? "#111" : "white", color: !row.present ? "white" : "black" }}>
+              <button onClick={() => setStudentPresent(row.studentCode, false)} style={{ minWidth: 90, background: !row.present ? "#6b7280" : "white", color: !row.present ? "white" : "black", borderColor: !row.present ? "#6b7280" : "#c9d1e4" }}>
                 Absent
               </button>
             </div>
@@ -388,7 +392,6 @@ export default function AttendancePage() {
         <button disabled={saving || sessionIds.length === 0} onClick={onSave}>
           {saving ? "Saving..." : "Save Attendance"}
         </button>
-        {msg && <div style={{ fontSize: 13 }}>{msg}</div>}
       </div>
     </div>
   );

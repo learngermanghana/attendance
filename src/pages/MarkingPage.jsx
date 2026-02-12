@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import answersDictionary from "../data/answers_dictionary.json";
 import { loadRoster, loadSubmissions, saveScoreRow } from "../services/markingService.js";
+import { useToast } from "../context/ToastContext.jsx";
 
 const DEFAULT_REFERENCE_LINK =
   "https://docs.google.com/spreadsheets/d/1bENY4-5AG9hrgaDKqyNpTwKT02i58wGva6tVRn-hhbE/gviz/tq?tqx=out:html&sheet=Key";
@@ -30,10 +31,10 @@ function inferLevel(assignment = "") {
 }
 
 export default function MarkingPage() {
+  const { success, error } = useToast();
   const [roster, setRoster] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
 
   const [query, setQuery] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState("");
@@ -52,7 +53,6 @@ export default function MarkingPage() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      setMessage("");
       try {
         const [rosterRows, submissionRows] = await Promise.all([loadRoster(), loadSubmissions()]);
         setRoster(rosterRows);
@@ -61,7 +61,7 @@ export default function MarkingPage() {
         const firstReference = referenceEntries?.[0]?.assignment || "";
         setReferenceAssignment(firstReference);
       } catch (err) {
-        setMessage(`❌ ${err?.message || "Failed to load marking data"}`);
+        error(err?.message || "Failed to load marking data");
       } finally {
         setLoading(false);
       }
@@ -106,15 +106,15 @@ export default function MarkingPage() {
 
   const handleSave = async () => {
     if (!selectedStudent) {
-      setMessage("❌ Pick a student before saving.");
+      error("Pick a student before saving.");
       return;
     }
     if (!referenceEntry) {
-      setMessage("❌ Pick a reference answer before saving.");
+      error("Pick a reference answer before saving.");
       return;
     }
     if (!feedback.trim()) {
-      setMessage("❌ Feedback is required.");
+      error("Feedback is required.");
       return;
     }
 
@@ -128,9 +128,9 @@ export default function MarkingPage() {
         level: selectedStudent.level || referenceEntry.level || inferLevel(referenceEntry.assignment),
         link: referenceEntry.answer_url || DEFAULT_REFERENCE_LINK,
       });
-      setMessage(`✅ Saved score for ${row.name} (${row.assignment}).`);
+      success(`Saved score for ${row.name} (${row.assignment}).`);
     } catch (err) {
-      setMessage(`❌ ${err?.message || "Failed to save score"}`);
+      error(err?.message || "Failed to save score");
     }
   };
 
@@ -142,7 +142,6 @@ export default function MarkingPage() {
       </p>
 
       {loading && <p>Loading roster and submissions...</p>}
-      {message && <p style={{ margin: 0 }}>{message}</p>}
 
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
         <h3>1) Pick a student</h3>
@@ -212,7 +211,13 @@ export default function MarkingPage() {
           </label>
           <label>
             Feedback
-            <textarea value={feedback} onChange={(e) => setFeedback(e.target.value)} rows={5} placeholder="Write student feedback..." />
+            <textarea
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+              rows={8}
+              style={{ fontSize: "1rem", lineHeight: 1.6, minHeight: 180 }}
+              placeholder="Write clear, actionable feedback for the student..."
+            />
           </label>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={() => { setScore(0); setFeedback(""); }}>Reset</button>
