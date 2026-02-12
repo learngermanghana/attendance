@@ -220,6 +220,37 @@ const DEFAULT_SCORES_WEBHOOK_URL = "";
 const SCORES_WEBHOOK_URL = import.meta.env.VITE_SCORES_WEBHOOK_URL || DEFAULT_SCORES_WEBHOOK_URL;
 const SAVE_SCORES_TO_FIRESTORE = String(import.meta.env.VITE_ENABLE_SCORE_FIRESTORE || "false").toLowerCase() === "true";
 
+function isLikelyNetworkError(error) {
+  return error instanceof TypeError || /networkerror|failed to fetch/i.test(String(error?.message || ""));
+}
+
+async function postScoreToWebhook(payload) {
+  const res = await fetch(SCORES_WEBHOOK_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || "Failed to write score to Google Sheets webhook");
+  }
+
+  const responseBody = await res.json().catch(() => ({}));
+  if (responseBody?.ok === false) {
+    throw new Error(responseBody?.error || "Validation failed while saving to sheet");
+  }
+}
+
+async function postScoreToWebhookNoCors(payload) {
+  await fetch(SCORES_WEBHOOK_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "text/plain;charset=UTF-8" },
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function saveScoreRow({ studentCode, name, assignment, score, comments, level, link }) {
   const payload = {
     studentcode: studentCode,
@@ -233,20 +264,14 @@ export async function saveScoreRow({ studentCode, name, assignment, score, comme
   };
 
   if (SCORES_WEBHOOK_URL) {
-    const res = await fetch(SCORES_WEBHOOK_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    try {
+      await postScoreToWebhook(payload);
+    } catch (error) {
+      if (!isLikelyNetworkError(error)) {
+        throw error;
+      }
 
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(body || "Failed to write score to Google Sheets webhook");
-    }
-
-    const responseBody = await res.json().catch(() => ({}));
-    if (responseBody?.ok === false) {
-      throw new Error(responseBody?.error || "Validation failed while saving to sheet");
+      await postScoreToWebhookNoCors(payload);
     }
   }
 
