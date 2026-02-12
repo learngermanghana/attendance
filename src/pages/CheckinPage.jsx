@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { getClassSchedule } from "../data/classSchedules";
+import { useToast } from "../context/ToastContext.jsx";
 
 export default function CheckinPage() {
+  const { success, error } = useToast();
   const [sp] = useSearchParams();
   const classId = sp.get("classId") || sp.get("className") || "";
   const date = sp.get("date") || "";
@@ -28,7 +30,6 @@ export default function CheckinPage() {
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState("");
 
   const validationError = useMemo(() => {
     if (!email.trim()) return "Email is required.";
@@ -42,9 +43,8 @@ export default function CheckinPage() {
 
   const submit = async (e) => {
     e.preventDefault();
-    setMsg("");
     if (validationError) {
-      setMsg(`❌ ${validationError}`);
+      error(validationError);
       return;
     }
 
@@ -63,11 +63,11 @@ export default function CheckinPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || "Check-in failed");
-      setMsg("✅ Check-in successful. You are marked present.");
+      success("Check-in successful. You are marked present.");
       setEmail("");
       setPhoneNumber("");
     } catch (err) {
-      setMsg("❌ " + (err?.message || "Error"));
+      error(err?.message || "Check-in failed");
     } finally {
       setBusy(false);
     }
@@ -114,8 +114,6 @@ export default function CheckinPage() {
         {!canSubmit && classId && date && <div style={{ color: "#a00000", fontSize: 12 }}>{validationError}</div>}
 
         <button disabled={!canSubmit || busy}>{busy ? "Submitting..." : "Mark me present"}</button>
-
-        {msg && <div style={{ marginTop: 6 }}>{msg}</div>}
       </form>
     </div>
   );

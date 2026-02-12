@@ -40,17 +40,24 @@ h3 {
 
 input,
 select,
+textarea,
 button {
   font: inherit;
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   padding: 0.55rem 0.7rem;
   border-radius: 8px;
   border: 1px solid #c9d1e4;
   background: white;
+}
+
+textarea {
+  min-height: 120px;
+  resize: vertical;
 }
 
 button {
