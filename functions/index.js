@@ -59,6 +59,17 @@ function normalizePhone(value) {
   return String(value || "").replace(/\D+/g, "");
 }
 
+function candidatePhoneNumbers(value) {
+  const digits = normalizePhone(value);
+  if (!digits) return [];
+
+  const variants = new Set([digits]);
+  if (digits.startsWith("0") && digits.length > 1) variants.add(digits.slice(1));
+  if (!digits.startsWith("0")) variants.add(`0${digits}`);
+
+  return Array.from(variants);
+}
+
 function buildSecretCode({ classId, date, email, phone }) {
   const pinSalt = resolvePinSalt();
   if (!pinSalt) {
@@ -78,6 +89,22 @@ function resolveStudentPhone(student = {}) {
     student.contactNo ||
     ""
   );
+}
+
+function isStudentRoleAllowed(student = {}) {
+  const role = normalizeText(student.role);
+  return !role || role === "student";
+}
+
+function isStudentStatusAllowed(student = {}) {
+  const status = normalizeText(student.status);
+  if (!status) return true;
+
+  if (["inactive", "suspended", "blocked", "deleted", "archived"].includes(status)) {
+    return false;
+  }
+
+  return ["active", "paid", "enrolled"].includes(status) || true;
 }
 
 async function requireAuth(req) {
@@ -194,10 +221,27 @@ app.post("/checkin", async (req, res) => {
       return qs.empty ? null : qs.docs[0];
     }
 
+    async function findStudentByPhone(candidatePhone) {
+      const phoneFields = ["phone", "phoneNumber", "phone_number", "contactNumber", "contactNo"];
+      for (const field of phoneFields) {
+        const qs = await db.collection(STUDENTS_COLLECTION).where(field, "==", candidatePhone).limit(1).get();
+        if (!qs.empty) return qs.docs[0];
+      }
+      return null;
+    }
+
     let studentDoc = await findStudentByEmail(rawEmail);
     if (!studentDoc && normalizedEmail !== rawEmail) {
       studentDoc = await findStudentByEmail(normalizedEmail);
     }
+
+    if (!studentDoc) {
+      for (const phoneCandidate of candidatePhoneNumbers(phoneNumber)) {
+        studentDoc = await findStudentByPhone(phoneCandidate);
+        if (studentDoc) break;
+      }
+    }
+
     if (!studentDoc) return res.status(404).json({ error: "Student not found" });
 
     const st = studentDoc.data();
@@ -207,8 +251,8 @@ app.post("/checkin", async (req, res) => {
       return res.status(400).json({ error: "Email and phone number do not match student records" });
     }
 
-    if (String(st.role || "").toLowerCase() !== "student") return res.status(400).json({ error: "Not a student account" });
-    if (String(st.status || "").toLowerCase() !== "active") return res.status(400).json({ error: "Student not active" });
+    if (!isStudentRoleAllowed(st)) return res.status(400).json({ error: "Not a student account" });
+    if (!isStudentStatusAllowed(st)) return res.status(400).json({ error: "Student not active" });
 
     const studentClassId = resolveStudentClassId(st);
     if (studentClassId !== classId) return res.status(400).json({ error: "Student not in this class" });
