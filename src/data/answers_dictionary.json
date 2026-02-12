@@ -1,12 +1,171 @@
-[
-  {
-    "assignment": "A2 1.1 Small Talk",
-    "level": "A2",
-    "reference": "Reference key: polite greetings, short personal introductions, and simple follow-up questions."
+{
+  "A1 Greetings 0.1": {
+    "answers": {
+      "Answer1": "C) Guten Morgen",
+      "Answer2": "D) Guten Tag",
+      "Answer3": "B) Guten Abend",
+      "Answer4": "B) Gute Nacht",
+      "Answer5": "C) Guten Morgen",
+      "Answer6": "C) Wie geht es Ihnen",
+      "Answer7": "B) Auf Wiedersehen",
+      "Answer8": "A) Tschuss",
+      "Answer9": "C) Guten Abend",
+      "Answer10": "D) Gute Nacht"
+    },
+    "answer_url": "https://docs.google.com/spreadsheets/d/1AgS3Kb78KcvbJnZvZijM4-cBJ1PitCVnUwe19T4TMPQ/gviz/tq?tqx=out:html&sheet=Key",
+    "format": "objective"
   },
-  {
-    "assignment": "A2 1.2 Daily Routines",
-    "level": "A2",
-    "reference": "Reference key: present simple tense, time expressions, and cohesive sequencing of activities."
+  "A1 Alphabets 0.2": {
+    "answers": {
+      "Answer1": "C) 26",
+      "Answer2": "A) A, O, U, B",
+      "Answer3": "A) Eszett",
+      "Answer4": "A) K",
+      "Answer5": "A) A-Umlaut",
+      "Answer6": "A) A, O, U, B",
+      "Answer7": "B 4",
+      "Answer8": "Wasser",
+      "Answer9": "Kaffee",
+      "Answer10": "Blume",
+      "Answer11": "Schule",
+      "Answer12": "Tisch"
+    },
+    "answer_url": "https://docs.google.com/spreadsheets/d/1XJcdMuaivOh2JCnXi1b9E4l5qN4KldyDSRNHJgiHnBs/gviz/tq?tqx=out:html&sheet=Key",
+    "format": "objective"
+  },
+  "A1 Personal Pronouns 1.1": {
+    "answers": {
+      "Answer1": "C Anna",
+      "Answer2": "C München",
+      "Answer3": "A A, B, C, D, E, F, G",
+      "Answer4": "B Hamburg"
+    },
+    "answer_url": "https://docs.google.com/spreadsheets/d/1KCNaM0_sgbrPhYMm89iC8WRzSfQgz80qUO9EAoCpXuo/gviz/tq?tqx=out:html&sheet=Key",
+    "format": "objective"
+  },
+  "A1 Numbers 2": {
+    "answers": {
+      "Answer1": "A) sieben",
+      "Answer2": "B) Drei",
+      "Answer3": "B) Sechs",
+      "Answer4": "B) Neun",
+      "Answer5": "B) Sieben",
+      "Answer6": "C) Fünf",
+      "Answer7": "B) zweihundertzweiundzwanzig",
+      "Answer8": "A) fünfhundertneun",
+      "Answer9": "A) zweitausendvierzig",
+      "Answer10": "A) fünftausendfünfhundertneun",
+      "Answer11": "16 – sechzehn",
+      "Answer12": "98 – achtundneunzig",
+      "Answer13": "555 – fünfhundertfünfundfünfzig",
+      "Answer14": "1020 – tausendzwanzig",
+      "Answer15": "8553 – achttausendfünfhundertdreiundfünfzig"
+    },
+    "answer_url": "https://docs.google.com/spreadsheets/d/1OVDkJimsz7wZwNa4s4QccST3TFvLkqzt720P_CWPdD8/gviz/tq?tqx=out:html&sheet=Key",
+    "format": "objective"
+  },
+  "A1 Pronouns 1.2": {
+    "answers": {
+      "Answer1": "Ich heiße Anna",
+      "Answer2": "Du heißt Max",
+      "Answer3": "Er heißt Peter",
+      "Answer4": "Wir kommen aus Italien",
+      "Answer5": "Ihr kommt aus Brasilien",
+      "Answer6": "Sie kommt/k kommen aus Russland",
+      "Answer7": "Ich wohne in Berlin",
+      "Answer8": "Du wohnst in Madrid",
+      "Answer9": "Sie wohnt in Wien",
+      "Answer10": "A) Anna",
+      "Answer11": "C) Aus Italien",
+      "Answer12": "D) In Berlin",
+      "Answer13": "B) Tom",
+      "Answer14": "A) In Berlin"
+    },
+    "answer_url": "https://docs.google.com/spreadsheets/d/1NuId_slE2LVNXvhfwQvdjYaqtBGa78aBNVETEw2RMmY/gviz/tq?tqx=out:html&sheet=Key",
+    "format": "objective"
+  },
+  "A1 Countries and Languages 4": {
+    "answers": {
+      "Answer1": "C) Neun",
+      "Answer2": "B) Polnisch",
+      "Answer3": "D) Niederländisch",
+      "Answer4": "A) Deutsch",
+      "Answer5": "C) Paris",
+      "Answer6": "B) Amsterdam",
+      "Answer7": "C) In der Schweiz",
+      "Answer8": "C) In Italien und Frankreich",
+      "Answer9": "C) Rom",
+      "Answer10": "B) Das Essen",
+      "Answer11": "B) Paris",
+      "Answer12": "A) Nach Spanien"
+    },
+    "answer_url": "https://docs.google.com/spreadsheets/d/1SiYvtaw-LwoeCff7yxlpWsfENMlIbQRqfuh3MPobPOE/gviz/tq?tqx=out:html&sheet=Key",
+    "format": "objective"
+  },
+  "A1 Objects and Colors 6": {
+    "answers": {
+      "Answer1": "Das Wohnzimmer – the living room",
+      "Answer2": "Die Küche – the kitchen",
+      "Answer3": "Das Schlafzimmer – the bedroom",
+      "Answer4": "Das Badezimmer – the bathroom",
+      "Answer5": "Der Balkon – the balcony",
+      "Answer6": "Der Flur – the hallway",
+      "Answer7": "Das Bett – the bed",
+      "Answer8": "Der Tisch – the table",
+      "Answer9": "Der Stuhl – the chair",
+      "Answer10": "Der Schrank – the wardrobe",
+      "Answer11": "B) Vier",
+      "Answer12": "A) Ein Sofa und ein Fernseher",
+      "Answer13": "B) Einen Herd, einen Kühlschrank und einen Tisch mit vier Stühlen",
+      "Answer14": "C) Ein großes Bett",
+      "Answer15": "D) Eine Dusche, eine Badewanne und ein Waschbecken",
+      "Answer16": "B) Klein und schön",
+      "Answer17": "C) Blumen und einen kleinen Tisch mit zwei Stühlen",
+      "Answer18": "B",
+      "Answer19": "B",
+      "Answer20": "B",
+      "Answer21": "C",
+      "Answer22": "D",
+      "Answer23": "B",
+      "Answer24": "C"
+    },
+    "answer_url": "https://docs.google.com/spreadsheets/d/1yXUzZdoz-wKnorDUbg-7e_SGMklgUXNxGakDlw5chgA/gviz/tq?tqx=out:html&sheet=Key",
+    "format": "objective"
+  },
+  "A1 German Cases 5": {
+    "answers": {
+      "Answer1": "Der Tisch – the table",
+      "Answer2": "Die Lampe – the lamp",
+      "Answer3": "Das Buch – the book",
+      "Answer4": "Der Stuhl – the chair",
+      "Answer5": "Die Katze – the cat",
+      "Answer6": "Das Auto – the car",
+      "Answer7": "Der Hund – the dog",
+      "Answer8": "Die Blume – the flower",
+      "Answer9": "Das Fenster – the window",
+      "Answer10": "Der Computer – the computer",
+      "Answer11": "Der Tisch ist groß",
+      "Answer12": "Die Lampe ist neu",
+      "Answer13": "Das Buch ist interessant",
+      "Answer14": "Der Stuhl ist bequem",
+      "Answer15": "Die Katze ist süß",
+      "Answer16": "Das Auto ist schnell",
+      "Answer17": "Der Hund ist freundlich",
+      "Answer18": "Die Blume ist schön",
+      "Answer19": "Das Fenster ist offen",
+      "Answer20": "Der Computer ist teuer",
+      "Answer21": "Ich sehe den Tisch",
+      "Answer22": "Sie kauft die Lampe",
+      "Answer23": "Er liest das Buch",
+      "Answer24": "Wir brauchen den Stuhl",
+      "Answer25": "Du fütterst die Katze",
+      "Answer26": "Ich fahre das Auto",
+      "Answer27": "Sie streichelt den Hund",
+      "Answer28": "Er pflückt die Blume",
+      "Answer29": "Wir putzen das Fenster",
+      "Answer30": "Sie benutzen den Computer"
+    },
+    "answer_url": "https://docs.google.com/spreadsheets/d/1d0dvYURPHf69KlJhToqOxn39V8GCcAsdrhrEAQ78phw/gviz/tq?tqx=out:html&sheet=Key",
+    "format": "objective"
   }
-]
+}

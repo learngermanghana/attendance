@@ -9,6 +9,26 @@ function normalize(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+function flattenAnswers(value, prefix = "") {
+  if (typeof value === "string") {
+    return [`${prefix}${value}`];
+  }
+
+  if (!value || typeof value !== "object") {
+    return [];
+  }
+
+  return Object.entries(value).flatMap(([key, nested]) => {
+    const nextPrefix = prefix ? `${prefix}${key}. ` : `${key}: `;
+    return flattenAnswers(nested, nextPrefix);
+  });
+}
+
+function inferLevel(assignment = "") {
+  const match = String(assignment).trim().match(/^([A-Z]\d+)/i);
+  return match ? match[1].toUpperCase() : "";
+}
+
 export default function MarkingPage() {
   const [roster, setRoster] = useState([]);
   const [submissions, setSubmissions] = useState([]);
@@ -21,6 +41,14 @@ export default function MarkingPage() {
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState("");
 
+  const referenceEntries = useMemo(() => {
+    if (Array.isArray(answersDictionary)) return answersDictionary;
+    return Object.entries(answersDictionary || {}).map(([assignment, data]) => ({
+      assignment,
+      ...data,
+    }));
+  }, []);
+
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -30,7 +58,7 @@ export default function MarkingPage() {
         setRoster(rosterRows);
         setSubmissions(submissionRows);
 
-        const firstReference = answersDictionary?.[0]?.assignment || "";
+        const firstReference = referenceEntries?.[0]?.assignment || "";
         setReferenceAssignment(firstReference);
       } catch (err) {
         setMessage(`❌ ${err?.message || "Failed to load marking data"}`);
@@ -38,7 +66,7 @@ export default function MarkingPage() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [referenceEntries]);
 
   const filteredStudents = useMemo(() => {
     if (!query.trim()) return roster;
@@ -51,8 +79,14 @@ export default function MarkingPage() {
   }, [roster, selectedStudentId]);
 
   const referenceEntry = useMemo(() => {
-    return answersDictionary.find((entry) => entry.assignment === referenceAssignment) || null;
-  }, [referenceAssignment]);
+    return referenceEntries.find((entry) => entry.assignment === referenceAssignment) || null;
+  }, [referenceAssignment, referenceEntries]);
+
+  const formattedReferenceAnswers = useMemo(() => {
+    if (referenceEntry?.reference) return referenceEntry.reference;
+    const lines = flattenAnswers(referenceEntry?.answers);
+    return lines.join("\n");
+  }, [referenceEntry]);
 
   const studentSubmissions = useMemo(() => {
     if (!selectedStudent) return [];
@@ -91,8 +125,8 @@ export default function MarkingPage() {
         assignment: referenceEntry.assignment,
         score: Number(score),
         comments: feedback.trim(),
-        level: selectedStudent.level || referenceEntry.level || "",
-        link: DEFAULT_REFERENCE_LINK,
+        level: selectedStudent.level || referenceEntry.level || inferLevel(referenceEntry.assignment),
+        link: referenceEntry.answer_url || DEFAULT_REFERENCE_LINK,
       });
       setMessage(`✅ Saved score for ${row.name} (${row.assignment}).`);
     } catch (err) {
@@ -134,13 +168,18 @@ export default function MarkingPage() {
         <h3>2) Pick a reference answer</h3>
         <div style={{ display: "grid", gap: 8 }}>
           <select value={referenceAssignment} onChange={(e) => setReferenceAssignment(e.target.value)}>
-            {answersDictionary.map((entry) => (
+            {referenceEntries.map((entry) => (
               <option key={entry.assignment} value={entry.assignment}>
                 {entry.assignment}
               </option>
             ))}
           </select>
-          <textarea value={referenceEntry?.reference || ""} readOnly rows={6} />
+          <textarea value={formattedReferenceAnswers} readOnly rows={10} />
+          {referenceEntry?.answer_url && (
+            <a href={referenceEntry.answer_url} target="_blank" rel="noreferrer">
+              Open answer source
+            </a>
+          )}
         </div>
       </section>
 
