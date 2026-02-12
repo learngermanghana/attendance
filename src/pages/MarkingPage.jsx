@@ -104,6 +104,22 @@ export default function MarkingPage() {
     return exact || studentSubmissions[0];
   }, [studentSubmissions, referenceAssignment]);
 
+  const combinedReferenceAndSubmission = useMemo(() => {
+    const referenceText = (formattedReferenceAnswers || "No reference answer available.").trim();
+    const submissionText = (selectedSubmission?.text || "No student submission available.").trim();
+
+    return `Reference Answer\n${referenceText}\n\nStudent Submission\n${submissionText}`;
+  }, [formattedReferenceAnswers, selectedSubmission]);
+
+  const handleCopyCombined = async () => {
+    try {
+      await navigator.clipboard.writeText(combinedReferenceAndSubmission);
+      success("Combined reference and submission copied.");
+    } catch {
+      error("Could not copy combined text. Please copy manually.");
+    }
+  };
+
   const handleSave = async () => {
     if (!selectedStudent) {
       error("Pick a student before saving.");
@@ -197,7 +213,20 @@ export default function MarkingPage() {
       </section>
 
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-        <h3>4) Enter score and feedback</h3>
+        <h3>4) Combined reference + student answer</h3>
+        <p style={{ marginTop: 0, fontSize: 13, opacity: 0.8 }}>
+          Use this combined block for quick copy/paste into external marking tools.
+        </p>
+        <div style={{ display: "grid", gap: 8 }}>
+          <textarea readOnly rows={12} value={combinedReferenceAndSubmission} />
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={handleCopyCombined}>Copy combined text</button>
+          </div>
+        </div>
+      </section>
+
+      <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
+        <h3>5) Enter score and feedback</h3>
         <div style={{ display: "grid", gap: 8 }}>
           <label>
             Score (0-100)
@@ -226,7 +255,7 @@ export default function MarkingPage() {
       </section>
 
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-        <h3>5) Save to Google Sheets (and optionally Firestore)</h3>
+        <h3>6) Save to Google Sheets (and optionally Firestore)</h3>
         <p style={{ marginTop: 0, fontSize: 13, opacity: 0.8 }}>
           Saves row headers: studentcode, name, assignment, score, comments, date, level, link.
         </p>
