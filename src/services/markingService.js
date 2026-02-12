@@ -1,5 +1,13 @@
 import { addDoc, collection, collectionGroup, getDocs } from "firebase/firestore";
 import { db } from "../firebase.js";
+import {
+  loadPublishedStudentRows,
+  readPublishedClassName,
+  readPublishedLevel,
+  readPublishedStatus,
+  readPublishedStudentCode,
+  readPublishedStudentName,
+} from "./publishedSheetService.js";
 
 const DEFAULT_ROSTER_SHEET_CSV_URL = import.meta.env.VITE_STUDENTS_SHEET_CSV_URL || "";
 const MARKING_ROSTER_CSV_URL = import.meta.env.VITE_MARKING_ROSTER_CSV_URL || DEFAULT_ROSTER_SHEET_CSV_URL;
@@ -101,12 +109,38 @@ async function loadCsvRows(url) {
 
 export async function loadRoster() {
   try {
-    if (!MARKING_ROSTER_CSV_URL) throw new Error("No roster sheet URL configured");
-    const rows = await loadCsvRows(MARKING_ROSTER_CSV_URL);
-    return toRosterRows(rows);
+    const publishedRows = await loadPublishedStudentRows();
+    const rosterFromPublishedSheet = publishedRows
+      .map((row) => {
+        const name = normalize(readPublishedStudentName(row) || findCol(row, ["studentname", "student_name", "fullname"]));
+        const studentCode = normalize(readPublishedStudentCode(row) || findCol(row, ["student_code", "uid", "code"]));
+        const level = normalize(readPublishedLevel(row) || readPublishedClassName(row) || findCol(row, ["class", "group"]));
+        const status = normalize(readPublishedStatus(row) || findCol(row, ["state"]));
+
+        return {
+          id: studentCode || `${name}-${level}`,
+          studentCode,
+          name,
+          level,
+          status: status || "Active",
+        };
+      })
+      .filter((row) => row.studentCode || row.name);
+
+    if (rosterFromPublishedSheet.length > 0) {
+      return rosterFromPublishedSheet;
+    }
+
+    throw new Error("Published student sheet has no rows");
   } catch {
-    const localRows = await loadCsvRows("/students.csv");
-    return toRosterRows(localRows);
+    try {
+      if (!MARKING_ROSTER_CSV_URL) throw new Error("No marking roster sheet URL configured");
+      const rows = await loadCsvRows(MARKING_ROSTER_CSV_URL);
+      return toRosterRows(rows);
+    } catch {
+      const localRows = await loadCsvRows("/students.csv");
+      return toRosterRows(localRows);
+    }
   }
 }
 
