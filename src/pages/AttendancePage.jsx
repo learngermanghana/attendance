@@ -59,6 +59,7 @@ export default function AttendancePage() {
   const sessionIds = useMemo(() => Object.keys(attendanceMap).sort((a, b) => Number(a) - Number(b)), [attendanceMap]);
 
   const selectedSession = attendanceMap[selectedSessionId] || { title: "", date: "", students: {} };
+  const checkinSessionDate = String(selectedSession.date || "").trim() || selectedSessionId;
 
   const studentRows = useMemo(() => {
     return Object.entries(selectedSession.students || {})
@@ -78,9 +79,9 @@ export default function AttendancePage() {
 
   const checkinUrl = useMemo(() => {
     const base = window.location.origin;
-    const qs = new URLSearchParams({ classId, date: selectedSessionId, lesson }).toString();
+    const qs = new URLSearchParams({ classId, date: checkinSessionDate, lesson }).toString();
     return `${base}/checkin?${qs}`;
-  }, [classId, selectedSessionId, lesson]);
+  }, [classId, checkinSessionDate, lesson]);
 
   const lessons = useMemo(() => {
     const schedule = getClassSchedule(classId);
@@ -161,7 +162,7 @@ export default function AttendancePage() {
 
     (async () => {
       try {
-        const checkins = await listSessionCheckins({ classId, date: selectedSessionId });
+        const checkins = await listSessionCheckins({ classId, date: checkinSessionDate });
         if (checkins.length === 0) return;
 
         setAttendanceMap((current) => {
@@ -185,7 +186,7 @@ export default function AttendancePage() {
         // Non-blocking: class page should still render if check-ins fail to load.
       }
     })();
-  }, [classId, selectedSessionId]);
+  }, [classId, selectedSessionId, checkinSessionDate]);
 
   const setStudentPresent = (studentCode, present) => {
     setAttendanceMap((prev) => ({
@@ -234,7 +235,7 @@ export default function AttendancePage() {
         },
         body: JSON.stringify({
           classId,
-          date: selectedSessionId,
+          date: checkinSessionDate,
           lesson,
           windowMinutes: 180,
           action: "open",
@@ -265,7 +266,7 @@ export default function AttendancePage() {
         },
         body: JSON.stringify({
           classId,
-          date: selectedSessionId,
+          date: checkinSessionDate,
           action: "close",
         }),
       });
@@ -308,6 +309,24 @@ export default function AttendancePage() {
         </label>
 
         <label>
+          Check-in date:{" "}
+          <input
+            type="date"
+            value={selectedSession.date || ""}
+            onChange={(e) => {
+              const nextDate = e.target.value;
+              setAttendanceMap((prev) => ({
+                ...prev,
+                [selectedSessionId]: {
+                  ...(prev[selectedSessionId] || {}),
+                  date: nextDate,
+                },
+              }));
+            }}
+          />
+        </label>
+
+        <label>
           Lesson:{" "}
           <select value={lesson} onChange={(e) => setLesson(e.target.value)}>
             <option value="">Select lesson</option>
@@ -326,6 +345,9 @@ export default function AttendancePage() {
 
       <div style={{ marginBottom: 12 }}>
         <b>Title:</b> {selectedSession.title || "-"}
+        <div style={{ marginTop: 4, fontSize: 13, opacity: 0.85 }}>
+          <b>Check-in date:</b> {checkinSessionDate}
+        </div>
       </div>
 
       <div style={{ border: "1px solid #ddd", borderRadius: 10, padding: 12, marginBottom: 14 }}>
