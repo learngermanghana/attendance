@@ -218,6 +218,9 @@ export async function loadSubmissions() {
 
 const DEFAULT_SCORES_WEBHOOK_URL = "";
 const SCORES_WEBHOOK_URL = import.meta.env.VITE_SCORES_WEBHOOK_URL || DEFAULT_SCORES_WEBHOOK_URL;
+const SCORES_WEBHOOK_TOKEN = String(import.meta.env.VITE_SCORES_WEBHOOK_TOKEN || "").trim();
+const SCORES_WEBHOOK_SHEET_NAME = String(import.meta.env.VITE_SCORES_WEBHOOK_SHEET_NAME || "").trim();
+const SCORES_WEBHOOK_SHEET_GID = String(import.meta.env.VITE_SCORES_WEBHOOK_SHEET_GID || "").trim();
 const SAVE_SCORES_TO_FIRESTORE = String(import.meta.env.VITE_ENABLE_SCORE_FIRESTORE || "false").toLowerCase() === "true";
 
 function isLikelyNetworkError(error) {
@@ -252,7 +255,7 @@ async function postScoreToWebhookNoCors(payload) {
 }
 
 export async function saveScoreRow({ studentCode, name, assignment, score, comments, level, link }) {
-  const payload = {
+  const row = {
     studentcode: studentCode,
     name,
     assignment,
@@ -263,24 +266,32 @@ export async function saveScoreRow({ studentCode, name, assignment, score, comme
     link: Number(score) < 60 ? "" : link,
   };
 
+  const webhookPayload = {
+    ...(SCORES_WEBHOOK_TOKEN ? { token: SCORES_WEBHOOK_TOKEN } : {}),
+    ...(SCORES_WEBHOOK_SHEET_NAME ? { sheet_name: SCORES_WEBHOOK_SHEET_NAME } : {}),
+    ...(SCORES_WEBHOOK_SHEET_GID ? { sheet_gid: SCORES_WEBHOOK_SHEET_GID } : {}),
+    row,
+    rows: [row],
+  };
+
   if (SCORES_WEBHOOK_URL) {
     try {
-      await postScoreToWebhook(payload);
+      await postScoreToWebhook(webhookPayload);
     } catch (error) {
       if (!isLikelyNetworkError(error)) {
         throw error;
       }
 
-      await postScoreToWebhookNoCors(payload);
+      await postScoreToWebhookNoCors(webhookPayload);
     }
   }
 
   if (SAVE_SCORES_TO_FIRESTORE) {
     await addDoc(collection(db, "scores"), {
-      ...payload,
+      ...row,
       createdAt: new Date().toISOString(),
     });
   }
 
-  return payload;
+  return row;
 }

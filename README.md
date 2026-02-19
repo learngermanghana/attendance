@@ -48,6 +48,9 @@ VITE_CHECKIN_API_URL=https://<region>-<project>.cloudfunctions.net/api/checkin
 VITE_STUDENTS_SHEET_CSV_URL=https://docs.google.com/spreadsheets/d/e/<published-sheet-id>/pub?output=csv
 VITE_MARKING_ROSTER_CSV_URL=https://docs.google.com/spreadsheets/d/<sheet-id>/gviz/tq?tqx=out:csv&sheet=Students
 VITE_SCORES_WEBHOOK_URL=https://script.google.com/macros/s/<deployment-id>/exec
+VITE_SCORES_WEBHOOK_TOKEN=<optional-token-configured-in-app-script>
+VITE_SCORES_WEBHOOK_SHEET_NAME=<optional-target-sheet-name>
+VITE_SCORES_WEBHOOK_SHEET_GID=<optional-target-sheet-gid>
 VITE_ENABLE_SCORE_FIRESTORE=false
 ```
 
@@ -110,3 +113,4 @@ The app includes a **Mark Work** page with a 5-stage marking workflow:
 5. Save to Google Sheets webhook, with optional Firestore mirror into `scores`.
 
 The target score row schema is: `studentcode, name, assignment, score, comments, date, level, link`.
+If your Apps Script expects auth/sheet selectors, configure `VITE_SCORES_WEBHOOK_TOKEN`, `VITE_SCORES_WEBHOOK_SHEET_NAME`, and/or `VITE_SCORES_WEBHOOK_SHEET_GID`.
