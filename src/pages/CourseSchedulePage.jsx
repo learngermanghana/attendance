@@ -203,7 +203,7 @@ export default function CourseSchedulePage() {
               popup.document.write(`<h1>Course Schedule (${level})</h1><p>Start date: ${exportsData.json.start_date}</p>`);
               popup.document.write("<ol>");
               scheduleRows.forEach((row) => {
-                popup.document.write(`<li><strong>${row.day}</strong> - ${row.week} - ${row.date} - ${row.topic}</li>`);
+                popup.document.write(`<li><strong>${row.day}</strong> - <code>${row.assignmentId}</code> - ${row.week} - ${row.date} - ${row.topic}</li>`);
               });
               popup.document.write("</ol></body></html>");
               popup.document.close();
@@ -221,6 +221,7 @@ export default function CourseSchedulePage() {
               <tr>
                 <th align="left">Week</th>
                 <th align="left">Day</th>
+                <th align="left">Assignment ID</th>
                 <th align="left">Date</th>
                 <th align="left">Topic</th>
               </tr>
@@ -230,6 +231,7 @@ export default function CourseSchedulePage() {
                 <tr key={`${row.day}-${row.dateIso}`}>
                   <td>{row.week}</td>
                   <td>{row.day}</td>
+                  <td><code>{row.assignmentId}</code></td>
                   <td>{row.date}</td>
                   <td>{row.topic}</td>
                 </tr>
