@@ -9,6 +9,7 @@ export default function CheckinPage() {
   const classId = sp.get("classId") || sp.get("className") || "";
   const date = sp.get("date") || "";
   const lesson = sp.get("lesson") || "";
+  const assignmentId = sp.get("assignmentId") || sp.get("assignment_id") || "";
 
   const scheduleInfo = useMemo(() => {
     const sessionIndex = Number.parseInt(String(date || ""), 10);
@@ -59,6 +60,7 @@ export default function CheckinPage() {
           email: email.trim(),
           phoneNumber: phoneNumber.trim(),
           lesson: lessonLabel,
+          assignmentId: assignmentId.trim(),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -86,6 +88,9 @@ export default function CheckinPage() {
         </div>
         <div>
           <b>Lesson:</b> {lessonLabel || "-"}
+        </div>
+        <div>
+          <b>Assignment ID:</b> {assignmentId || "-"}
         </div>
       </div>
 

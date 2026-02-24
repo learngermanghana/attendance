@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
 import { WEEKDAY_OPTIONS, courseLevels } from "../data/courseTemplates.js";
+import { buildAssignmentId } from "./assignmentId.js";
 
 const DEFAULT_WEEKDAYS = ["Monday", "Tuesday", "Wednesday"];
 
@@ -13,17 +14,6 @@ function normalizeWeekdays(weekdays) {
 
 function toIsoDate(value) {
   return dayjs(value).format("YYYY-MM-DD");
-}
-
-function getAssignmentNumber(topic, fallbackDayIndex) {
-  const match = String(topic || "").match(/(\d+(?:\.\d+)?)/);
-  return match?.[1] || String(fallbackDayIndex);
-}
-
-function getAssignmentId(level, topic, fallbackDayIndex) {
-  const safeLevel = String(level || "").trim().toUpperCase();
-  const assignmentNumber = getAssignmentNumber(topic, fallbackDayIndex);
-  return `${safeLevel}-${assignmentNumber}`;
 }
 
 export function getHolidayWindow(startDate, days = 120) {
@@ -63,7 +53,7 @@ export function generateCourseSchedule({
         const isHoliday = holidays.has(cursorIso);
 
         if (isPreferredDay && !isHoliday) {
-          const assignmentId = getAssignmentId(level, topic, dayIndex);
+          const assignmentId = buildAssignmentId(level, topic, dayIndex);
           rows.push({
             week: weekLabel,
             day: `Day ${dayIndex}`,
@@ -106,7 +96,7 @@ export function buildScheduleExports({ level, startDate, holidayDates, rows }) {
       total_sessions: cleanRows.length,
       holidays,
       sessions: cleanRows.map((row) => ({
-        assignment_id: row.assignmentId || getAssignmentId(level, row.topic, Number.parseInt(String(row.day || "").replace(/\D+/g, ""), 10) || 1),
+        assignment_id: row.assignmentId || buildAssignmentId(level, row.topic, Number.parseInt(String(row.day || "").replace(/\D+/g, ""), 10) || 1),
         week: row.week,
         day: row.day,
         date: row.date,

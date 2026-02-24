@@ -53,12 +53,13 @@ export default function ReportsPage() {
                 studentId: studentCode,
                 studentName: entry?.name || "",
                 status: entry?.present ? "present" : "absent",
+                assignment_id: session.assignment_id || session.assignmentId || "",
               }))
             : [];
         const mergedBase = baseRecords.length > 0 ? baseRecords : studentMapRecords;
 
         const byStudent = new Map(
-          baseRecords.map((r) => [r.studentId, { ...r, method: "manual", classId: session.classId, date: session.date, lesson: session.lesson || "" }])
+          baseRecords.map((r) => [r.studentId, { ...r, method: "manual", classId: session.classId, date: session.date, lesson: session.lesson || "", assignment_id: session.assignment_id || session.assignmentId || "" }])
         );
 
         const checkins = await listSessionCheckins({ classId: session.classId, date: session.date });
@@ -72,6 +73,7 @@ export default function ReportsPage() {
             classId: session.classId,
             date: session.date,
             lesson: c.lesson || session.lesson || "",
+            assignment_id: c.assignment_id || session.assignment_id || session.assignmentId || "",
           });
         }
 

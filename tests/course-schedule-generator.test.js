@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { buildScheduleExports, generateCourseSchedule } from "../src/utils/courseScheduleGenerator.js";
+import { buildAssignmentId } from "../src/utils/assignmentId.js";
 
 test("generateCourseSchedule assigns dates in curriculum order and skips holidays", () => {
   const rows = generateCourseSchedule({
@@ -53,4 +54,9 @@ test("buildScheduleExports serializes metadata and sessions", () => {
   assert.deepEqual(result.json.holidays, ["2026-02-12"]);
   assert.equal(result.json.sessions[0].assignment_id, "A1-1");
   assert.equal(result.json.sessions[0].topic, "Intro");
+});
+
+test("buildAssignmentId composes level and assignment number", () => {
+  assert.equal(buildAssignmentId("B1", "10.28. Klimafreundlich leben", 28), "B1-10.28");
+  assert.equal(buildAssignmentId("A2", "No number topic", 7), "A2-7");
 });

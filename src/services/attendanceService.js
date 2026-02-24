@@ -61,6 +61,7 @@ function normalizeSessionDoc(data = {}) {
   return {
     title: String(data.title || data.lesson || "").trim(),
     date: String(data.date || "").trim(),
+    assignmentId: String(data.assignmentId || data.assignment_id || "").trim(),
     students,
   };
 }
@@ -91,6 +92,7 @@ export async function saveAttendanceToFirestore(classId, attendanceMap) {
       title: String(session?.title || "").trim(),
       date: String(session?.date || "").trim(),
       students: session?.students || {},
+      assignment_id: String(session?.assignmentId || session?.assignment_id || "").trim(),
       updatedAt: serverTimestamp(),
     };
 
