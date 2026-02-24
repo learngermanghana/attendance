@@ -7,6 +7,7 @@ import ReportsPage from "./pages/ReportsPage";
 import CheckinPage from "./pages/CheckinPage";
 import CourseSchedulePage from "./pages/CourseSchedulePage";
 import MarkingPage from "./pages/MarkingPage";
+import TutorMarkingPage from "./pages/TutorMarkingPage";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
 import "./App.css";
@@ -25,6 +26,7 @@ function TopBar() {
           <Link to="/reports">Reports</Link>
           <Link to="/course-schedule">Course Schedule</Link>
           <Link to="/marking">Mark Work</Link>
+          <Link to="/campus/tutor-marking">Tutor Marking</Link>
         </div>
 
         <div className="topbar-user">
@@ -103,6 +105,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <MarkingPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/campus/tutor-marking"
+            element={
+              <ProtectedRoute>
+                <TutorMarkingPage />
               </ProtectedRoute>
             }
           />
