@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { buildScheduleExports, generateCourseSchedule } from "../src/utils/courseScheduleGenerator.js";
+import { buildAssignmentId } from "../src/utils/assignmentId.js";
 
 test("generateCourseSchedule assigns dates in curriculum order and skips holidays", () => {
   const rows = generateCourseSchedule({
@@ -16,6 +17,8 @@ test("generateCourseSchedule assigns dates in curriculum order and skips holiday
   assert.equal(rows[1].dateIso, "2026-02-16");
   assert.equal(rows[0].day, "Day 1");
   assert.equal(rows[1].day, "Day 2");
+  assert.equal(rows[0].assignmentId, "A1-0.1");
+  assert.equal(rows[1].assignmentId, "A1-0.2");
 });
 
 test("generateCourseSchedule advanced mode falls back to default weekdays when a week has no selected days", () => {
@@ -35,7 +38,7 @@ test("generateCourseSchedule advanced mode falls back to default weekdays when a
 
 test("buildScheduleExports serializes metadata and sessions", () => {
   const rows = [
-    { week: "Week One", day: "Day 1", date: "Monday, 09 February 2026", dateIso: "2026-02-09", topic: "Intro" },
+    { week: "Week One", day: "Day 1", assignmentId: "A1-1", date: "Monday, 09 February 2026", dateIso: "2026-02-09", topic: "Intro" },
   ];
 
   const result = buildScheduleExports({
@@ -49,5 +52,11 @@ test("buildScheduleExports serializes metadata and sessions", () => {
   assert.equal(result.json.course_level, "A1");
   assert.equal(result.json.total_sessions, 1);
   assert.deepEqual(result.json.holidays, ["2026-02-12"]);
+  assert.equal(result.json.sessions[0].assignment_id, "A1-1");
   assert.equal(result.json.sessions[0].topic, "Intro");
+});
+
+test("buildAssignmentId composes level and assignment number", () => {
+  assert.equal(buildAssignmentId("B1", "10.28. Klimafreundlich leben", 28), "B1-10.28");
+  assert.equal(buildAssignmentId("A2", "No number topic", 7), "A2-7");
 });

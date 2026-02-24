@@ -11,6 +11,8 @@ import {
   saveAttendanceToFirestore,
 } from "../services/attendanceService";
 import { useToast } from "../context/ToastContext.jsx";
+import { buildAssignmentId } from "../utils/assignmentId.js";
+import { resolveScheduleKey } from "../data/classSchedules";
 
 function normalizeScheduleDate(raw) {
   if (!raw) return "";
@@ -21,12 +23,15 @@ function normalizeScheduleDate(raw) {
 function buildScheduleMap(classId) {
   const schedule = getClassSchedule(classId);
   const map = {};
+  const scheduleLevel = resolveScheduleKey(classId);
 
   schedule.forEach((item, index) => {
     const sessionId = String(index);
+    const assignmentId = String(item.assignmentId || item.assignment_id || buildAssignmentId(scheduleLevel, item.topic, index + 1));
     map[sessionId] = {
       title: `${item.week}: ${item.topic}`,
       date: normalizeScheduleDate(item.date),
+      assignmentId,
       students: {},
     };
   });
@@ -58,7 +63,7 @@ export default function AttendancePage() {
 
   const sessionIds = useMemo(() => Object.keys(attendanceMap).sort((a, b) => Number(a) - Number(b)), [attendanceMap]);
 
-  const selectedSession = attendanceMap[selectedSessionId] || { title: "", date: "", students: {} };
+  const selectedSession = attendanceMap[selectedSessionId] || { title: "", date: "", assignmentId: "", students: {} };
   const checkinSessionDate = String(selectedSession.date || "").trim() || selectedSessionId;
 
   const studentRows = useMemo(() => {
@@ -79,16 +84,25 @@ export default function AttendancePage() {
 
   const checkinUrl = useMemo(() => {
     const base = window.location.origin;
-    const qs = new URLSearchParams({ classId, date: checkinSessionDate, lesson }).toString();
+    const qs = new URLSearchParams({
+      classId,
+      date: checkinSessionDate,
+      lesson,
+      assignmentId: String(selectedSession.assignmentId || ""),
+    }).toString();
     return `${base}/checkin?${qs}`;
-  }, [classId, checkinSessionDate, lesson]);
+  }, [classId, checkinSessionDate, lesson, selectedSession.assignmentId]);
 
   const lessons = useMemo(() => {
     const schedule = getClassSchedule(classId);
-    return schedule.map((item) => ({
-      value: `${item.day} - ${item.topic}`,
-      label: `${item.day}: ${item.topic}`,
-    }));
+    const scheduleLevel = resolveScheduleKey(classId);
+    return schedule.map((item, index) => {
+      const assignmentId = String(item.assignmentId || item.assignment_id || buildAssignmentId(scheduleLevel, item.topic, index + 1));
+      return {
+        value: `${item.day} - ${item.topic}`,
+        label: `${item.day}: ${item.topic}${assignmentId ? ` (${assignmentId})` : ""}`,
+      };
+    });
   }, [classId]);
 
   useEffect(() => {
@@ -125,6 +139,7 @@ export default function AttendancePage() {
           nextAttendanceMap["0"] = {
             title: "Session 1",
             date: dayjs().format("YYYY-MM-DD"),
+            assignmentId: "",
             students: {},
           };
         }
@@ -137,6 +152,7 @@ export default function AttendancePage() {
             ...existingSession,
             title: String(existingSession.title || "").trim() || scheduleSession.title || `Session ${Number(sessionId) + 1}`,
             date: String(existingSession.date || "").trim() || scheduleSession.date || dayjs().format("YYYY-MM-DD"),
+            assignmentId: String(existingSession.assignmentId || existingSession.assignment_id || scheduleSession.assignmentId || ""),
             students: {
               ...studentTemplate,
               ...baseStudents,
@@ -237,6 +253,7 @@ export default function AttendancePage() {
           classId,
           date: checkinSessionDate,
           lesson,
+          assignmentId: String(selectedSession.assignmentId || ""),
           windowMinutes: 180,
           action: "open",
         }),
@@ -347,6 +364,9 @@ export default function AttendancePage() {
         <b>Title:</b> {selectedSession.title || "-"}
         <div style={{ marginTop: 4, fontSize: 13, opacity: 0.85 }}>
           <b>Check-in date:</b> {checkinSessionDate}
+        </div>
+        <div style={{ marginTop: 4, fontSize: 13, opacity: 0.85 }}>
+          <b>Assignment ID:</b> {selectedSession.assignmentId || "-"}
         </div>
       </div>
 

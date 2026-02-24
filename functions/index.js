@@ -138,7 +138,7 @@ app.post("/openSession", async (req, res) => {
 
     const body = req.body || {};
     const classId = normalizeClassId(body.classId || body.className);
-    const { date, action, windowMinutes, lesson } = body;
+    const { date, action, windowMinutes, lesson, assignmentId } = body;
 
     if (!classId || !date) {
       return res.status(400).json({ error: "classId and date are required" });
@@ -169,6 +169,7 @@ app.post("/openSession", async (req, res) => {
       classId,
       date,
       lesson: String(lesson || "").trim(),
+      assignment_id: String(assignmentId || "").trim(),
       opened: true,
       openFrom: now,
       openTo,
@@ -192,7 +193,7 @@ app.post("/checkin", async (req, res) => {
   try {
     const body = req.body || {};
     const classId = normalizeClassId(body.classId || body.className);
-    const { date, email, phoneNumber, lesson } = body;
+    const { date, email, phoneNumber, lesson, assignmentId } = body;
 
     if (!classId || !date || !email || !phoneNumber) {
       return res.status(400).json({ error: "classId, date, email, phoneNumber are required" });
@@ -272,6 +273,7 @@ app.post("/checkin", async (req, res) => {
       classId,
       date,
       lesson: String(lesson || session.lesson || "").trim(),
+      assignment_id: String(assignmentId || session.assignment_id || "").trim(),
       status: "present",
       method: "qr",
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
