@@ -19,6 +19,10 @@ function sessionRefFor(classId, sessionId) {
   return doc(collection(db, "attendance", normalizeClassId(classId), "sessions"), String(sessionId));
 }
 
+function looksLikeIsoDate(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(value || "").trim());
+}
+
 function normalizeStudentEntry(studentCode, value) {
   if (typeof value === "boolean") {
     return {
@@ -87,16 +91,27 @@ export async function saveAttendanceToFirestore(classId, attendanceMap) {
   }
 
   const writes = Object.entries(attendanceMap).map(async ([sessionId, session]) => {
+    const sessionDate = String(session?.date || "").trim();
     const payload = {
       classId: safeClassId,
       title: String(session?.title || "").trim(),
-      date: String(session?.date || "").trim(),
+      date: sessionDate,
       students: session?.students || {},
       assignment_id: String(session?.assignmentId || session?.assignment_id || "").trim(),
       updatedAt: serverTimestamp(),
     };
 
-    const ref = sessionRefFor(safeClassId, sessionId);
+    const indexRef = sessionRefFor(safeClassId, sessionId);
+    let ref = indexRef;
+
+    if (looksLikeIsoDate(sessionDate)) {
+      const dateRef = sessionRefFor(safeClassId, sessionDate);
+      const dateSnap = await getDoc(dateRef);
+      if (dateSnap.exists()) {
+        ref = dateRef;
+      }
+    }
+
     const snap = await getDoc(ref);
     if (!snap.exists()) {
       payload.createdAt = serverTimestamp();

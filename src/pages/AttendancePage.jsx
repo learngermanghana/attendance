@@ -47,6 +47,38 @@ function byStudentName(a, b) {
   return String(a?.name || "").localeCompare(String(b?.name || ""));
 }
 
+function mergeStoredAttendanceWithSchedule(scheduleAttendanceMap, storedAttendance) {
+  const merged = { ...scheduleAttendanceMap };
+  const scheduleIdsByDate = {};
+
+  for (const [sessionId, session] of Object.entries(scheduleAttendanceMap)) {
+    const date = String(session?.date || "").trim();
+    if (!date) continue;
+    if (!scheduleIdsByDate[date]) scheduleIdsByDate[date] = [];
+    scheduleIdsByDate[date].push(sessionId);
+  }
+
+  for (const [storedId, storedSession] of Object.entries(storedAttendance || {})) {
+    const storedDate = String(storedSession?.date || "").trim();
+    const dateCandidates = [storedDate, String(storedId || "").trim()].filter(Boolean);
+    const matchedSessionId = dateCandidates
+      .map((candidate) => scheduleIdsByDate[candidate] || [])
+      .find((matches) => matches.length === 1)?.[0];
+
+    const targetSessionId = matchedSessionId || storedId;
+    merged[targetSessionId] = {
+      ...(merged[targetSessionId] || {}),
+      ...storedSession,
+      students: {
+        ...((merged[targetSessionId] || {}).students || {}),
+        ...(storedSession?.students || {}),
+      },
+    };
+  }
+
+  return merged;
+}
+
 export default function AttendancePage() {
   const { classId: routeClassId } = useParams();
   const classId = decodeURIComponent(routeClassId || "");
@@ -133,7 +165,7 @@ export default function AttendancePage() {
         }
 
         const scheduleAttendanceMap = buildScheduleMap(classId);
-        const nextAttendanceMap = { ...scheduleAttendanceMap, ...storedAttendance };
+        const nextAttendanceMap = mergeStoredAttendanceWithSchedule(scheduleAttendanceMap, storedAttendance);
 
         if (Object.keys(nextAttendanceMap).length === 0) {
           nextAttendanceMap["0"] = {
