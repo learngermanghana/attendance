@@ -216,11 +216,12 @@ export async function loadSubmissions() {
   });
 }
 
-const DEFAULT_SCORES_WEBHOOK_URL = "";
+const DEFAULT_SCORES_WEBHOOK_URL =
+  "https://script.google.com/macros/s/AKfycbxYrtdvehwxI56zBHDv_1ngJMzNGkPEefT9lgp3KlFczRlSTStcwhQPDzc02jXVjdvJJQ/exec";
 const SCORES_WEBHOOK_URL = import.meta.env.VITE_SCORES_WEBHOOK_URL || DEFAULT_SCORES_WEBHOOK_URL;
-const SCORES_WEBHOOK_TOKEN = String(import.meta.env.VITE_SCORES_WEBHOOK_TOKEN || "").trim();
+const SCORES_WEBHOOK_TOKEN = String(import.meta.env.VITE_SCORES_WEBHOOK_TOKEN || "Xenomexpress7727/").trim();
 const SCORES_WEBHOOK_SHEET_NAME = String(import.meta.env.VITE_SCORES_WEBHOOK_SHEET_NAME || "").trim();
-const SCORES_WEBHOOK_SHEET_GID = String(import.meta.env.VITE_SCORES_WEBHOOK_SHEET_GID || "").trim();
+const SCORES_WEBHOOK_SHEET_GID = String(import.meta.env.VITE_SCORES_WEBHOOK_SHEET_GID || "2121051612").trim();
 const SAVE_SCORES_TO_FIRESTORE = String(import.meta.env.VITE_ENABLE_SCORE_FIRESTORE || "false").toLowerCase() === "true";
 
 function isLikelyNetworkError(error) {
