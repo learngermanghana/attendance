@@ -41,6 +41,7 @@ export default function MarkingPage() {
   const [referenceAssignment, setReferenceAssignment] = useState("");
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState("");
+  const [saveReceipt, setSaveReceipt] = useState(null);
 
   const referenceEntries = useMemo(() => {
     if (Array.isArray(answersDictionary)) return answersDictionary;
@@ -135,7 +136,7 @@ export default function MarkingPage() {
     }
 
     try {
-      const row = await saveScoreRow({
+      const receipt = await saveScoreRow({
         studentCode: selectedStudent.studentCode,
         name: selectedStudent.name,
         assignment: referenceEntry.assignment,
@@ -144,8 +145,22 @@ export default function MarkingPage() {
         level: selectedStudent.level || referenceEntry.level || inferLevel(referenceEntry.assignment),
         link: referenceEntry.answer_url || DEFAULT_REFERENCE_LINK,
       });
-      success(`Saved score for ${row.name} (${row.assignment}).`);
+      setSaveReceipt(receipt);
+
+      const successfulTargets = [
+        receipt.sheet.success ? "Google Sheets" : null,
+        receipt.firestore.success ? "Firestore" : null,
+      ].filter(Boolean);
+
+      const targetMessage = successfulTargets.length
+        ? `Saved to ${successfulTargets.join(" and ")}.`
+        : "Save completed with warnings.";
+
+      success(`Saved score for ${receipt.row.name} (${receipt.row.assignment}). ${targetMessage}`);
     } catch (err) {
+      if (err?.receipt) {
+        setSaveReceipt(err.receipt);
+      }
       error(err?.message || "Failed to save score");
     }
   };
@@ -260,6 +275,21 @@ export default function MarkingPage() {
           Saves row headers: studentcode, name, assignment, score, comments, date, level, link.
         </p>
         <button onClick={handleSave} disabled={loading}>Save score</button>
+        {saveReceipt && (
+          <div style={{ marginTop: 12, border: "1px solid #ddd", borderRadius: 8, padding: 10, background: "#fafafa", display: "grid", gap: 8 }}>
+            <div style={{ fontSize: 13 }}>
+              <b>Save receipt:</b> {saveReceipt.row.name} · {saveReceipt.row.assignment}
+            </div>
+            <div style={{ fontSize: 13 }}>
+              Google Sheets: <b>{saveReceipt.sheet.success ? "Success" : "Failed"}</b>
+              <div style={{ opacity: 0.85 }}>{saveReceipt.sheet.message}</div>
+            </div>
+            <div style={{ fontSize: 13 }}>
+              Firestore mirror: <b>{saveReceipt.firestore.success ? "Success" : "Failed"}</b>
+              <div style={{ opacity: 0.85 }}>{saveReceipt.firestore.message}</div>
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );
