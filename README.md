@@ -60,6 +60,22 @@ VITE_ENABLE_SCORE_FIRESTORE=false
 npm run dev
 ```
 
+
+## Firestore Indexes
+
+Firestore creates single-field indexes automatically, but **composite indexes must be defined and deployed**.
+
+This repo is now configured so Firebase reads `firestore.indexes.json` from `firebase.json`.
+
+Create/update indexes automatically in your project by deploying them:
+
+```bash
+firebase deploy --only firestore:indexes
+```
+
+Tip: when a query needs a new composite index, Firestore returns an error with a direct "Create index" link.
+Use that link once, then run `firebase firestore:indexes > firestore.indexes.json` (or copy from console) to keep the file in sync.
+
 ## Functions Setup
 
 1. Install dependencies:
