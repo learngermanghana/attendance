@@ -236,15 +236,81 @@ Use quick templates for common messages:
 
 ### Set up the announcement sheet (auto-send broadcasts)
 
-1. Create a Google Sheet with row-1 headers:
+Use this once so clicking **Save broadcast** in the Communication page writes directly into Google Sheets.
+
+1. **Create a Google Sheet** for announcements.
+2. In row 1, add exact headers:
 
    ```
    announcement,class,date,link,topic,email,attach_certificate,cert_level
    ```
 
-2. Reuse the same Apps Script deployment used for marking (or a separate one), and append rows from `body.row` / `body.rows`.
+3. Open **Extensions → Apps Script** and paste this web-app handler:
 
-3. Add env values:
+   ```javascript
+   function doPost(e) {
+     try {
+       const body = JSON.parse(e.postData.contents || "{}");
+       const token = "REPLACE_WITH_OPTIONAL_SHARED_TOKEN"; // Set "" to disable token check.
+
+       if (token && body.token !== token) {
+         return ContentService.createTextOutput(
+           JSON.stringify({ ok: false, error: "Unauthorized" })
+         ).setMimeType(ContentService.MimeType.JSON);
+       }
+
+       const ss = SpreadsheetApp.getActiveSpreadsheet();
+       const sheet = body.sheet_gid
+         ? ss.getSheets().find((s) => String(s.getSheetId()) === String(body.sheet_gid))
+         : (body.sheet_name ? ss.getSheetByName(body.sheet_name) : ss.getActiveSheet());
+
+       if (!sheet) {
+         return ContentService.createTextOutput(
+           JSON.stringify({ ok: false, error: "Target sheet not found" })
+         ).setMimeType(ContentService.MimeType.JSON);
+       }
+
+       const rows = Array.isArray(body.rows)
+         ? body.rows
+         : (body.row ? [body.row] : []);
+
+       if (!rows.length) {
+         return ContentService.createTextOutput(
+           JSON.stringify({ ok: false, error: "No row payload" })
+         ).setMimeType(ContentService.MimeType.JSON);
+       }
+
+       rows.forEach((r) => {
+         sheet.appendRow([
+           r.announcement || "",
+           r.class || "",
+           r.date || new Date().toISOString().slice(0, 10),
+           r.link || "",
+           r.topic || "",
+           r.email || "",
+           r.attach_certificate || "FALSE",
+           r.cert_level || "",
+         ]);
+       });
+
+       return ContentService.createTextOutput(
+         JSON.stringify({ ok: true, count: rows.length })
+       ).setMimeType(ContentService.MimeType.JSON);
+     } catch (err) {
+       return ContentService.createTextOutput(
+         JSON.stringify({ ok: false, error: String(err) })
+       ).setMimeType(ContentService.MimeType.JSON);
+     }
+   }
+   ```
+
+4. **Deploy** the script as a Web App:
+   - Deploy → New deployment → Type: Web app
+   - Execute as: **Me**
+   - Who has access: **Anyone** (or anyone in your domain)
+   - Copy the `/exec` URL.
+
+5. Add/update frontend env values:
 
    ```bash
    VITE_ANNOUNCEMENT_WEBHOOK_URL=https://script.google.com/macros/s/<deployment-id>/exec
@@ -254,5 +320,4 @@ Use quick templates for common messages:
    VITE_ANNOUNCEMENT_WEBHOOK_SHEET_GID=123456789
    ```
 
-4. Restart frontend and open **Communication** to send broadcasts.
-
+6. Restart frontend and open **Communication** to send broadcasts.
