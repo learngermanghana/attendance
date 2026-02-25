@@ -52,6 +52,11 @@ VITE_SCORES_WEBHOOK_TOKEN=<optional-token-configured-in-app-script>
 VITE_SCORES_WEBHOOK_SHEET_NAME=<optional-target-sheet-name>
 VITE_SCORES_WEBHOOK_SHEET_GID=<optional-target-sheet-gid>
 VITE_ENABLE_SCORE_FIRESTORE=false
+VITE_ANNOUNCEMENT_WEBHOOK_URL=https://script.google.com/macros/s/<deployment-id>/exec
+VITE_ANNOUNCEMENT_WEBHOOK_TOKEN=<optional-token-configured-in-app-script>
+VITE_ANNOUNCEMENT_WEBHOOK_SHEET_NAME=<optional-target-sheet-name>
+VITE_ANNOUNCEMENT_WEBHOOK_SHEET_GID=<optional-target-sheet-gid>
+VITE_ENABLE_ANNOUNCEMENT_FIRESTORE=false
 ```
 
 3. Run locally:
@@ -104,15 +109,7 @@ firebase deploy --only functions
 2. Teacher opens check-in to generate a QR URL.
 3. Student scans QR (`/checkin?classId=...&date=...`) and submits email + phone number.
 4. Function validates session window, student record match, and class membership, then writes check-in with an auto-generated secret code.
-5. Teacher can save manual attendance records and run reports with CSV export.
-
-## Reports
-
-Reports page supports:
-- Filter by class id and date range.
-- Status filter (present/absent/late/excused).
-- Aggregate metrics.
-- CSV export of filtered rows.
+5. Teacher can save manual attendance records, mark student work, and send broadcast announcements to Google Sheets.
 
 ## Notes
 
@@ -224,3 +221,38 @@ Use this once so clicking **Save score** in the Marking page writes directly int
 - If save shows success but row is missing, verify the deployed Apps Script version and sheet selector (`sheet_name`/`sheet_gid`).
 - If you get unauthorized/validation errors, confirm `VITE_SCORES_WEBHOOK_TOKEN` matches the token in Apps Script.
 - If your browser blocks CORS for script responses, the app falls back to a `no-cors` request, so check the target sheet directly.
+
+## Communication Broadcasts
+
+The app includes a **Communication** page for tutor broadcasts that writes directly into an announcement Google Sheet.
+
+The target row schema is:
+`announcement, class, date, link, topic, email, attach_certificate, cert_level`.
+
+Use quick templates for common messages:
+- Class about to start
+- Class cancellation
+- Course ended / transcript or certificate notice
+
+### Set up the announcement sheet (auto-send broadcasts)
+
+1. Create a Google Sheet with row-1 headers:
+
+   ```
+   announcement,class,date,link,topic,email,attach_certificate,cert_level
+   ```
+
+2. Reuse the same Apps Script deployment used for marking (or a separate one), and append rows from `body.row` / `body.rows`.
+
+3. Add env values:
+
+   ```bash
+   VITE_ANNOUNCEMENT_WEBHOOK_URL=https://script.google.com/macros/s/<deployment-id>/exec
+   VITE_ANNOUNCEMENT_WEBHOOK_TOKEN=REPLACE_WITH_OPTIONAL_SHARED_TOKEN
+   VITE_ANNOUNCEMENT_WEBHOOK_SHEET_NAME=Announcements
+   # or
+   VITE_ANNOUNCEMENT_WEBHOOK_SHEET_GID=123456789
+   ```
+
+4. Restart frontend and open **Communication** to send broadcasts.
+

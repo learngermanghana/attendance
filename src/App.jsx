@@ -3,11 +3,11 @@ import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import AttendancePage from "./pages/AttendancePage";
-import ReportsPage from "./pages/ReportsPage";
 import CheckinPage from "./pages/CheckinPage";
 import CourseSchedulePage from "./pages/CourseSchedulePage";
 import MarkingPage from "./pages/MarkingPage";
 import TutorMarkingPage from "./pages/TutorMarkingPage";
+import CommunicationPage from "./pages/CommunicationPage";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
 import "./App.css";
@@ -23,10 +23,10 @@ function TopBar() {
       <div className="topbar-inner">
         <div className="topbar-links">
           <Link to="/">Dashboard</Link>
-          <Link to="/reports">Reports</Link>
           <Link to="/course-schedule">Course Schedule</Link>
           <Link to="/marking">Mark Work</Link>
           <Link to="/campus/tutor-marking">Tutor Marking</Link>
+          <Link to="/communication">Communication</Link>
         </div>
 
         <div className="topbar-user">
@@ -117,10 +117,10 @@ export default function App() {
             }
           />
           <Route
-            path="/reports"
+            path="/communication"
             element={
               <ProtectedRoute>
-                <ReportsPage />
+                <CommunicationPage />
               </ProtectedRoute>
             }
           />

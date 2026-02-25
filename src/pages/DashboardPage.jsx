@@ -24,7 +24,7 @@ export default function DashboardPage() {
 
   return (
     <div style={{ padding: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}><h2 style={{ margin: 0 }}>Classes</h2><Link to="/marking">Open marking console</Link></div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}><h2 style={{ margin: 0 }}>Classes</h2><div style={{ display: "flex", gap: 12 }}><Link to="/marking">Open marking console</Link><Link to="/communication">Send broadcast</Link></div></div>
 
       {loading && <p>Loading classes...</p>}
       {error && <p style={{ color: "#a00000" }}>❌ {error}</p>}
