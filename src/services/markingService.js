@@ -274,24 +274,61 @@ export async function saveScoreRow({ studentCode, name, assignment, score, comme
     rows: [row],
   };
 
+  const receipt = {
+    row,
+    sheet: {
+      attempted: Boolean(SCORES_WEBHOOK_URL),
+      success: !SCORES_WEBHOOK_URL,
+      message: SCORES_WEBHOOK_URL ? "Pending" : "Sheet save skipped (webhook not configured).",
+    },
+    firestore: {
+      attempted: SAVE_SCORES_TO_FIRESTORE,
+      success: !SAVE_SCORES_TO_FIRESTORE,
+      message: SAVE_SCORES_TO_FIRESTORE ? "Pending" : "Firestore mirror skipped (disabled by config).",
+    },
+  };
+
   if (SCORES_WEBHOOK_URL) {
     try {
       await postScoreToWebhook(webhookPayload);
+      receipt.sheet.success = true;
+      receipt.sheet.message = "Saved to Google Sheets.";
     } catch (error) {
       if (!isLikelyNetworkError(error)) {
-        throw error;
+        receipt.sheet.success = false;
+        receipt.sheet.message = String(error?.message || "Google Sheets save failed.");
+      } else {
+        try {
+          await postScoreToWebhookNoCors(webhookPayload);
+          receipt.sheet.success = true;
+          receipt.sheet.message = "Sheet request sent via no-cors fallback (delivery cannot be confirmed by browser).";
+        } catch (fallbackError) {
+          receipt.sheet.success = false;
+          receipt.sheet.message = String(fallbackError?.message || error?.message || "Google Sheets save failed.");
+        }
       }
-
-      await postScoreToWebhookNoCors(webhookPayload);
     }
   }
 
   if (SAVE_SCORES_TO_FIRESTORE) {
-    await addDoc(collection(db, "scores"), {
-      ...row,
-      createdAt: new Date().toISOString(),
-    });
+    try {
+      await addDoc(collection(db, "scores"), {
+        ...row,
+        createdAt: new Date().toISOString(),
+      });
+      receipt.firestore.success = true;
+      receipt.firestore.message = "Saved to Firestore mirror.";
+    } catch (error) {
+      receipt.firestore.success = false;
+      receipt.firestore.message = String(error?.message || "Firestore mirror save failed.");
+    }
   }
 
-  return row;
+  if (!receipt.sheet.success && !receipt.firestore.success) {
+    const saveError = new Error("Save failed for both Google Sheets and Firestore.");
+    saveError.receipt = receipt;
+    throw saveError;
+  }
+
+  return receipt;
 }
