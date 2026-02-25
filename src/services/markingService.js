@@ -1,4 +1,4 @@
-import { addDoc, collection, collectionGroup, getDocs } from "firebase/firestore";
+import { addDoc, collection, collectionGroup, deleteDoc, doc, getDocs } from "firebase/firestore";
 import { db } from "../firebase.js";
 import {
   loadPublishedStudentRows,
@@ -180,12 +180,17 @@ function normalizeSubmission(id, data = {}) {
 
   return {
     id,
+    status: normalize(data.status || data.submissionStatus),
     studentCode: normalize(data.studentCode || data.student_code || data.uid),
     studentName: normalize(data.studentName || data.student_name || data.name),
     assignment: normalize(data.assignment || data.assignmentTitle || data.task || data.topic),
     level: normalize(data.level || data.className || data.class || data.group),
     text: normalize(readSubmissionText(data)),
     createdAt,
+    updatedAt: normalizeTimestamp(data.updatedAt) || normalizeTimestamp(data.lastUpdatedAt) || null,
+    originalSubmittedAt: normalizeTimestamp(data.originalSubmittedAt) || null,
+    improvementSummary: normalize(data.improvementSummary),
+    previousSubmissionText: normalize(data.previousSubmissionText),
     raw: data,
   };
 }
@@ -203,17 +208,28 @@ export async function loadSubmissions() {
     if (snapResult.status !== "fulfilled") return;
 
     snapResult.value.forEach((docSnap) => {
-      records.push(normalizeSubmission(docSnap.id, docSnap.data()));
+      records.push({
+        ...normalizeSubmission(docSnap.id, docSnap.data()),
+        path: docSnap.ref.path,
+      });
     });
   });
 
-  const deduped = Array.from(new Map(records.map((record) => [record.id, record])).values());
+  const deduped = Array.from(new Map(records.map((record) => [record.path || record.id, record])).values());
 
   return deduped.sort((a, b) => {
     const aTime = a.createdAt ? a.createdAt.getTime() : 0;
     const bTime = b.createdAt ? b.createdAt.getTime() : 0;
     return bTime - aTime;
   });
+}
+
+export async function deleteSubmission(path) {
+  if (!path) {
+    throw new Error("Missing submission path for delete.");
+  }
+
+  await deleteDoc(doc(db, path));
 }
 
 const DEFAULT_SCORES_WEBHOOK_URL =

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import answersDictionary from "../data/answers_dictionary.json";
-import { loadRoster, loadSubmissions, saveScoreRow } from "../services/markingService.js";
+import { deleteSubmission, loadRoster, loadSubmissions, saveScoreRow } from "../services/markingService.js";
 import { useToast } from "../context/ToastContext.jsx";
 
 const DEFAULT_REFERENCE_LINK =
@@ -42,6 +42,9 @@ export default function MarkingPage() {
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState("");
   const [saveReceipt, setSaveReceipt] = useState(null);
+  const [savingScore, setSavingScore] = useState(false);
+  const [deletingSubmissionPath, setDeletingSubmissionPath] = useState("");
+  const [activeSubmissionTab, setActiveSubmissionTab] = useState("latest");
 
   const referenceEntries = useMemo(() => {
     if (Array.isArray(answersDictionary)) return answersDictionary;
@@ -98,12 +101,22 @@ export default function MarkingPage() {
     });
   }, [selectedStudent, submissions]);
 
-  const selectedSubmission = useMemo(() => {
+  const latestSubmission = useMemo(() => {
     if (!studentSubmissions.length) return null;
 
     const exact = studentSubmissions.find((row) => normalize(row.assignment) === normalize(referenceAssignment));
     return exact || studentSubmissions[0];
   }, [studentSubmissions, referenceAssignment]);
+
+  const submissionHistory = useMemo(() => {
+    return [...studentSubmissions].sort((a, b) => {
+      const aTime = a.createdAt ? a.createdAt.getTime() : 0;
+      const bTime = b.createdAt ? b.createdAt.getTime() : 0;
+      return bTime - aTime;
+    });
+  }, [studentSubmissions]);
+
+  const selectedSubmission = activeSubmissionTab === "latest" ? latestSubmission : submissionHistory[0] || null;
 
   const combinedReferenceAndSubmission = useMemo(() => {
     const referenceText = (formattedReferenceAnswers || "No reference answer available.").trim();
@@ -111,6 +124,27 @@ export default function MarkingPage() {
 
     return `Reference Answer\n${referenceText}\n\nStudent Submission\n${submissionText}`;
   }, [formattedReferenceAnswers, selectedSubmission]);
+
+  const handleDeleteSubmission = async (submission) => {
+    if (!submission?.path) {
+      error("Could not delete submission: missing document path.");
+      return;
+    }
+
+    const confirmed = window.confirm("Delete this submission permanently? This cannot be undone.");
+    if (!confirmed) return;
+
+    try {
+      setDeletingSubmissionPath(submission.path);
+      await deleteSubmission(submission.path);
+      setSubmissions((prev) => prev.filter((row) => row.path !== submission.path));
+      success("Submission deleted.");
+    } catch (err) {
+      error(err?.message || "Failed to delete submission.");
+    } finally {
+      setDeletingSubmissionPath("");
+    }
+  };
 
   const handleCopyCombined = async () => {
     try {
@@ -136,6 +170,7 @@ export default function MarkingPage() {
     }
 
     try {
+      setSavingScore(true);
       const receipt = await saveScoreRow({
         studentCode: selectedStudent.studentCode,
         name: selectedStudent.name,
@@ -162,6 +197,8 @@ export default function MarkingPage() {
         setSaveReceipt(err.receipt);
       }
       error(err?.message || "Failed to save score");
+    } finally {
+      setSavingScore(false);
     }
   };
 
@@ -215,15 +252,57 @@ export default function MarkingPage() {
 
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
         <h3>3) Load student submission</h3>
-        {selectedSubmission ? (
-          <>
-            <div style={{ fontSize: 13, marginBottom: 8 }}>
-              Assignment: <b>{selectedSubmission.assignment || "Unknown"}</b> · Submitted: {selectedSubmission.createdAt?.toLocaleString() || "Unknown"}
-            </div>
-            <textarea readOnly rows={8} value={selectedSubmission.text || "No submission text available."} />
-          </>
+        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+          <button
+            onClick={() => setActiveSubmissionTab("latest")}
+            style={{ fontWeight: activeSubmissionTab === "latest" ? 700 : 400 }}
+          >
+            Latest submission
+          </button>
+          <button
+            onClick={() => setActiveSubmissionTab("history")}
+            style={{ fontWeight: activeSubmissionTab === "history" ? 700 : 400 }}
+          >
+            Submission history
+          </button>
+        </div>
+        {activeSubmissionTab === "latest" ? (
+          selectedSubmission ? (
+            <>
+              <div style={{ fontSize: 13, marginBottom: 8 }}>
+                Assignment: <b>{selectedSubmission.assignment || "Unknown"}</b> · Status: {selectedSubmission.status || "submitted"} · Submitted: {selectedSubmission.createdAt?.toLocaleString() || "Unknown"}
+              </div>
+              <textarea readOnly rows={8} value={selectedSubmission.text || "No submission text available."} />
+            </>
+          ) : (
+            <p style={{ margin: 0 }}>No submission found yet for this student.</p>
+          )
+        ) : submissionHistory.length ? (
+          <div style={{ display: "grid", gap: 8 }}>
+            {submissionHistory.map((row) => (
+              <div key={row.path || row.id} style={{ border: "1px solid #e1e1e1", borderRadius: 8, padding: 10, display: "grid", gap: 8 }}>
+                <div style={{ fontSize: 13 }}>
+                  <b>{row.assignment || "Unknown assignment"}</b> · {row.status || "submitted"} · {row.createdAt?.toLocaleString() || "Unknown time"}
+                </div>
+                {row.improvementSummary && (
+                  <div style={{ fontSize: 13 }}>
+                    <b>Improvement summary:</b> {row.improvementSummary}
+                  </div>
+                )}
+                <textarea readOnly rows={4} value={row.text || "No submission text available."} />
+                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                  <button
+                    onClick={() => handleDeleteSubmission(row)}
+                    disabled={deletingSubmissionPath === row.path}
+                  >
+                    {deletingSubmissionPath === row.path ? "Deleting..." : "Delete submission"}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
-          <p style={{ margin: 0 }}>No submission found yet for this student.</p>
+          <p style={{ margin: 0 }}>No submission history found yet for this student.</p>
         )}
       </section>
 
@@ -274,7 +353,8 @@ export default function MarkingPage() {
         <p style={{ marginTop: 0, fontSize: 13, opacity: 0.8 }}>
           Saves row headers: studentcode, name, assignment, score, comments, date, level, link.
         </p>
-        <button onClick={handleSave} disabled={loading}>Save score</button>
+        <button onClick={handleSave} disabled={loading || savingScore}>{savingScore ? "Saving..." : "Save score"}</button>
+        {savingScore && <p style={{ marginTop: 8, fontSize: 13 }}>Saving score, please wait...</p>}
         {saveReceipt && (
           <div style={{ marginTop: 12, border: "1px solid #ddd", borderRadius: 8, padding: 10, background: "#fafafa", display: "grid", gap: 8 }}>
             <div style={{ fontSize: 13 }}>
