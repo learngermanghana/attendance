@@ -63,7 +63,7 @@ function normalizeSessionDoc(data = {}) {
   }
 
   return {
-    title: String(data.title || data.lesson || "").trim(),
+    title: String(data.title || data.sessionLabel || data.lesson || "").trim(),
     date: String(data.date || "").trim(),
     assignmentId: String(data.assignmentId || data.assignment_id || "").trim(),
     students,
@@ -129,7 +129,7 @@ export async function loadAttendanceSession({ classId, date }) {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 
-export async function saveAttendance({ classId, date, teacherUid, lesson, records }) {
+export async function saveAttendance({ classId, date, teacherUid, sessionLabel, records }) {
   const sessionRef = sessionRefFor(classId, date);
   const snap = await getDoc(sessionRef);
 
@@ -137,7 +137,7 @@ export async function saveAttendance({ classId, date, teacherUid, lesson, record
     classId: normalizeClassId(classId),
     date,
     markedBy: teacherUid,
-    lesson: String(lesson || "").trim(),
+    sessionLabel: String(sessionLabel || "").trim(),
     updatedAt: serverTimestamp(),
     records,
   };

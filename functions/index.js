@@ -138,7 +138,7 @@ app.post("/openSession", async (req, res) => {
 
     const body = req.body || {};
     const classId = normalizeClassId(body.classId || body.className);
-    const { date, action, windowMinutes, lesson, assignmentId } = body;
+    const { date, action, windowMinutes, sessionLabel, lesson, assignmentId } = body;
 
     if (!classId || !date) {
       return res.status(400).json({ error: "classId and date are required" });
@@ -168,7 +168,7 @@ app.post("/openSession", async (req, res) => {
     const payload = {
       classId,
       date,
-      lesson: String(lesson || "").trim(),
+      sessionLabel: String(sessionLabel || lesson || "").trim(),
       assignment_id: String(assignmentId || "").trim(),
       opened: true,
       openFrom: now,
@@ -193,7 +193,7 @@ app.post("/checkin", async (req, res) => {
   try {
     const body = req.body || {};
     const classId = normalizeClassId(body.classId || body.className);
-    const { date, email, phoneNumber, lesson, assignmentId } = body;
+    const { date, email, phoneNumber, sessionLabel, lesson, assignmentId } = body;
 
     if (!classId || !date || !email || !phoneNumber) {
       return res.status(400).json({ error: "classId, date, email, phoneNumber are required" });
@@ -272,7 +272,7 @@ app.post("/checkin", async (req, res) => {
       secretCode: buildSecretCode({ classId, date, email: st.email || normalizedEmail, phone: storedPhone }),
       classId,
       date,
-      lesson: String(lesson || session.lesson || "").trim(),
+      sessionLabel: String(sessionLabel || lesson || session.sessionLabel || session.lesson || "").trim(),
       assignment_id: String(assignmentId || session.assignment_id || "").trim(),
       status: "present",
       method: "qr",

@@ -85,7 +85,7 @@ export default function AttendancePage() {
   const { user } = useAuth();
   const { success, error, info } = useToast();
 
-  const [lesson, setLesson] = useState("");
+  const [sessionLabel, setSessionLabel] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sessionOpen, setSessionOpen] = useState(false);
@@ -119,13 +119,13 @@ export default function AttendancePage() {
     const qs = new URLSearchParams({
       classId,
       date: checkinSessionDate,
-      lesson,
+      sessionLabel,
       assignmentId: String(selectedSession.assignmentId || ""),
     }).toString();
     return `${base}/checkin?${qs}`;
-  }, [classId, checkinSessionDate, lesson, selectedSession.assignmentId]);
+  }, [classId, checkinSessionDate, sessionLabel, selectedSession.assignmentId]);
 
-  const lessons = useMemo(() => {
+  const sessionOptions = useMemo(() => {
     const schedule = getClassSchedule(classId);
     const scheduleLevel = resolveScheduleKey(classId);
     return schedule.map((item, index) => {
@@ -138,10 +138,10 @@ export default function AttendancePage() {
   }, [classId]);
 
   useEffect(() => {
-    if (!lesson && lessons.length > 0) {
-      setLesson(lessons[0].value);
+    if (!sessionLabel && sessionOptions.length > 0) {
+      setSessionLabel(sessionOptions[0].value);
     }
-  }, [lesson, lessons]);
+  }, [sessionLabel, sessionOptions]);
 
   useEffect(() => {
     (async () => {
@@ -284,7 +284,7 @@ export default function AttendancePage() {
         body: JSON.stringify({
           classId,
           date: checkinSessionDate,
-          lesson,
+          sessionLabel,
           assignmentId: String(selectedSession.assignmentId || ""),
           windowMinutes: 180,
           action: "open",
@@ -337,7 +337,7 @@ export default function AttendancePage() {
   return (
     <div style={{ padding: 16, maxWidth: 900 }}>
       <h2>Attendance: {classId}</h2>
-      {lesson && <div style={{ marginBottom: 8, fontSize: 13, opacity: 0.85 }}>Lesson: {lesson}</div>}
+      {sessionLabel && <div style={{ marginBottom: 8, fontSize: 13, opacity: 0.85 }}>Session: {sessionLabel}</div>}
 
       <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
         <label>
@@ -376,10 +376,10 @@ export default function AttendancePage() {
         </label>
 
         <label>
-          Lesson:{" "}
-          <select value={lesson} onChange={(e) => setLesson(e.target.value)}>
-            <option value="">Select lesson</option>
-            {lessons.map((item) => (
+          Session:{" "}
+          <select value={sessionLabel} onChange={(e) => setSessionLabel(e.target.value)}>
+            <option value="">Select session</option>
+            {sessionOptions.map((item) => (
               <option key={item.value} value={item.value}>
                 {item.label}
               </option>

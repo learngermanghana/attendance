@@ -8,7 +8,7 @@ export default function CheckinPage() {
   const [sp] = useSearchParams();
   const classId = sp.get("classId") || sp.get("className") || "";
   const date = sp.get("date") || "";
-  const lesson = sp.get("lesson") || "";
+  const sessionLabel = sp.get("sessionLabel") || sp.get("lesson") || "";
   const assignmentId = sp.get("assignmentId") || sp.get("assignment_id") || "";
 
   const scheduleInfo = useMemo(() => {
@@ -21,12 +21,12 @@ export default function CheckinPage() {
 
     return {
       dateLabel: item.date || String(date || ""),
-      lessonLabel: `${item.day || ""} - ${item.topic || ""}`.trim().replace(/^\s*-\s*/, ""),
+      sessionDisplayLabel: `${item.day || ""} - ${item.topic || ""}`.trim().replace(/^\s*-\s*/, ""),
     };
   }, [classId, date]);
 
   const dateLabel = scheduleInfo?.dateLabel || date || "";
-  const lessonLabel = lesson || scheduleInfo?.lessonLabel || "";
+  const sessionDisplayLabel = sessionLabel || scheduleInfo?.sessionDisplayLabel || "";
 
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -59,7 +59,7 @@ export default function CheckinPage() {
           date,
           email: email.trim(),
           phoneNumber: phoneNumber.trim(),
-          lesson: lessonLabel,
+          sessionLabel: sessionDisplayLabel,
           assignmentId: assignmentId.trim(),
         }),
       });
@@ -87,7 +87,7 @@ export default function CheckinPage() {
           <b>Date:</b> {dateLabel || "-"}
         </div>
         <div>
-          <b>Lesson:</b> {lessonLabel || "-"}
+          <b>Session:</b> {sessionDisplayLabel || "-"}
         </div>
         <div>
           <b>Assignment ID:</b> {assignmentId || "-"}
