@@ -1,4 +1,4 @@
-import { addDoc, collection, collectionGroup, deleteDoc, doc, getDocs } from "firebase/firestore";
+import { addDoc, collection, collectionGroup, deleteDoc, doc, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase.js";
 import {
   loadPublishedStudentRows,
@@ -159,13 +159,20 @@ function normalizeTimestamp(value) {
 }
 
 function readSubmissionText(data) {
+  const submissionLink = data?.submissionLink || data?.submission_link || data?.link || "";
+
   return (
     data?.content ||
     data?.text ||
     data?.submissionText ||
     data?.submission_text ||
+    data?.submission ||
+    data?.finalSubmission ||
+    data?.answerText ||
+    data?.response ||
     data?.answer ||
     data?.body ||
+    (submissionLink ? `Submission link: ${submissionLink}` : "") ||
     ""
   );
 }
@@ -181,11 +188,12 @@ function normalizeSubmission(id, data = {}) {
   return {
     id,
     status: normalize(data.status || data.submissionStatus),
-    studentCode: normalize(data.studentCode || data.student_code || data.uid),
-    studentName: normalize(data.studentName || data.student_name || data.name),
-    assignment: normalize(data.assignment || data.assignmentTitle || data.task || data.topic),
+    studentCode: normalize(data.studentCode || data.student_code || data.uid || data.studentId || data.student_id),
+    studentName: normalize(data.studentName || data.student_name || data.name || data.fullName),
+    assignment: normalize(data.assignment || data.assignmentTitle || data.task || data.topic || data.chapterKey || data.chapterTitle),
     level: normalize(data.level || data.className || data.class || data.group),
     text: normalize(readSubmissionText(data)),
+    submissionLink: normalize(data.submissionLink || data.submission_link || data.link),
     createdAt,
     updatedAt: normalizeTimestamp(data.updatedAt) || normalizeTimestamp(data.lastUpdatedAt) || null,
     originalSubmittedAt: normalizeTimestamp(data.originalSubmittedAt) || null,
@@ -193,6 +201,63 @@ function normalizeSubmission(id, data = {}) {
     previousSubmissionText: normalize(data.previousSubmissionText),
     raw: data,
   };
+}
+
+
+function isFinalSubmission(submission) {
+  const status = normalize(submission?.status).toLowerCase();
+  return status !== "draft";
+}
+
+function sortNewestFirst(rows) {
+  return [...rows].sort((a, b) => {
+    const aTime = a.createdAt ? a.createdAt.getTime() : 0;
+    const bTime = b.createdAt ? b.createdAt.getTime() : 0;
+    return bTime - aTime;
+  });
+}
+
+function normalizeDocs(snapshot) {
+  const rows = [];
+  snapshot.forEach((docSnap) => {
+    const normalized = normalizeSubmission(docSnap.id, docSnap.data());
+    if (!isFinalSubmission(normalized)) return;
+    rows.push({
+      ...normalized,
+      path: docSnap.ref.path,
+    });
+  });
+
+  const deduped = Array.from(new Map(rows.map((row) => [row.path || row.id, row])).values());
+  return sortNewestFirst(deduped);
+}
+
+export async function fetchSubmissions(level, studentCode) {
+  const safeLevel = normalize(level);
+  const safeStudentCode = normalize(studentCode);
+
+  if (!safeLevel || !safeStudentCode) {
+    return [];
+  }
+
+  const oldNestedPathRows = normalizeDocs(await getDocs(collection(db, "submissions", safeLevel, safeStudentCode)));
+  if (oldNestedPathRows.length) return oldNestedPathRows;
+
+  const flatRows = normalizeDocs(
+    await getDocs(query(collection(db, "submissions"), where("studentCode", "==", safeStudentCode))),
+  ).filter((row) => normalize(row.level) === safeLevel);
+  if (flatRows.length) return flatRows;
+
+  const flatSnakeRows = normalizeDocs(
+    await getDocs(query(collection(db, "submissions"), where("student_code", "==", safeStudentCode))),
+  ).filter((row) => normalize(row.level) === safeLevel);
+  if (flatSnakeRows.length) return flatSnakeRows;
+
+  const olderPostsRows = normalizeDocs(
+    await getDocs(query(collection(db, "submissions", safeLevel, "posts"), where("studentCode", "==", safeStudentCode))),
+  );
+
+  return olderPostsRows;
 }
 
 export async function loadSubmissions() {
@@ -206,22 +271,11 @@ export async function loadSubmissions() {
 
   [flatSnap, nestedSnap, postsSnap].forEach((snapResult) => {
     if (snapResult.status !== "fulfilled") return;
-
-    snapResult.value.forEach((docSnap) => {
-      records.push({
-        ...normalizeSubmission(docSnap.id, docSnap.data()),
-        path: docSnap.ref.path,
-      });
-    });
+    records.push(...normalizeDocs(snapResult.value));
   });
 
   const deduped = Array.from(new Map(records.map((record) => [record.path || record.id, record])).values());
-
-  return deduped.sort((a, b) => {
-    const aTime = a.createdAt ? a.createdAt.getTime() : 0;
-    const bTime = b.createdAt ? b.createdAt.getTime() : 0;
-    return bTime - aTime;
-  });
+  return sortNewestFirst(deduped);
 }
 
 export async function deleteSubmission(path) {
