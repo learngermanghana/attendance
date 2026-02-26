@@ -46,12 +46,14 @@ export default function MarkingPage() {
     if (typeof window === "undefined") return "";
     return window.localStorage.getItem(REFERENCE_ASSIGNMENT_STORAGE_KEY) || "";
   });
+  const [referenceQuery, setReferenceQuery] = useState("");
   const [score, setScore] = useState("");
   const [feedback, setFeedback] = useState("");
   const [saveReceipt, setSaveReceipt] = useState(null);
   const [savingScore, setSavingScore] = useState(false);
   const [deletingSubmissionPath, setDeletingSubmissionPath] = useState("");
   const [activeSubmissionTab, setActiveSubmissionTab] = useState("latest");
+  const [selectedHistorySubmissionPath, setSelectedHistorySubmissionPath] = useState("");
 
   const referenceEntries = useMemo(() => {
     if (Array.isArray(answersDictionary)) return answersDictionary;
@@ -82,6 +84,7 @@ export default function MarkingPage() {
     const selectedStudent = roster.find((row) => row.id === selectedStudentId);
     if (!selectedStudent?.studentCode || !selectedStudent?.level) {
       setSubmissions([]);
+      setSelectedHistorySubmissionPath("");
       return;
     }
 
@@ -90,6 +93,7 @@ export default function MarkingPage() {
       try {
         const submissionRows = await fetchSubmissions(selectedStudent.level, selectedStudent.studentCode);
         setSubmissions(submissionRows);
+        setSelectedHistorySubmissionPath("");
       } catch (err) {
         error(err?.message || "Failed to load student submissions");
       } finally {
@@ -141,6 +145,17 @@ export default function MarkingPage() {
     return referenceEntries.find((entry) => entry.assignment === referenceAssignment) || null;
   }, [referenceAssignment, referenceEntries]);
 
+  const filteredReferenceEntries = useMemo(() => {
+    if (!referenceQuery.trim()) return referenceEntries;
+    const q = normalize(referenceQuery);
+    return referenceEntries.filter((entry) => {
+      const assignment = normalize(entry.assignment);
+      const level = normalize(entry.level);
+      const referenceText = normalize(entry.reference || "");
+      return assignment.includes(q) || level.includes(q) || referenceText.includes(q);
+    });
+  }, [referenceEntries, referenceQuery]);
+
   const formattedReferenceAnswers = useMemo(() => {
     if (referenceEntry?.reference) return referenceEntry.reference;
     const lines = flattenAnswers(referenceEntry?.answers);
@@ -164,7 +179,12 @@ export default function MarkingPage() {
     });
   }, [studentSubmissions]);
 
-  const selectedSubmission = activeSubmissionTab === "latest" ? latestSubmission : null;
+  const selectedHistorySubmission = useMemo(() => {
+    if (!submissionHistory.length) return null;
+    return submissionHistory.find((row) => row.path === selectedHistorySubmissionPath) || null;
+  }, [submissionHistory, selectedHistorySubmissionPath]);
+
+  const selectedSubmission = activeSubmissionTab === "history" ? selectedHistorySubmission : latestSubmission;
 
   const latestNotifications = useMemo(() => submissionNotifications.slice(0, 30), [submissionNotifications]);
 
@@ -336,13 +356,21 @@ export default function MarkingPage() {
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
         <h3>2) Pick a reference answer</h3>
         <div style={{ display: "grid", gap: 8 }}>
+          <input
+            placeholder="Search reference answers by assignment/level"
+            value={referenceQuery}
+            onChange={(e) => setReferenceQuery(e.target.value)}
+          />
           <select value={referenceAssignment} onChange={(e) => setReferenceAssignment(e.target.value)}>
-            {referenceEntries.map((entry) => (
+            {filteredReferenceEntries.map((entry) => (
               <option key={entry.assignment} value={entry.assignment}>
                 {entry.assignment}
               </option>
             ))}
           </select>
+          {!filteredReferenceEntries.length && (
+            <p style={{ margin: 0, fontSize: 13, opacity: 0.8 }}>No reference answers match your search.</p>
+          )}
           <textarea value={formattedReferenceAnswers} readOnly rows={10} />
           {referenceEntry?.answer_url && (
             <a href={referenceEntry.answer_url} target="_blank" rel="noreferrer">
@@ -366,6 +394,12 @@ export default function MarkingPage() {
             style={{ fontWeight: activeSubmissionTab === "notifications" ? 700 : 400 }}
           >
             Incoming notifications
+          </button>
+          <button
+            onClick={() => setActiveSubmissionTab("history")}
+            style={{ fontWeight: activeSubmissionTab === "history" ? 700 : 400 }}
+          >
+            Submission history
           </button>
         </div>
         {loadingSubmissions ? (
@@ -409,7 +443,8 @@ export default function MarkingPage() {
           ) : (
             <p style={{ margin: 0 }}>No incoming submissions found yet.</p>
           )
-        ) : submissionHistory.length ? (
+        ) : activeSubmissionTab === "history" ? (
+          submissionHistory.length ? (
           <div style={{ display: "grid", gap: 8 }}>
             {submissionHistory.map((row) => (
               <div key={row.path || row.id} style={{ border: "1px solid #e1e1e1", borderRadius: 8, padding: 10, display: "grid", gap: 8 }}>
@@ -422,7 +457,17 @@ export default function MarkingPage() {
                   </div>
                 )}
                 <textarea readOnly rows={4} value={row.text || "No submission text available."} />
-                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                  <button
+                    onClick={() => {
+                      setSelectedHistorySubmissionPath(row.path || "");
+                      success("History submission selected for combined view.");
+                    }}
+                    disabled={!row.path}
+                    style={{ fontWeight: selectedHistorySubmissionPath === row.path ? 700 : 400 }}
+                  >
+                    {selectedHistorySubmissionPath === row.path ? "Selected" : "Use this submission"}
+                  </button>
                   <button
                     onClick={() => handleDeleteSubmission(row)}
                     disabled={deletingSubmissionPath === row.path}
@@ -433,9 +478,10 @@ export default function MarkingPage() {
               </div>
             ))}
           </div>
-        ) : (
-          <p style={{ margin: 0 }}>No submission history found yet for this student.</p>
-        )}
+          ) : (
+            <p style={{ margin: 0 }}>No submission history found yet for this student.</p>
+          )
+        ) : null}
       </section>
 
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
