@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import answersDictionary from "../data/answers_dictionary.json";
-import { deleteSubmission, loadRoster, loadSubmissions, saveScoreRow } from "../services/markingService.js";
+import { deleteSubmission, fetchSubmissions, loadRoster, saveScoreRow } from "../services/markingService.js";
 import { useToast } from "../context/ToastContext.jsx";
 
 const DEFAULT_REFERENCE_LINK =
@@ -35,6 +35,7 @@ export default function MarkingPage() {
   const [roster, setRoster] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingSubmissions, setLoadingSubmissions] = useState(false);
 
   const [query, setQuery] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState("");
@@ -58,9 +59,8 @@ export default function MarkingPage() {
     (async () => {
       setLoading(true);
       try {
-        const [rosterRows, submissionRows] = await Promise.all([loadRoster(), loadSubmissions()]);
+        const rosterRows = await loadRoster();
         setRoster(rosterRows);
-        setSubmissions(submissionRows);
 
         const firstReference = referenceEntries?.[0]?.assignment || "";
         setReferenceAssignment(firstReference);
@@ -70,7 +70,27 @@ export default function MarkingPage() {
         setLoading(false);
       }
     })();
-  }, [referenceEntries]);
+  }, [referenceEntries, error]);
+
+  useEffect(() => {
+    const selectedStudent = roster.find((row) => row.id === selectedStudentId);
+    if (!selectedStudent?.studentCode || !selectedStudent?.level) {
+      setSubmissions([]);
+      return;
+    }
+
+    (async () => {
+      setLoadingSubmissions(true);
+      try {
+        const submissionRows = await fetchSubmissions(selectedStudent.level, selectedStudent.studentCode);
+        setSubmissions(submissionRows);
+      } catch (err) {
+        error(err?.message || "Failed to load student submissions");
+      } finally {
+        setLoadingSubmissions(false);
+      }
+    })();
+  }, [roster, selectedStudentId, error]);
 
   const filteredStudents = useMemo(() => {
     if (!query.trim()) return roster;
@@ -92,14 +112,7 @@ export default function MarkingPage() {
     return lines.join("\n");
   }, [referenceEntry]);
 
-  const studentSubmissions = useMemo(() => {
-    if (!selectedStudent) return [];
-    return submissions.filter((row) => {
-      const codeMatch = row.studentCode && selectedStudent.studentCode && normalize(row.studentCode) === normalize(selectedStudent.studentCode);
-      const nameMatch = normalize(row.studentName) && normalize(row.studentName) === normalize(selectedStudent.name);
-      return codeMatch || nameMatch;
-    });
-  }, [selectedStudent, submissions]);
+  const studentSubmissions = useMemo(() => submissions, [submissions]);
 
   const latestSubmission = useMemo(() => {
     if (!studentSubmissions.length) return null;
@@ -266,7 +279,9 @@ export default function MarkingPage() {
             Submission history
           </button>
         </div>
-        {activeSubmissionTab === "latest" ? (
+        {loadingSubmissions ? (
+          <p style={{ margin: 0 }}>Loading submissions...</p>
+        ) : activeSubmissionTab === "latest" ? (
           selectedSubmission ? (
             <>
               <div style={{ fontSize: 13, marginBottom: 8 }}>
