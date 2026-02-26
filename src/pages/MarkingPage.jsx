@@ -197,18 +197,46 @@ export default function MarkingPage() {
     }
   };
 
-  const handleSelectFromNotification = (submission) => {
+  const handleSelectFromNotification = async (submission) => {
+    if (!submission?.studentCode || !submission?.level) {
+      error("This notification is missing student information and cannot be opened.");
+      return;
+    }
+
     const matchingStudent = roster.find((row) => {
       const sameCode = normalize(row.studentCode) && normalize(row.studentCode) === normalize(submission.studentCode);
       const sameLevel = normalize(row.level) && normalize(row.level) === normalize(submission.level);
       return sameCode && sameLevel;
     }) || roster.find((row) => normalize(row.studentCode) === normalize(submission.studentCode));
 
-    if (matchingStudent) {
-      setSelectedStudentId(matchingStudent.id);
-      setQuery("");
-      setActiveSubmissionTab("latest");
+    if (!matchingStudent) {
+      setSubmissionNotifications((prev) => prev.filter((row) => row.path !== submission.path));
+      error("Student for this submission was not found in the roster.");
+      return;
     }
+
+    let freshRows = [];
+    try {
+      freshRows = await fetchSubmissions(matchingStudent.level, matchingStudent.studentCode);
+    } catch (err) {
+      error(err?.message || "Failed to verify this submission before loading.");
+      return;
+    }
+
+    const submissionStillExists = submission.path
+      ? freshRows.some((row) => row.path === submission.path)
+      : freshRows.some((row) => normalize(row.assignment) === normalize(submission.assignment));
+
+    if (!submissionStillExists) {
+      setSubmissionNotifications((prev) => prev.filter((row) => row.path !== submission.path));
+      error("This submission no longer exists (it may already be deleted).");
+      return;
+    }
+
+    setSubmissions(freshRows);
+    setSelectedStudentId(matchingStudent.id);
+    setQuery("");
+    setActiveSubmissionTab("latest");
 
     const matchingReference = referenceEntries.find((entry) => normalize(entry.assignment) === normalize(submission.assignment));
     if (matchingReference?.assignment) {
@@ -363,7 +391,7 @@ export default function MarkingPage() {
                     <b>{row.assignment || "Unknown assignment"}</b> · {row.status || "submitted"} · {row.createdAt?.toLocaleString() || "Unknown time"}
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-                    <button onClick={() => handleSelectFromNotification(row)}>Load for marking</button>
+                    <button onClick={() => void handleSelectFromNotification(row)}>Load for marking</button>
                     <button
                       onClick={() => handleDeleteSubmission(row)}
                       disabled={deletingSubmissionPath === row.path}
