@@ -108,7 +108,7 @@ firebase deploy --only functions
 1. Teacher signs in and opens a class attendance page.
 2. Teacher opens check-in to generate a QR URL.
 3. Student scans QR (`/checkin?classId=...&date=...`) and submits email + phone number.
-4. Function validates session window, student record match, and class membership, then writes check-in with an auto-generated secret code.
+4. Function validates check-in window, student record match, and class membership, then writes check-in with an auto-generated secret code.
 5. Teacher can save manual attendance records, mark student work, and send broadcast announcements to Google Sheets.
 
 ## Notes
