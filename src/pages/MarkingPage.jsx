@@ -46,7 +46,7 @@ export default function MarkingPage() {
     if (typeof window === "undefined") return "";
     return window.localStorage.getItem(REFERENCE_ASSIGNMENT_STORAGE_KEY) || "";
   });
-  const [score, setScore] = useState(0);
+  const [score, setScore] = useState("");
   const [feedback, setFeedback] = useState("");
   const [saveReceipt, setSaveReceipt] = useState(null);
   const [savingScore, setSavingScore] = useState(false);
@@ -266,6 +266,10 @@ export default function MarkingPage() {
       error("Feedback is required.");
       return;
     }
+    if (score === "") {
+      error("Score is required.");
+      return;
+    }
 
     try {
       setSavingScore(true);
@@ -457,7 +461,15 @@ export default function MarkingPage() {
               min={0}
               max={100}
               value={score}
-              onChange={(e) => setScore(Math.max(0, Math.min(100, Number(e.target.value || 0))))}
+              onChange={(e) => {
+                const nextValue = e.target.value;
+                if (nextValue === "") {
+                  setScore("");
+                  return;
+                }
+
+                setScore(String(Math.max(0, Math.min(100, Number(nextValue)))));
+              }}
             />
           </label>
           <label>
@@ -471,7 +483,7 @@ export default function MarkingPage() {
             />
           </label>
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={() => { setScore(0); setFeedback(""); }}>Reset</button>
+            <button onClick={() => { setScore(""); setFeedback(""); }}>Reset</button>
           </div>
         </div>
       </section>
