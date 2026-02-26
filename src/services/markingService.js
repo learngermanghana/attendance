@@ -177,7 +177,21 @@ function readSubmissionText(data) {
   );
 }
 
-function normalizeSubmission(id, data = {}) {
+function extractPathInfo(path = "") {
+  const segments = String(path).split("/").filter(Boolean);
+  const submissionsIndex = segments.indexOf("submissions");
+
+  if (submissionsIndex === -1) {
+    return { levelFromPath: "", studentCodeFromPath: "" };
+  }
+
+  const levelFromPath = normalize(segments[submissionsIndex + 1] || "");
+  const studentCodeFromPath = normalize(segments[submissionsIndex + 2] || "");
+  return { levelFromPath, studentCodeFromPath };
+}
+
+function normalizeSubmission(id, data = {}, path = "") {
+  const { levelFromPath, studentCodeFromPath } = extractPathInfo(path);
   const createdAt =
     normalizeTimestamp(data.createdAt) ||
     normalizeTimestamp(data.timestamp) ||
@@ -188,10 +202,10 @@ function normalizeSubmission(id, data = {}) {
   return {
     id,
     status: normalize(data.status || data.submissionStatus),
-    studentCode: normalize(data.studentCode || data.student_code || data.uid || data.studentId || data.student_id),
-    studentName: normalize(data.studentName || data.student_name || data.name || data.fullName),
+    studentCode: normalize(data.studentCode || data.student_code || data.uid || data.studentId || data.student_id || studentCodeFromPath),
+    studentName: normalize(data.studentName || data.student_name || data.student || data.name || data.fullName),
     assignment: normalize(data.assignment || data.assignmentTitle || data.task || data.topic || data.chapterKey || data.chapterTitle),
-    level: normalize(data.level || data.className || data.class || data.group),
+    level: normalize(data.level || data.className || data.class || data.group || levelFromPath),
     text: normalize(readSubmissionText(data)),
     submissionLink: normalize(data.submissionLink || data.submission_link || data.link),
     createdAt,
@@ -220,7 +234,7 @@ function sortNewestFirst(rows) {
 function normalizeDocs(snapshot) {
   const rows = [];
   snapshot.forEach((docSnap) => {
-    const normalized = normalizeSubmission(docSnap.id, docSnap.data());
+    const normalized = normalizeSubmission(docSnap.id, docSnap.data(), docSnap.ref.path);
     if (!isFinalSubmission(normalized)) return;
     rows.push({
       ...normalized,
