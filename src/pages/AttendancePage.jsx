@@ -85,7 +85,6 @@ export default function AttendancePage() {
   const { user } = useAuth();
   const { success, error, info } = useToast();
 
-  const [sessionLabel, setSessionLabel] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [sessionOpen, setSessionOpen] = useState(false);
@@ -97,6 +96,13 @@ export default function AttendancePage() {
 
   const selectedSession = attendanceMap[selectedSessionId] || { title: "", date: "", assignmentId: "", students: {} };
   const checkinSessionDate = String(selectedSession.date || "").trim() || selectedSessionId;
+
+  const schedule = useMemo(() => getClassSchedule(classId), [classId]);
+  const sessionLabel = useMemo(() => {
+    const scheduleItem = schedule[Number(selectedSessionId)];
+    if (scheduleItem) return `${scheduleItem.day} - ${scheduleItem.topic}`;
+    return selectedSession.title || "";
+  }, [schedule, selectedSessionId, selectedSession.title]);
 
   const studentRows = useMemo(() => {
     return Object.entries(selectedSession.students || {})
@@ -124,24 +130,6 @@ export default function AttendancePage() {
     }).toString();
     return `${base}/checkin?${qs}`;
   }, [classId, checkinSessionDate, sessionLabel, selectedSession.assignmentId]);
-
-  const sessionOptions = useMemo(() => {
-    const schedule = getClassSchedule(classId);
-    const scheduleLevel = resolveScheduleKey(classId);
-    return schedule.map((item, index) => {
-      const assignmentId = String(item.assignmentId || item.assignment_id || buildAssignmentId(scheduleLevel, item.topic, index + 1));
-      return {
-        value: `${item.day} - ${item.topic}`,
-        label: `${item.day}: ${item.topic}${assignmentId ? ` (${assignmentId})` : ""}`,
-      };
-    });
-  }, [classId]);
-
-  useEffect(() => {
-    if (!sessionLabel && sessionOptions.length > 0) {
-      setSessionLabel(sessionOptions[0].value);
-    }
-  }, [sessionLabel, sessionOptions]);
 
   useEffect(() => {
     (async () => {
@@ -373,18 +361,6 @@ export default function AttendancePage() {
               }));
             }}
           />
-        </label>
-
-        <label>
-          Session:{" "}
-          <select value={sessionLabel} onChange={(e) => setSessionLabel(e.target.value)}>
-            <option value="">Select session</option>
-            {sessionOptions.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </select>
         </label>
 
         <div style={{ marginLeft: "auto", fontSize: 12, opacity: 0.85 }}>
