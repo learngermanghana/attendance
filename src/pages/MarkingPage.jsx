@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import answersDictionary from "../data/answers_dictionary.json";
-import { deleteSubmission, fetchSubmissions, loadRoster, saveScoreRow } from "../services/markingService.js";
+import { deleteSubmission, fetchSubmissions, loadRoster, loadSubmissions, saveScoreRow } from "../services/markingService.js";
 import { useToast } from "../context/ToastContext.jsx";
 
 const DEFAULT_REFERENCE_LINK =
   "https://docs.google.com/spreadsheets/d/1bENY4-5AG9hrgaDKqyNpTwKT02i58wGva6tVRn-hhbE/gviz/tq?tqx=out:html&sheet=Key";
+const REFERENCE_ASSIGNMENT_STORAGE_KEY = "marking.referenceAssignment";
 
 function normalize(value) {
   return String(value || "").trim().toLowerCase();
@@ -34,12 +35,17 @@ export default function MarkingPage() {
   const { success, error } = useToast();
   const [roster, setRoster] = useState([]);
   const [submissions, setSubmissions] = useState([]);
+  const [submissionNotifications, setSubmissionNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
 
   const [query, setQuery] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState("");
-  const [referenceAssignment, setReferenceAssignment] = useState("");
+  const [referenceAssignment, setReferenceAssignment] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return window.localStorage.getItem(REFERENCE_ASSIGNMENT_STORAGE_KEY) || "";
+  });
   const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState("");
   const [saveReceipt, setSaveReceipt] = useState(null);
@@ -63,7 +69,7 @@ export default function MarkingPage() {
         setRoster(rosterRows);
 
         const firstReference = referenceEntries?.[0]?.assignment || "";
-        setReferenceAssignment(firstReference);
+        setReferenceAssignment((current) => current || firstReference);
       } catch (err) {
         error(err?.message || "Failed to load marking data");
       } finally {
@@ -91,6 +97,35 @@ export default function MarkingPage() {
       }
     })();
   }, [roster, selectedStudentId, error]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadLatestSubmissions = async () => {
+      setLoadingNotifications(true);
+      try {
+        const rows = await loadSubmissions();
+        if (!cancelled) setSubmissionNotifications(rows);
+      } catch (err) {
+        if (!cancelled) error(err?.message || "Failed to load submission notifications");
+      } finally {
+        if (!cancelled) setLoadingNotifications(false);
+      }
+    };
+
+    loadLatestSubmissions();
+    const refreshId = window.setInterval(loadLatestSubmissions, 20000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(refreshId);
+    };
+  }, [error]);
+
+  useEffect(() => {
+    if (!referenceAssignment || typeof window === "undefined") return;
+    window.localStorage.setItem(REFERENCE_ASSIGNMENT_STORAGE_KEY, referenceAssignment);
+  }, [referenceAssignment]);
 
   const filteredStudents = useMemo(() => {
     if (!query.trim()) return roster;
@@ -129,7 +164,9 @@ export default function MarkingPage() {
     });
   }, [studentSubmissions]);
 
-  const selectedSubmission = activeSubmissionTab === "latest" ? latestSubmission : submissionHistory[0] || null;
+  const selectedSubmission = activeSubmissionTab === "latest" ? latestSubmission : null;
+
+  const latestNotifications = useMemo(() => submissionNotifications.slice(0, 30), [submissionNotifications]);
 
   const combinedReferenceAndSubmission = useMemo(() => {
     const referenceText = (formattedReferenceAnswers || "No reference answer available.").trim();
@@ -151,11 +188,31 @@ export default function MarkingPage() {
       setDeletingSubmissionPath(submission.path);
       await deleteSubmission(submission.path);
       setSubmissions((prev) => prev.filter((row) => row.path !== submission.path));
+      setSubmissionNotifications((prev) => prev.filter((row) => row.path !== submission.path));
       success("Submission deleted.");
     } catch (err) {
       error(err?.message || "Failed to delete submission.");
     } finally {
       setDeletingSubmissionPath("");
+    }
+  };
+
+  const handleSelectFromNotification = (submission) => {
+    const matchingStudent = roster.find((row) => {
+      const sameCode = normalize(row.studentCode) && normalize(row.studentCode) === normalize(submission.studentCode);
+      const sameLevel = normalize(row.level) && normalize(row.level) === normalize(submission.level);
+      return sameCode && sameLevel;
+    }) || roster.find((row) => normalize(row.studentCode) === normalize(submission.studentCode));
+
+    if (matchingStudent) {
+      setSelectedStudentId(matchingStudent.id);
+      setQuery("");
+      setActiveSubmissionTab("latest");
+    }
+
+    const matchingReference = referenceEntries.find((entry) => normalize(entry.assignment) === normalize(submission.assignment));
+    if (matchingReference?.assignment) {
+      setReferenceAssignment(matchingReference.assignment);
     }
   };
 
@@ -273,10 +330,10 @@ export default function MarkingPage() {
             Latest submission
           </button>
           <button
-            onClick={() => setActiveSubmissionTab("history")}
-            style={{ fontWeight: activeSubmissionTab === "history" ? 700 : 400 }}
+            onClick={() => setActiveSubmissionTab("notifications")}
+            style={{ fontWeight: activeSubmissionTab === "notifications" ? 700 : 400 }}
           >
-            Submission history
+            Incoming notifications
           </button>
         </div>
         {loadingSubmissions ? (
@@ -291,6 +348,34 @@ export default function MarkingPage() {
             </>
           ) : (
             <p style={{ margin: 0 }}>No submission found yet for this student.</p>
+          )
+        ) : activeSubmissionTab === "notifications" ? (
+          loadingNotifications ? (
+            <p style={{ margin: 0 }}>Loading notifications...</p>
+          ) : latestNotifications.length ? (
+            <div style={{ display: "grid", gap: 8 }}>
+              {latestNotifications.map((row) => (
+                <div key={row.path || row.id} style={{ border: "1px solid #e1e1e1", borderRadius: 8, padding: 10, display: "grid", gap: 8 }}>
+                  <div style={{ fontSize: 13 }}>
+                    <b>{row.studentName || "Unknown student"}</b> ({row.studentCode || "No code"}) · {row.level || "No level"}
+                  </div>
+                  <div style={{ fontSize: 13 }}>
+                    <b>{row.assignment || "Unknown assignment"}</b> · {row.status || "submitted"} · {row.createdAt?.toLocaleString() || "Unknown time"}
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                    <button onClick={() => handleSelectFromNotification(row)}>Load for marking</button>
+                    <button
+                      onClick={() => handleDeleteSubmission(row)}
+                      disabled={deletingSubmissionPath === row.path}
+                    >
+                      {deletingSubmissionPath === row.path ? "Deleting..." : "Delete"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ margin: 0 }}>No incoming submissions found yet.</p>
           )
         ) : submissionHistory.length ? (
           <div style={{ display: "grid", gap: 8 }}>
