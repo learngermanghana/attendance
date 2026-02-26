@@ -166,17 +166,7 @@ export default function MarkingPage() {
 
   const selectedSubmission = activeSubmissionTab === "latest" ? latestSubmission : null;
 
-  const latestNotifications = useMemo(() => {
-    return submissionNotifications.slice(0, 30).map((row) => {
-      const rosterMatch = roster.find((student) => normalize(student.studentCode) === normalize(row.studentCode));
-      return {
-        ...row,
-        studentName: row.studentName || rosterMatch?.name || "",
-        studentCode: row.studentCode || rosterMatch?.studentCode || "",
-        level: row.level || rosterMatch?.level || "",
-      };
-    });
-  }, [submissionNotifications, roster]);
+  const latestNotifications = useMemo(() => submissionNotifications.slice(0, 30), [submissionNotifications]);
 
   const combinedReferenceAndSubmission = useMemo(() => {
     const referenceText = (formattedReferenceAnswers || "No reference answer available.").trim();
