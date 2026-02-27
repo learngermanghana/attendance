@@ -79,8 +79,14 @@ export default function CommunicationPage() {
     setSaving(true);
 
     try {
-      await saveAnnouncementRow(form);
-      toast.success("Broadcast saved and sent to sheet.");
+      const receipt = await saveAnnouncementRow(form);
+
+      if (receipt?.sheet?.success && receipt?.sheet?.unverified) {
+        toast.info(receipt.sheet.message || "Broadcast request was sent, but the browser cannot verify sheet delivery.");
+      } else if (receipt?.sheet?.success || receipt?.firestore?.success) {
+        toast.success(receipt?.sheet?.message || receipt?.firestore?.message || "Broadcast saved successfully.");
+      }
+
       setForm((current) => ({
         ...current,
         announcement: "",
