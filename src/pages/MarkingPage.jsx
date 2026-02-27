@@ -53,7 +53,6 @@ export default function MarkingPage() {
   const [savingScore, setSavingScore] = useState(false);
   const [deletingSubmissionPath, setDeletingSubmissionPath] = useState("");
   const [activeSubmissionTab, setActiveSubmissionTab] = useState("latest");
-  const [selectedHistorySubmissionPath, setSelectedHistorySubmissionPath] = useState("");
 
   const referenceEntries = useMemo(() => {
     if (Array.isArray(answersDictionary)) return answersDictionary;
@@ -84,7 +83,6 @@ export default function MarkingPage() {
     const selectedStudent = roster.find((row) => row.id === selectedStudentId);
     if (!selectedStudent?.studentCode || !selectedStudent?.level) {
       setSubmissions([]);
-      setSelectedHistorySubmissionPath("");
       return;
     }
 
@@ -93,7 +91,6 @@ export default function MarkingPage() {
       try {
         const submissionRows = await fetchSubmissions(selectedStudent.level, selectedStudent.studentCode);
         setSubmissions(submissionRows);
-        setSelectedHistorySubmissionPath("");
       } catch (err) {
         error(err?.message || "Failed to load student submissions");
       } finally {
@@ -171,20 +168,7 @@ export default function MarkingPage() {
     return exact || studentSubmissions[0];
   }, [studentSubmissions, referenceAssignment]);
 
-  const submissionHistory = useMemo(() => {
-    return [...studentSubmissions].sort((a, b) => {
-      const aTime = a.createdAt ? a.createdAt.getTime() : 0;
-      const bTime = b.createdAt ? b.createdAt.getTime() : 0;
-      return bTime - aTime;
-    });
-  }, [studentSubmissions]);
-
-  const selectedHistorySubmission = useMemo(() => {
-    if (!submissionHistory.length) return null;
-    return submissionHistory.find((row) => row.path === selectedHistorySubmissionPath) || null;
-  }, [submissionHistory, selectedHistorySubmissionPath]);
-
-  const selectedSubmission = activeSubmissionTab === "history" ? selectedHistorySubmission : latestSubmission;
+  const selectedSubmission = latestSubmission;
 
   const latestNotifications = useMemo(() => submissionNotifications.slice(0, 30), [submissionNotifications]);
 
@@ -395,12 +379,6 @@ export default function MarkingPage() {
           >
             Incoming notifications
           </button>
-          <button
-            onClick={() => setActiveSubmissionTab("history")}
-            style={{ fontWeight: activeSubmissionTab === "history" ? 700 : 400 }}
-          >
-            Submission history
-          </button>
         </div>
         {loadingSubmissions ? (
           <p style={{ margin: 0 }}>Loading submissions...</p>
@@ -442,44 +420,6 @@ export default function MarkingPage() {
             </div>
           ) : (
             <p style={{ margin: 0 }}>No incoming submissions found yet.</p>
-          )
-        ) : activeSubmissionTab === "history" ? (
-          submissionHistory.length ? (
-          <div style={{ display: "grid", gap: 8 }}>
-            {submissionHistory.map((row) => (
-              <div key={row.path || row.id} style={{ border: "1px solid #e1e1e1", borderRadius: 8, padding: 10, display: "grid", gap: 8 }}>
-                <div style={{ fontSize: 13 }}>
-                  <b>{row.assignment || "Unknown assignment"}</b> · {row.status || "submitted"} · {row.createdAt?.toLocaleString() || "Unknown time"}
-                </div>
-                {row.improvementSummary && (
-                  <div style={{ fontSize: 13 }}>
-                    <b>Improvement summary:</b> {row.improvementSummary}
-                  </div>
-                )}
-                <textarea readOnly rows={4} value={row.text || "No submission text available."} />
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
-                  <button
-                    onClick={() => {
-                      setSelectedHistorySubmissionPath(row.path || "");
-                      success("History submission selected for combined view.");
-                    }}
-                    disabled={!row.path}
-                    style={{ fontWeight: selectedHistorySubmissionPath === row.path ? 700 : 400 }}
-                  >
-                    {selectedHistorySubmissionPath === row.path ? "Selected" : "Use this submission"}
-                  </button>
-                  <button
-                    onClick={() => handleDeleteSubmission(row)}
-                    disabled={deletingSubmissionPath === row.path}
-                  >
-                    {deletingSubmissionPath === row.path ? "Deleting..." : "Delete submission"}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-          ) : (
-            <p style={{ margin: 0 }}>No submission history found yet for this student.</p>
           )
         ) : null}
       </section>
