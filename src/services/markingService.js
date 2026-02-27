@@ -236,6 +236,7 @@ function normalizeDocs(snapshot) {
   snapshot.forEach((docSnap) => {
     const normalized = normalizeSubmission(docSnap.id, docSnap.data(), docSnap.ref.path);
     if (!isFinalSubmission(normalized)) return;
+    if (!normalized.studentCode && !normalized.studentName) return;
     rows.push({
       ...normalized,
       path: docSnap.ref.path,
