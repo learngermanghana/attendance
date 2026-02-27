@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { listClasses } from "../services/classesService";
+import { loadSubmissions } from "../services/markingService";
+import { loadPendingTutorReviews } from "../services/tutorReviewService";
 
 export default function DashboardPage() {
   const [classes, setClasses] = useState([]);
+  const [incomingAssignmentsCount, setIncomingAssignmentsCount] = useState(0);
+  const [pendingTutorReviewsCount, setPendingTutorReviewsCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -12,8 +16,15 @@ export default function DashboardPage() {
       setLoading(true);
       setError("");
       try {
-        const data = await listClasses();
-        setClasses(data);
+        const [classRows, submissionRows, tutorReviewRows] = await Promise.all([
+          listClasses(),
+          loadSubmissions(),
+          loadPendingTutorReviews(),
+        ]);
+
+        setClasses(classRows);
+        setIncomingAssignmentsCount(submissionRows.length);
+        setPendingTutorReviewsCount(tutorReviewRows.length);
       } catch (err) {
         setError(err?.message || "Failed to load dashboard metrics");
       } finally {
@@ -47,14 +58,42 @@ export default function DashboardPage() {
       {error && <p style={{ color: "#a00000" }}>❌ {error}</p>}
 
       {!loading && !error && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginTop: 16 }}>
-          {metrics.map((metric) => (
-            <div key={metric.label} style={{ border: "1px solid #ddd", borderRadius: 8, padding: 14, background: "#fff" }}>
-              <div style={{ fontSize: 12, color: "#4a5570" }}>{metric.label}</div>
-              <div style={{ fontWeight: 800, fontSize: 26, marginTop: 6 }}>{metric.value}</div>
+        <>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginTop: 16 }}>
+            {metrics.map((metric) => (
+              <div key={metric.label} style={{ border: "1px solid #ddd", borderRadius: 8, padding: 14, background: "#fff" }}>
+                <div style={{ fontSize: 12, color: "#4a5570" }}>{metric.label}</div>
+                <div style={{ fontWeight: 800, fontSize: 26, marginTop: 6 }}>{metric.value}</div>
+              </div>
+            ))}
+          </div>
+
+          <section style={{ marginTop: 16, display: "grid", gap: 12 }}>
+            <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 14, background: "#fff" }}>
+              <div style={{ fontWeight: 700 }}>Incoming assignments</div>
+              <p style={{ margin: "8px 0 0" }}>
+                {incomingAssignmentsCount > 0
+                  ? `${incomingAssignmentsCount} assignment${incomingAssignmentsCount === 1 ? "" : "s"} awaiting admin review.`
+                  : "No incoming assignments to review right now."}
+              </p>
+              <div style={{ marginTop: 8 }}>
+                <Link to="/marking">Open marking queue</Link>
+              </div>
             </div>
-          ))}
-        </div>
+
+            <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 14, background: "#fff" }}>
+              <div style={{ fontWeight: 700 }}>Tutor review requests</div>
+              <p style={{ margin: "8px 0 0" }}>
+                {pendingTutorReviewsCount > 0
+                  ? `${pendingTutorReviewsCount} tutor review message${pendingTutorReviewsCount === 1 ? "" : "s"} pending final review.`
+                  : "No tutor review messages pending at the moment."}
+              </p>
+              <div style={{ marginTop: 8 }}>
+                <Link to="/campus/tutor-marking">Open tutor marking</Link>
+              </div>
+            </div>
+          </section>
+        </>
       )}
     </div>
   );
