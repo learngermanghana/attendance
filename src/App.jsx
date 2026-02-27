@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Routes, Route, Link, useNavigate } from "react-router-dom";
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
+import AttendanceOverviewPage from "./pages/AttendanceOverviewPage";
 import AttendancePage from "./pages/AttendancePage";
 import CheckinPage from "./pages/CheckinPage";
 import CourseSchedulePage from "./pages/CourseSchedulePage";
@@ -15,30 +17,46 @@ import "./App.css";
 function TopBar() {
   const { user, logout } = useAuth();
   const nav = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   if (!user) return null;
 
   return (
     <header className="topbar">
       <div className="topbar-inner">
-        <div className="topbar-links">
-          <Link to="/">Dashboard</Link>
-          <Link to="/course-schedule">Course Schedule</Link>
-          <Link to="/marking">Mark Work</Link>
-          <Link to="/campus/tutor-marking">Tutor Marking</Link>
-          <Link to="/communication">Communication</Link>
-        </div>
-
-        <div className="topbar-user">
-          <span className="topbar-email">{user.email}</span>
+        <div className="topbar-main-row">
           <button
-            onClick={async () => {
-              await logout();
-              nav("/login");
-            }}
+            type="button"
+            className="topbar-menu-btn"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-expanded={menuOpen}
+            aria-controls="topbar-navigation"
+            aria-label="Toggle navigation menu"
           >
-            Logout
+            ☰
           </button>
+
+          <div id="topbar-navigation" className={`topbar-links ${menuOpen ? "topbar-links-open" : ""}`}>
+            <Link to="/" onClick={() => setMenuOpen(false)}>Dashboard</Link>
+            <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
+            <Link to="/course-schedule" onClick={() => setMenuOpen(false)}>Course Schedule</Link>
+            <Link to="/marking" onClick={() => setMenuOpen(false)}>Mark Work</Link>
+            <Link to="/campus/tutor-marking" onClick={() => setMenuOpen(false)}>Tutor Marking</Link>
+            <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
+          </div>
+
+          <div className={`topbar-user ${menuOpen ? "topbar-user-open" : ""}`}>
+            <span className="topbar-email">{user.email}</span>
+            <button
+              onClick={async () => {
+                setMenuOpen(false);
+                await logout();
+                nav("/login");
+              }}
+            >
+              Logout
+            </button>
+          </div>
         </div>
       </div>
     </header>
@@ -83,6 +101,15 @@ export default function App() {
           />
 
           <Route
+            path="/attendance"
+            element={
+              <ProtectedRoute>
+                <AttendanceOverviewPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/attendance/:classId"
             element={
               <ProtectedRoute>
@@ -90,7 +117,6 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-
 
           <Route
             path="/course-schedule"
