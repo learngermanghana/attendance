@@ -1,7 +1,6 @@
 import {
   collection,
   getDocs,
-  orderBy,
   query,
   serverTimestamp,
   updateDoc,
@@ -16,7 +15,6 @@ export async function loadPendingTutorReviews() {
   const reviewsQuery = query(
     collection(db, REVIEW_COLLECTION),
     where("reviewStatus", "==", "pending"),
-    orderBy("updatedAt", "desc"),
   );
 
   const snap = await getDocs(reviewsQuery);
