@@ -64,7 +64,6 @@ export default function DashboardPage() {
         <div style={{ display: "flex", gap: 12 }}>
           <Link to="/attendance">Go to attendance</Link>
           <Link to="/communication">Send broadcast</Link>
-          <Link to="/audit/finance">Finance audit</Link>
         </div>
       </div>
 
@@ -123,14 +122,7 @@ export default function DashboardPage() {
 
             <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 14, background: "#fff" }}>
               <div style={{ fontWeight: 700 }}>Audit workspace</div>
-              <p style={{ margin: "8px 0 0" }}>
-                Monitor financial records, contract completion, and expenses from the students CSV feed.
-              </p>
-              <ul style={{ margin: "8px 0 0", paddingLeft: 18 }}>
-                <li><Link to="/audit/finance">Finance page</Link></li>
-                <li><Link to="/audit/contracts">Contracts page</Link></li>
-                <li><Link to="/audit/expenses">Expense page</Link></li>
-              </ul>
+              <p style={{ margin: "8px 0 0" }}>Audit pages have been retired.</p>
             </div>
           </section>
         </>

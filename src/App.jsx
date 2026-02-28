@@ -10,9 +10,6 @@ import CourseSchedulePage from "./pages/CourseSchedulePage";
 import MarkingPage from "./pages/MarkingPage";
 import TutorMarkingPage from "./pages/TutorMarkingPage";
 import CommunicationPage from "./pages/CommunicationPage";
-import FinanceAuditPage from "./pages/FinanceAuditPage";
-import ContractsAuditPage from "./pages/ContractsAuditPage";
-import ExpensesAuditPage from "./pages/ExpensesAuditPage";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
 import "./App.css";
@@ -46,9 +43,6 @@ function TopBar() {
             <Link to="/marking" onClick={() => setMenuOpen(false)}>Mark Work</Link>
             <Link to="/campus/tutor-marking" onClick={() => setMenuOpen(false)}>Tutor Marking</Link>
             <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
-            <Link to="/audit/finance" onClick={() => setMenuOpen(false)}>Finance Audit</Link>
-            <Link to="/audit/contracts" onClick={() => setMenuOpen(false)}>Contracts Audit</Link>
-            <Link to="/audit/expenses" onClick={() => setMenuOpen(false)}>Expense Audit</Link>
           </div>
 
           <div className={`topbar-user ${menuOpen ? "topbar-user-open" : ""}`}>
@@ -153,30 +147,6 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <CommunicationPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/audit/finance"
-            element={
-              <ProtectedRoute>
-                <FinanceAuditPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/audit/contracts"
-            element={
-              <ProtectedRoute>
-                <ContractsAuditPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/audit/expenses"
-            element={
-              <ProtectedRoute>
-                <ExpensesAuditPage />
               </ProtectedRoute>
             }
           />
