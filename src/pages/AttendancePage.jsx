@@ -96,6 +96,7 @@ export default function AttendancePage() {
 
   const selectedSession = attendanceMap[selectedSessionId] || { title: "", date: "", assignmentId: "", students: {} };
   const checkinSessionDate = String(selectedSession.date || "").trim() || selectedSessionId;
+  const checkinSessionId = String(selectedSessionId || "").trim();
 
   const schedule = useMemo(() => getClassSchedule(classId), [classId]);
   const sessionLabel = useMemo(() => {
@@ -124,12 +125,13 @@ export default function AttendancePage() {
     const base = window.location.origin;
     const qs = new URLSearchParams({
       classId,
+      sessionId: checkinSessionId,
       date: checkinSessionDate,
       sessionLabel,
       assignmentId: String(selectedSession.assignmentId || ""),
     }).toString();
     return `${base}/checkin?${qs}`;
-  }, [classId, checkinSessionDate, sessionLabel, selectedSession.assignmentId]);
+  }, [classId, checkinSessionDate, checkinSessionId, sessionLabel, selectedSession.assignmentId]);
 
   useEffect(() => {
     (async () => {
@@ -198,7 +200,7 @@ export default function AttendancePage() {
 
     (async () => {
       try {
-        const checkins = await listSessionCheckins({ classId, date: checkinSessionDate });
+        const checkins = await listSessionCheckins({ classId, sessionId: checkinSessionId });
         if (checkins.length === 0) return;
 
         setAttendanceMap((current) => {
@@ -222,7 +224,7 @@ export default function AttendancePage() {
         // Non-blocking: class page should still render if check-ins fail to load.
       }
     })();
-  }, [classId, selectedSessionId, checkinSessionDate]);
+  }, [classId, selectedSessionId, checkinSessionDate, checkinSessionId]);
 
   const setStudentPresent = (studentCode, present) => {
     setAttendanceMap((prev) => ({
@@ -271,7 +273,8 @@ export default function AttendancePage() {
         },
         body: JSON.stringify({
           classId,
-          date: checkinSessionDate,
+          sessionId: checkinSessionId,
+      date: checkinSessionDate,
           sessionLabel,
           assignmentId: String(selectedSession.assignmentId || ""),
           windowMinutes: 180,
@@ -303,7 +306,8 @@ export default function AttendancePage() {
         },
         body: JSON.stringify({
           classId,
-          date: checkinSessionDate,
+          sessionId: checkinSessionId,
+      date: checkinSessionDate,
           action: "close",
         }),
       });
