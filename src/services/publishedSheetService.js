@@ -2,7 +2,7 @@ const DEFAULT_PUBLISHED_SHEET_CSV_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vTDD46qAiCuuza-u4jTzwgiuMR5HwtBhQdvElQw5SIQOHCEJ7RCNLx7Zlarf7HvhYOCXkiVcwTCyXp6/pub?output=csv";
 
 const PUBLISHED_SHEET_CSV_URL =
-  import.meta.env.VITE_STUDENTS_SHEET_CSV_URL || DEFAULT_PUBLISHED_SHEET_CSV_URL;
+  import.meta?.env?.VITE_STUDENTS_SHEET_CSV_URL || DEFAULT_PUBLISHED_SHEET_CSV_URL;
 
 function normalizeHeader(value) {
   return String(value || "")
