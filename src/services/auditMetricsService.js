@@ -30,9 +30,8 @@ function inferPaymentStatus(row) {
     if (["unpaid", "overdue", "due"].includes(explicit)) return "unpaid";
   }
 
-  const amountPaid = parseMoney(readAny(row, ["paid", "amountpaid", "paidamount"]));
-  const balance = parseMoney(readAny(row, ["balance", "amountdue", "tuition", "fee", "totalfee"]));
-  const amountDue = amountPaid + Math.max(balance, 0);
+  const amountDue = parseMoney(readAny(row, ["amountdue", "tuition", "fee", "totalfee"]));
+  const amountPaid = parseMoney(readAny(row, ["amountpaid", "paid", "paidamount"]));
 
   if (amountDue <= 0 && amountPaid <= 0) return "unknown";
   if (amountPaid >= amountDue && amountDue > 0) return "paid";
@@ -47,14 +46,6 @@ function inferContractStatus(row) {
   if (["signed", "complete", "completed"].includes(explicit)) return "signed";
   if (["pending", "awaiting", "review"].includes(explicit)) return "pending";
   if (["missing", "notstarted", "unsigned"].includes(explicit)) return "missing";
-
-  const startDate = normalize(readAny(row, ["contractstart"]));
-  const endDate = normalize(readAny(row, ["contractend"]));
-  const enrollmentSent = normalizeKey(readAny(row, ["enrollmentsent"]));
-
-  if (startDate && endDate) return "signed";
-  if (startDate || endDate || ["yes", "true", "sent"].includes(enrollmentSent)) return "pending";
-
   return explicit ? "pending" : "missing";
 }
 
@@ -62,10 +53,6 @@ function inferExpenseStatus(row) {
   const explicit = normalizeKey(readAny(row, ["expensestatus", "expenseapproval", "expense"]));
   if (["approved", "reimbursed", "paid"].includes(explicit)) return "approved";
   if (["pending", "submitted", "review"].includes(explicit)) return "pending";
-
-  const expenseAmount = parseMoney(readAny(row, ["dailylimit", "expense", "expenseamount", "cost"]));
-  if (expenseAmount > 0) return "approved";
-
   return explicit ? "pending" : "none";
 }
 
@@ -76,16 +63,14 @@ function toAuditRow(row) {
     paymentStatus: inferPaymentStatus(row),
     contractStatus: inferContractStatus(row),
     expenseStatus: inferExpenseStatus(row),
-    amountPaid: parseMoney(readAny(row, ["paid", "amountpaid", "paidamount"])),
-    amountDue:
-      parseMoney(readAny(row, ["paid", "amountpaid", "paidamount"])) +
-      Math.max(parseMoney(readAny(row, ["balance", "amountdue", "tuition", "fee", "totalfee"])), 0),
-    balance: Math.max(parseMoney(readAny(row, ["balance", "amountdue", "tuition", "fee", "totalfee"])), 0),
-    expenseAmount: parseMoney(readAny(row, ["dailylimit", "expense", "expenseamount", "cost"])),
+    amountDue: parseMoney(readAny(row, ["amountdue", "tuition", "fee", "totalfee"])),
+    amountPaid: parseMoney(readAny(row, ["amountpaid", "paid", "paidamount"])),
+    expenseAmount: parseMoney(readAny(row, ["expense", "expenseamount", "cost"])),
   };
 }
 
-export function buildAuditMetrics(rows) {
+export async function loadAuditMetrics() {
+  const rows = await loadPublishedStudentRows();
   const auditRows = rows.map(toAuditRow);
 
   const finance = {
@@ -115,9 +100,4 @@ export function buildAuditMetrics(rows) {
     contracts,
     expenses,
   };
-}
-
-export async function loadAuditMetrics() {
-  const rows = await loadPublishedStudentRows();
-  return buildAuditMetrics(rows);
 }
