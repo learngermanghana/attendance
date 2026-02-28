@@ -1,15 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { listClasses } from "../services/classesService";
 import { loadSubmissions } from "../services/markingService";
 import { loadPendingTutorReviews } from "../services/tutorReviewService";
-import { loadAuditMetrics } from "../services/auditMetricsService";
 
 export default function DashboardPage() {
-  const [classes, setClasses] = useState([]);
   const [incomingAssignments, setIncomingAssignments] = useState([]);
   const [pendingTutorReviewsCount, setPendingTutorReviewsCount] = useState(0);
-  const [auditMetrics, setAuditMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -18,17 +14,13 @@ export default function DashboardPage() {
       setLoading(true);
       setError("");
       try {
-        const [classRows, submissionRows, tutorReviewRows, auditRows] = await Promise.all([
-          listClasses(),
+        const [submissionRows, tutorReviewRows] = await Promise.all([
           loadSubmissions(),
           loadPendingTutorReviews(),
-          loadAuditMetrics(),
         ]);
 
-        setClasses(classRows);
         setIncomingAssignments(submissionRows);
         setPendingTutorReviewsCount(tutorReviewRows.length);
-        setAuditMetrics(auditRows);
       } catch (err) {
         setError(err?.message || "Failed to load dashboard metrics");
       } finally {
@@ -37,21 +29,6 @@ export default function DashboardPage() {
     })();
   }, []);
 
-  const metrics = useMemo(() => {
-    const totalClasses = classes.length;
-    const namedClasses = classes.filter((klass) => Boolean(klass?.name)).length;
-
-    return [
-      { label: "Total classes", value: totalClasses },
-      { label: "Named classes", value: namedClasses },
-      { label: "Needs setup", value: Math.max(totalClasses - namedClasses, 0) },
-      { label: "Students", value: auditMetrics?.finance.totalStudents || 0 },
-      { label: "Fees outstanding", value: auditMetrics?.finance.unpaid || 0 },
-      { label: "Contracts missing", value: auditMetrics?.contracts.missing || 0 },
-      { label: "Expense reviews", value: auditMetrics?.expenses.pending || 0 },
-    ];
-  }, [auditMetrics, classes]);
-
   const incomingAssignmentPreview = useMemo(
     () => incomingAssignments.slice(0, 5),
     [incomingAssignments],
@@ -59,29 +36,12 @@ export default function DashboardPage() {
 
   return (
     <div style={{ padding: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-        <h2 style={{ margin: 0 }}>Dashboard</h2>
-        <div style={{ display: "flex", gap: 12 }}>
-          <Link to="/attendance">Go to attendance</Link>
-          <Link to="/communication">Send broadcast</Link>
-        </div>
-      </div>
-
       {loading && <p>Loading dashboard metrics...</p>}
       {error && <p style={{ color: "#a00000" }}>❌ {error}</p>}
 
       {!loading && !error && (
         <>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginTop: 16 }}>
-            {metrics.map((metric) => (
-              <div key={metric.label} style={{ border: "1px solid #ddd", borderRadius: 8, padding: 14, background: "#fff" }}>
-                <div style={{ fontSize: 12, color: "#4a5570" }}>{metric.label}</div>
-                <div style={{ fontWeight: 800, fontSize: 26, marginTop: 6 }}>{metric.value}</div>
-              </div>
-            ))}
-          </div>
-
-          <section style={{ marginTop: 16, display: "grid", gap: 12 }}>
+          <section style={{ display: "grid", gap: 12 }}>
             <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 14, background: "#fff" }}>
               <div style={{ fontWeight: 700 }}>Incoming assignments</div>
               <p style={{ margin: "8px 0 0" }}>
