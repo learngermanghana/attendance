@@ -6,7 +6,7 @@ import { loadPendingTutorReviews } from "../services/tutorReviewService";
 
 export default function DashboardPage() {
   const [classes, setClasses] = useState([]);
-  const [incomingAssignmentsCount, setIncomingAssignmentsCount] = useState(0);
+  const [incomingAssignments, setIncomingAssignments] = useState([]);
   const [pendingTutorReviewsCount, setPendingTutorReviewsCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -23,7 +23,7 @@ export default function DashboardPage() {
         ]);
 
         setClasses(classRows);
-        setIncomingAssignmentsCount(submissionRows.length);
+        setIncomingAssignments(submissionRows);
         setPendingTutorReviewsCount(tutorReviewRows.length);
       } catch (err) {
         setError(err?.message || "Failed to load dashboard metrics");
@@ -43,6 +43,11 @@ export default function DashboardPage() {
       { label: "Needs setup", value: Math.max(totalClasses - namedClasses, 0) },
     ];
   }, [classes]);
+
+  const incomingAssignmentPreview = useMemo(
+    () => incomingAssignments.slice(0, 5),
+    [incomingAssignments],
+  );
 
   return (
     <div style={{ padding: 16 }}>
@@ -72,10 +77,24 @@ export default function DashboardPage() {
             <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 14, background: "#fff" }}>
               <div style={{ fontWeight: 700 }}>Incoming assignments</div>
               <p style={{ margin: "8px 0 0" }}>
-                {incomingAssignmentsCount > 0
-                  ? `${incomingAssignmentsCount} assignment${incomingAssignmentsCount === 1 ? "" : "s"} awaiting admin review.`
+                {incomingAssignments.length > 0
+                  ? `${incomingAssignments.length} assignment${incomingAssignments.length === 1 ? "" : "s"} awaiting admin review.`
                   : "No incoming assignments to review right now."}
               </p>
+              {incomingAssignmentPreview.length > 0 && (
+                <ul style={{ margin: "10px 0 0", paddingLeft: 18 }}>
+                  {incomingAssignmentPreview.map((submission) => {
+                    const studentName = submission.studentName || submission.studentCode || "Unknown student";
+                    const title = submission.assignment || "Untitled assignment";
+
+                    return (
+                      <li key={submission.path || submission.id} style={{ marginTop: 4 }}>
+                        <strong>{studentName}</strong>: {title}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
               <div style={{ marginTop: 8 }}>
                 <Link to="/marking">Open marking queue</Link>
               </div>
