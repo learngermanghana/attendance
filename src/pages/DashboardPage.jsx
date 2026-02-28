@@ -3,11 +3,13 @@ import { Link } from "react-router-dom";
 import { listClasses } from "../services/classesService";
 import { loadSubmissions } from "../services/markingService";
 import { loadPendingTutorReviews } from "../services/tutorReviewService";
+import { loadAuditMetrics } from "../services/auditMetricsService";
 
 export default function DashboardPage() {
   const [classes, setClasses] = useState([]);
   const [incomingAssignments, setIncomingAssignments] = useState([]);
   const [pendingTutorReviewsCount, setPendingTutorReviewsCount] = useState(0);
+  const [auditMetrics, setAuditMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -16,15 +18,17 @@ export default function DashboardPage() {
       setLoading(true);
       setError("");
       try {
-        const [classRows, submissionRows, tutorReviewRows] = await Promise.all([
+        const [classRows, submissionRows, tutorReviewRows, auditRows] = await Promise.all([
           listClasses(),
           loadSubmissions(),
           loadPendingTutorReviews(),
+          loadAuditMetrics(),
         ]);
 
         setClasses(classRows);
         setIncomingAssignments(submissionRows);
         setPendingTutorReviewsCount(tutorReviewRows.length);
+        setAuditMetrics(auditRows);
       } catch (err) {
         setError(err?.message || "Failed to load dashboard metrics");
       } finally {
@@ -41,8 +45,12 @@ export default function DashboardPage() {
       { label: "Total classes", value: totalClasses },
       { label: "Named classes", value: namedClasses },
       { label: "Needs setup", value: Math.max(totalClasses - namedClasses, 0) },
+      { label: "Students", value: auditMetrics?.finance.totalStudents || 0 },
+      { label: "Fees outstanding", value: auditMetrics?.finance.unpaid || 0 },
+      { label: "Contracts missing", value: auditMetrics?.contracts.missing || 0 },
+      { label: "Expense reviews", value: auditMetrics?.expenses.pending || 0 },
     ];
-  }, [classes]);
+  }, [auditMetrics, classes]);
 
   const incomingAssignmentPreview = useMemo(
     () => incomingAssignments.slice(0, 5),
@@ -56,6 +64,7 @@ export default function DashboardPage() {
         <div style={{ display: "flex", gap: 12 }}>
           <Link to="/attendance">Go to attendance</Link>
           <Link to="/communication">Send broadcast</Link>
+          <Link to="/audit/finance">Finance audit</Link>
         </div>
       </div>
 
@@ -110,6 +119,18 @@ export default function DashboardPage() {
               <div style={{ marginTop: 8 }}>
                 <Link to="/campus/tutor-marking">Open tutor marking</Link>
               </div>
+            </div>
+
+            <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 14, background: "#fff" }}>
+              <div style={{ fontWeight: 700 }}>Audit workspace</div>
+              <p style={{ margin: "8px 0 0" }}>
+                Monitor financial records, contract completion, and expenses from the students CSV feed.
+              </p>
+              <ul style={{ margin: "8px 0 0", paddingLeft: 18 }}>
+                <li><Link to="/audit/finance">Finance page</Link></li>
+                <li><Link to="/audit/contracts">Contracts page</Link></li>
+                <li><Link to="/audit/expenses">Expense page</Link></li>
+              </ul>
             </div>
           </section>
         </>
