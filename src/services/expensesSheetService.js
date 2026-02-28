@@ -3,6 +3,9 @@ const DEFAULT_EXPENSES_SHEET_PUBLISHED_URL =
 
 const EXPENSES_PUBLISHED_URL = String(import.meta.env.VITE_EXPENSES_SHEET_PUBLISHED_URL || DEFAULT_EXPENSES_SHEET_PUBLISHED_URL).trim();
 const EXPENSES_WEBHOOK_URL = String(import.meta.env.VITE_EXPENSES_WEBHOOK_URL || "").trim();
+const EXPENSES_WEBHOOK_TOKEN = String(import.meta.env.VITE_EXPENSES_WEBHOOK_TOKEN || "").trim();
+const EXPENSES_WEBHOOK_SHEET_NAME = String(import.meta.env.VITE_EXPENSES_WEBHOOK_SHEET_NAME || "").trim();
+const EXPENSES_WEBHOOK_SHEET_GID = String(import.meta.env.VITE_EXPENSES_WEBHOOK_SHEET_GID || "").trim();
 
 function normalize(value) {
   return String(value || "").trim();
@@ -139,6 +142,9 @@ export async function saveExpenseRow(input = {}) {
   }
 
   const payload = {
+    ...(EXPENSES_WEBHOOK_TOKEN ? { token: EXPENSES_WEBHOOK_TOKEN } : {}),
+    ...(EXPENSES_WEBHOOK_SHEET_NAME ? { sheet_name: EXPENSES_WEBHOOK_SHEET_NAME } : {}),
+    ...(EXPENSES_WEBHOOK_SHEET_GID ? { sheet_gid: EXPENSES_WEBHOOK_SHEET_GID } : {}),
     row,
     rows: [row],
   };
