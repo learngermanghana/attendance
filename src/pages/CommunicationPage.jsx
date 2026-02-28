@@ -20,6 +20,11 @@ const QUICK_TEMPLATES = [
     announcement: "Congratulations! Your course has ended. Your transcript/certificate is ready.",
     attachCertificate: true,
   },
+  {
+    label: "No class on holiday",
+    topic: "Holiday Notice",
+    announcement: "No class on {date} due to holiday. Replacement class details will follow.",
+  },
 ];
 
 const fieldStyle = { display: "grid", gap: 6 };
