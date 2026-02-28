@@ -128,8 +128,8 @@ async function requireAuth(req) {
   return decoded;
 }
 
-function sessionDocRef(classId, date) {
-  return db.doc(`attendance/${classId}/sessions/${date}`);
+function sessionDocRef(classId, sessionId) {
+  return db.doc(`attendance/${classId}/sessions/${sessionId}`);
 }
 
 app.post("/openSession", async (req, res) => {
@@ -138,19 +138,20 @@ app.post("/openSession", async (req, res) => {
 
     const body = req.body || {};
     const classId = normalizeClassId(body.classId || body.className);
-    const { date, action, windowMinutes, sessionLabel, lesson, assignmentId } = body;
+    const { sessionId: rawSessionId, date, action, windowMinutes, sessionLabel, lesson, assignmentId } = body;
+    const sessionId = String(rawSessionId || date || "").trim();
 
-    if (!classId || !date) {
-      return res.status(400).json({ error: "classId and date are required" });
+    if (!classId || !sessionId) {
+      return res.status(400).json({ error: "classId and sessionId are required" });
     }
 
-    const ref = sessionDocRef(classId, date);
+    const ref = sessionDocRef(classId, sessionId);
 
     if (action === "close") {
       await ref.set(
         {
           classId,
-          date,
+          sessionId,
           opened: false,
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
           closedBy: user.uid,
@@ -165,9 +166,11 @@ app.post("/openSession", async (req, res) => {
     const openTo = admin.firestore.Timestamp.fromMillis(now.toMillis() + mins * 60 * 1000);
 
     const existing = await ref.get();
+    const existingSession = existing.exists ? existing.data() : {};
     const payload = {
       classId,
-      date,
+      sessionId,
+      date: String(date || existingSession.date || "").trim(),
       sessionLabel: String(sessionLabel || lesson || "").trim(),
       assignment_id: String(assignmentId || "").trim(),
       opened: true,
@@ -193,13 +196,14 @@ app.post("/checkin", async (req, res) => {
   try {
     const body = req.body || {};
     const classId = normalizeClassId(body.classId || body.className);
-    const { date, email, phoneNumber, sessionLabel, lesson, assignmentId } = body;
+    const { sessionId: rawSessionId, date, email, phoneNumber, sessionLabel, lesson, assignmentId } = body;
+    const sessionId = String(rawSessionId || date || "").trim();
 
-    if (!classId || !date || !email || !phoneNumber) {
-      return res.status(400).json({ error: "classId, date, email, phoneNumber are required" });
+    if (!classId || !sessionId || !email || !phoneNumber) {
+      return res.status(400).json({ error: "classId, sessionId, email, phoneNumber are required" });
     }
 
-    const sessionRef = sessionDocRef(classId, date);
+    const sessionRef = sessionDocRef(classId, sessionId);
     const sessionSnap = await sessionRef.get();
     if (!sessionSnap.exists) return res.status(400).json({ error: "Session not opened" });
 
@@ -260,7 +264,8 @@ app.post("/checkin", async (req, res) => {
 
     const uid = st.uid || studentDoc.id;
 
-    const checkinRef = sessionRef.collection("checkins").doc(uid);
+    const checkinDocId = String(uid || st.studentCode || st.studentcode || studentDoc.id || "").trim();
+    const checkinRef = sessionRef.collection("checkins").doc(checkinDocId);
     const checkinSnap = await checkinRef.get();
 
     const checkinPayload = {
@@ -269,9 +274,10 @@ app.post("/checkin", async (req, res) => {
       name: st.name || "",
       email: st.email || "",
       phoneNumber: resolveStudentPhone(st),
-      secretCode: buildSecretCode({ classId, date, email: st.email || normalizedEmail, phone: storedPhone }),
+      secretCode: buildSecretCode({ classId, date: sessionId, email: st.email || normalizedEmail, phone: storedPhone }),
       classId,
-      date,
+      sessionId,
+      date: String(date || session.date || "").trim(),
       sessionLabel: String(sessionLabel || lesson || session.sessionLabel || session.lesson || "").trim(),
       assignment_id: String(assignmentId || session.assignment_id || "").trim(),
       status: "present",

@@ -19,10 +19,6 @@ function sessionRefFor(classId, sessionId) {
   return doc(collection(db, "attendance", normalizeClassId(classId), "sessions"), String(sessionId));
 }
 
-function looksLikeIsoDate(value) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(String(value || "").trim());
-}
-
 function normalizeStudentEntry(studentCode, value) {
   if (typeof value === "boolean") {
     return {
@@ -101,16 +97,7 @@ export async function saveAttendanceToFirestore(classId, attendanceMap) {
       updatedAt: serverTimestamp(),
     };
 
-    const indexRef = sessionRefFor(safeClassId, sessionId);
-    let ref = indexRef;
-
-    if (looksLikeIsoDate(sessionDate)) {
-      const dateRef = sessionRefFor(safeClassId, sessionDate);
-      const dateSnap = await getDoc(dateRef);
-      if (dateSnap.exists()) {
-        ref = dateRef;
-      }
-    }
+    const ref = sessionRefFor(safeClassId, sessionId);
 
     const snap = await getDoc(ref);
     if (!snap.exists()) {
@@ -161,10 +148,13 @@ export async function listAttendanceSessions({ classId, dateFrom, dateTo }) {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
-export async function listSessionCheckins({ classId, date }) {
+export async function listSessionCheckins({ classId, sessionId }) {
   const safeClassId = normalizeClassId(classId);
   if (!safeClassId) return [];
 
-  const snap = await getDocs(collection(db, "attendance", safeClassId, "sessions", String(date), "checkins"));
+  const safeSessionId = String(sessionId || "").trim();
+  if (!safeSessionId) return [];
+
+  const snap = await getDocs(collection(db, "attendance", safeClassId, "sessions", safeSessionId, "checkins"));
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
