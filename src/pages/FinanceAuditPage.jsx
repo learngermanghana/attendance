@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { loadAuditMetrics } from "../services/auditMetricsService";
 
 function formatMoney(value) {
-  return new Intl.NumberFormat("en-GH", { style: "currency", currency: "GHS", maximumFractionDigits: 2 }).format(value || 0);
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value || 0);
 }
 
 export default function FinanceAuditPage() {
