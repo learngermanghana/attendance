@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import answersDictionary from "../data/answers_dictionary.json";
 import { deleteSubmission, fetchSubmissions, loadRoster, loadSubmissions, saveScoreRow } from "../services/markingService.js";
+import { autoMarkSubmission } from "../utils/autoMarking.js";
 import { useToast } from "../context/ToastContext.jsx";
 
 const DEFAULT_REFERENCE_LINK =
@@ -51,6 +52,7 @@ export default function MarkingPage() {
   const [feedback, setFeedback] = useState("");
   const [saveReceipt, setSaveReceipt] = useState(null);
   const [savingScore, setSavingScore] = useState(false);
+  const [autoMarking, setAutoMarking] = useState(false);
   const [deletingSubmissionPath, setDeletingSubmissionPath] = useState("");
   const [activeSubmissionTab, setActiveSubmissionTab] = useState("latest");
 
@@ -254,6 +256,32 @@ export default function MarkingPage() {
       success("Combined reference and submission copied.");
     } catch {
       error("Could not copy combined text. Please copy manually.");
+    }
+  };
+
+
+  const handleAutoMark = async () => {
+    if (!referenceEntry) {
+      error("Pick a reference answer before auto-marking.");
+      return;
+    }
+
+    const submissionText = selectedSubmission?.text || "";
+    if (!submissionText.trim()) {
+      error("No student submission available to auto-mark.");
+      return;
+    }
+
+    try {
+      setAutoMarking(true);
+      const result = autoMarkSubmission({ referenceEntry, submissionText });
+      setScore(String(result.score));
+      setFeedback(result.feedback);
+      success("AI auto-mark draft applied. Please review before saving.");
+    } catch (err) {
+      error(err?.message || "Failed to auto-mark submission.");
+    } finally {
+      setAutoMarking(false);
     }
   };
 
@@ -469,6 +497,9 @@ export default function MarkingPage() {
             />
           </label>
           <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={handleAutoMark} disabled={autoMarking || !selectedSubmission}>
+              {autoMarking ? "Auto-marking..." : "Auto-mark with AI"}
+            </button>
             <button onClick={() => { setScore(""); setFeedback(""); }}>Reset</button>
           </div>
         </div>
