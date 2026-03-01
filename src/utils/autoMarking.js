@@ -25,29 +25,20 @@ function getQuestionIndex(key) {
 }
 
 function parseStudentObjectiveAnswers(submissionText = "") {
-  const lines = String(submissionText || "")
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
+  const text = String(submissionText || "");
+  const map = new Map();
 
-  const explicitByIndex = new Map();
-  const implicitByOrder = [];
-
-  for (const line of lines) {
-    const explicitMatch = line.match(/^(?:answer\s*)?(\d{1,3})\s*[\).:-]?\s*(.+)$/i);
-    if (explicitMatch) {
-      explicitByIndex.set(Number.parseInt(explicitMatch[1], 10), explicitMatch[2].trim());
-      continue;
-    }
-
-    implicitByOrder.push(line);
+  const explicitRegex = /(?:^|\n|\r)\s*(?:answer\s*)?(\d{1,3})\s*[\).:-]\s*([^\n\r]+)/gi;
+  let explicitMatch;
+  while ((explicitMatch = explicitRegex.exec(text))) {
+    map.set(Number.parseInt(explicitMatch[1], 10), explicitMatch[2].trim());
   }
 
-  return { explicitByIndex, implicitByOrder };
+  return map;
 }
 
 function scoreObjective(referenceAnswers = {}, submissionText = "") {
-  const { explicitByIndex, implicitByOrder } = parseStudentObjectiveAnswers(submissionText);
+  const studentAnswers = parseStudentObjectiveAnswers(submissionText);
   const entries = Object.entries(referenceAnswers || {});
 
   const total = entries.length;
@@ -61,9 +52,9 @@ function scoreObjective(referenceAnswers = {}, submissionText = "") {
   let matched = 0;
   const missed = [];
 
-  for (const [position, [key, value]] of entries.entries()) {
+  for (const [key, value] of entries) {
     const questionIndex = getQuestionIndex(key);
-    const studentRaw = (questionIndex ? explicitByIndex.get(questionIndex) : "") || implicitByOrder[position] || "";
+    const studentRaw = questionIndex ? studentAnswers.get(questionIndex) : "";
 
     const expectedLetter = extractOptionLetter(value);
     const expectedText = normalizeForCompare(extractOptionText(value));

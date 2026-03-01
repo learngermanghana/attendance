@@ -125,7 +125,7 @@ The app includes a **Mark Work** page with a 5-stage marking workflow:
 4. Auto-mark draft (optional) or enter manual score/feedback.
 5. Save to Google Sheets webhook, with optional Firestore mirror into `scores`.
 
-For objective answers, auto-mark accepts either the option letter (`B`) or the answer text (`Um sieben Uhr`) when matching entries such as `B) Um sieben Uhr`. It also accepts numbered lines like `1: A) sieben` (without needing the `Answer1:` prefix).
+For objective answers, auto-mark accepts either the option letter (`B`) or the answer text (`Um sieben Uhr`) when matching entries such as `B) Um sieben Uhr`.
 
 The target score row schema is: `studentcode, name, assignment, score, comments, date, level, link`.
 If your Apps Script expects auth/sheet selectors, configure `VITE_SCORES_WEBHOOK_TOKEN`, `VITE_SCORES_WEBHOOK_SHEET_NAME`, and/or `VITE_SCORES_WEBHOOK_SHEET_GID`.
