@@ -25,6 +25,12 @@ const QUICK_TEMPLATES = [
     topic: "Holiday Notice",
     announcement: "No class on {date} due to holiday. Replacement class details will follow.",
   },
+  {
+    label: "NRW class time update",
+    topic: "Class Time Update",
+    announcement:
+      "Hi NRW class, your class time has been updated to {new_time} starting {date}. Please reply if you have any conflicts.",
+  },
 ];
 
 const fieldStyle = { display: "grid", gap: 6 };
