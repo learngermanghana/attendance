@@ -8,10 +8,16 @@ import {
   readPublishedStudentCode,
   readPublishedStudentName,
 } from "./publishedSheetService.js";
-import { resolveWithSheetFallback } from "./fallbackResolvers.js";
+
+function isRosterEligibleStatus(statusValue) {
+  const status = String(statusValue || "").toLowerCase().trim();
+  return !status || status === "active" || status === "paid";
+}
 
 function isActiveStudent(data) {
-  return String(data?.status || "").toLowerCase() === "active" && String(data?.role || "").toLowerCase() === "student";
+  const role = String(data?.role || "").toLowerCase();
+  const hasCompatibleRole = !role || role === "student";
+  return isRosterEligibleStatus(data?.status) && hasCompatibleRole;
 }
 
 function byNameAsc(a, b) {
@@ -35,6 +41,22 @@ function resolvePublishedClass(row) {
   const className = normalize(readPublishedClassName(row));
   if (className) return className;
   return normalize(readPublishedLevel(row));
+}
+
+
+function isActivePublishedRow(row) {
+  return isRosterEligibleStatus(readPublishedStatus(row));
+}
+
+function mapPublishedStudent(row) {
+  return {
+    id: String(readPublishedStudentCode(row) || readPublishedStudentName(row) || "").trim(),
+    name: normalize(readPublishedStudentName(row)),
+    studentCode: normalize(readPublishedStudentCode(row)),
+    className: resolvePublishedClass(row),
+    status: normalize(readPublishedStatus(row)).toLowerCase(),
+    role: "student",
+  };
 }
 
 export async function listPublishedStudentsByClassWithLoader(classId, loadRows = loadPublishedStudentRows) {
@@ -77,11 +99,28 @@ export async function listStudentsByClassWithDeps(
     loadStudentsByField = loadStudentsByFieldWithFirestore,
   } = {},
 ) {
-  return resolveWithSheetFallback({
-    loadFromSheet: () => loadPublishedStudentsByClass(classId),
-    loadFromFallbackFields: (field) => loadStudentsByField(field, classId),
-    fallbackFields: ["classId", "className", "group", "groupId", "groupName"],
-  });
+  try {
+    const fromSheet = await loadPublishedStudentsByClass(classId);
+    if (fromSheet.length > 0) return fromSheet;
+  } catch {
+    // Fall back when published sheet is unavailable.
+  }
+
+  const fields = ["classId", "className", "group", "groupId", "groupName"];
+  const merged = [];
+  const seenIds = new Set();
+
+  for (const field of fields) {
+    const records = await loadStudentsByField(field, classId);
+    for (const record of records) {
+      const dedupeKey = String(record?.id || record?.studentCode || record?.studentcode || record?.uid || record?.email || "").trim();
+      if (dedupeKey && seenIds.has(dedupeKey)) continue;
+      if (dedupeKey) seenIds.add(dedupeKey);
+      merged.push(record);
+    }
+  }
+
+  return merged.sort(byNameAsc);
 }
 
 export async function listStudentsByClass(classId) {
