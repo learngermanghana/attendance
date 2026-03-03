@@ -34,3 +34,27 @@ test("normalizes spacing in class name matching", async () => {
 
   assert.equal(result.length, 1);
 });
+
+
+test("includes paid published students for class match", async () => {
+  const rows = [
+    { classname: "A2 Stuttgart Klasse", level: "A2", status: "Paid", studentcode: "S-003", name: "Paid Student" },
+    { classname: "A2 Stuttgart Klasse", level: "A2", status: "Inactive", studentcode: "S-004", name: "Inactive Student" },
+  ];
+
+  const result = await listPublishedStudentsByClassWithLoader("A2 Stuttgart Klasse", async () => rows);
+
+  assert.deepEqual(result.map((s) => s.name), ["Paid Student"]);
+});
+
+
+test("includes published students with missing status for class match", async () => {
+  const rows = [
+    { classname: "A2 Stuttgart Klasse", level: "A2", status: "", studentcode: "S-005", name: "No Status Student" },
+    { classname: "A2 Stuttgart Klasse", level: "A2", status: "Inactive", studentcode: "S-006", name: "Inactive Student" },
+  ];
+
+  const result = await listPublishedStudentsByClassWithLoader("A2 Stuttgart Klasse", async () => rows);
+
+  assert.deepEqual(result.map((s) => s.name), ["No Status Student"]);
+});
