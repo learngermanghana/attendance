@@ -19,6 +19,21 @@ function formatTimestamp(value) {
   return String(value);
 }
 
+function toMillis(value) {
+  if (!value) return 0;
+  if (typeof value?.toDate === "function") return value.toDate().getTime();
+  if (value instanceof Date) return value.getTime();
+  if (typeof value?.seconds === "number") return value.seconds * 1000;
+  const parsed = Date.parse(String(value));
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function getNewReplies(review) {
+  const lastTutorActionMillis = toMillis(review?.reviewedAt);
+  const replies = Array.isArray(review?.studentReplies) ? review.studentReplies : [];
+  return replies.filter((reply) => toMillis(reply?.createdAt) > lastTutorActionMillis);
+}
+
 export default function TutorMarkingPage() {
   const { success, error } = useToast();
   const [loading, setLoading] = useState(true);
@@ -70,14 +85,14 @@ export default function TutorMarkingPage() {
     <div style={{ padding: 16, display: "grid", gap: 16 }}>
       <h2>Tutor Marking Queue</h2>
       <p style={{ marginTop: -8, opacity: 0.8 }}>
-        Review pending writing submissions, choose a final status, and save tutor feedback for the student.
+        Review actionable tutor threads, reply, and clear completed items so fresh student follow-ups are easy to spot.
       </p>
 
       {loading && <p>Loading pending tutor reviews...</p>}
 
       {!loading && sortedReviews.length === 0 && (
         <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-          <p style={{ margin: 0 }}>No pending reviews found in examTutorReviewQueue.</p>
+          <p style={{ margin: 0 }}>No actionable reviews found in examTutorReviewQueue.</p>
         </section>
       )}
 
@@ -85,12 +100,15 @@ export default function TutorMarkingPage() {
         const studentDraft = extractText(review, ["studentDraft", "draftText", "originalDraft"]);
         const aiFeedback = extractText(review, ["aiFeedback", "feedback", "aiReviewFeedback"]);
         const revisedDraft = extractText(review, ["revisedDraft", "improvedDraft", "rewrittenDraft"]);
+        const reflection = extractText(review, ["reflection"]);
+        const studentReplies = Array.isArray(review.studentReplies) ? review.studentReplies : [];
+        const newReplies = getNewReplies(review);
 
         return (
           <section key={review.id} style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, display: "grid", gap: 10 }}>
             <div style={{ fontSize: 13, opacity: 0.8 }}>
               <b>Review ID:</b> {review.id} · <b>Student:</b> {review.studentName || review.studentId || "Unknown"} · <b>Updated:</b>{" "}
-              {formatTimestamp(review.updatedAt)}
+              {formatTimestamp(review.updatedAt)} · <b>Source:</b> {review.source || "—"} · <b>New replies:</b> {newReplies.length}
             </div>
 
             <label>
@@ -107,6 +125,29 @@ export default function TutorMarkingPage() {
               Revised draft
               <textarea readOnly rows={6} value={revisedDraft || "No revised draft found."} />
             </label>
+
+            <label>
+              Reflection / question
+              <textarea readOnly rows={4} value={reflection || "No reflection question found."} />
+            </label>
+
+            <div style={{ display: "grid", gap: 6 }}>
+              <b>Student follow-up replies ({studentReplies.length})</b>
+              {newReplies.length > 0 && (
+                <div style={{ color: "#8a4b00", fontSize: 12, fontWeight: 700 }}>
+                  New student messages needing follow-up: {newReplies.length}
+                </div>
+              )}
+              {studentReplies.length === 0 && <p style={{ margin: 0, opacity: 0.75 }}>No student replies yet.</p>}
+              {studentReplies.map((reply, index) => (
+                <article key={`${review.id}-reply-${index}`} style={{ border: "1px solid #eee", borderRadius: 6, padding: 8 }}>
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>
+                    {reply?.studentName || "Student"} ({reply?.studentCode || "—"}) · {formatTimestamp(reply?.createdAt)}
+                  </div>
+                  <div style={{ marginTop: 4, whiteSpace: "pre-wrap" }}>{reply?.message || "(empty message)"}</div>
+                </article>
+              ))}
+            </div>
 
             <div style={{ display: "grid", gap: 8 }}>
               <label>
