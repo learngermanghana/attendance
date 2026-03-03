@@ -11,7 +11,10 @@ import {
 import { resolveWithSheetFallback } from "./fallbackResolvers.js";
 
 function isActiveStudent(data) {
-  return String(data?.status || "").toLowerCase() === "active" && String(data?.role || "").toLowerCase() === "student";
+  const status = String(data?.status || "").toLowerCase();
+  const role = String(data?.role || "").toLowerCase();
+  const hasCompatibleRole = !role || role === "student";
+  return status === "active" && hasCompatibleRole;
 }
 
 function byNameAsc(a, b) {
@@ -35,6 +38,22 @@ function resolvePublishedClass(row) {
   const className = normalize(readPublishedClassName(row));
   if (className) return className;
   return normalize(readPublishedLevel(row));
+}
+
+
+function isActivePublishedRow(row) {
+  return String(readPublishedStatus(row) || "").toLowerCase() === "active";
+}
+
+function mapPublishedStudent(row) {
+  return {
+    id: String(readPublishedStudentCode(row) || readPublishedStudentName(row) || "").trim(),
+    name: normalize(readPublishedStudentName(row)),
+    studentCode: normalize(readPublishedStudentCode(row)),
+    className: resolvePublishedClass(row),
+    status: normalize(readPublishedStatus(row)).toLowerCase(),
+    role: "student",
+  };
 }
 
 export async function listPublishedStudentsByClassWithLoader(classId, loadRows = loadPublishedStudentRows) {
