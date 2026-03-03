@@ -70,14 +70,15 @@ export default function TutorMarkingPage() {
     <div style={{ padding: 16, display: "grid", gap: 16 }}>
       <h2>Tutor Marking Queue</h2>
       <p style={{ marginTop: -8, opacity: 0.8 }}>
-        Review pending writing submissions, choose a final status, and save tutor feedback for the student.
+        Review actionable tutor threads (pending status, new student follow-ups, or campus-writing reflection requests),
+        then save your tutor response.
       </p>
 
       {loading && <p>Loading pending tutor reviews...</p>}
 
       {!loading && sortedReviews.length === 0 && (
         <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
-          <p style={{ margin: 0 }}>No pending reviews found in examTutorReviewQueue.</p>
+          <p style={{ margin: 0 }}>No actionable reviews found in examTutorReviewQueue.</p>
         </section>
       )}
 
@@ -85,12 +86,14 @@ export default function TutorMarkingPage() {
         const studentDraft = extractText(review, ["studentDraft", "draftText", "originalDraft"]);
         const aiFeedback = extractText(review, ["aiFeedback", "feedback", "aiReviewFeedback"]);
         const revisedDraft = extractText(review, ["revisedDraft", "improvedDraft", "rewrittenDraft"]);
+        const reflection = extractText(review, ["reflection"]);
+        const studentReplies = Array.isArray(review.studentReplies) ? review.studentReplies : [];
 
         return (
           <section key={review.id} style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, display: "grid", gap: 10 }}>
             <div style={{ fontSize: 13, opacity: 0.8 }}>
               <b>Review ID:</b> {review.id} · <b>Student:</b> {review.studentName || review.studentId || "Unknown"} · <b>Updated:</b>{" "}
-              {formatTimestamp(review.updatedAt)}
+              {formatTimestamp(review.updatedAt)} · <b>Source:</b> {review.source || "—"}
             </div>
 
             <label>
@@ -107,6 +110,24 @@ export default function TutorMarkingPage() {
               Revised draft
               <textarea readOnly rows={6} value={revisedDraft || "No revised draft found."} />
             </label>
+
+            <label>
+              Reflection / question
+              <textarea readOnly rows={4} value={reflection || "No reflection question found."} />
+            </label>
+
+            <div style={{ display: "grid", gap: 6 }}>
+              <b>Student follow-up replies ({studentReplies.length})</b>
+              {studentReplies.length === 0 && <p style={{ margin: 0, opacity: 0.75 }}>No student replies yet.</p>}
+              {studentReplies.map((reply, index) => (
+                <article key={`${review.id}-reply-${index}`} style={{ border: "1px solid #eee", borderRadius: 6, padding: 8 }}>
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>
+                    {reply?.studentName || "Student"} ({reply?.studentCode || "—"}) · {formatTimestamp(reply?.createdAt)}
+                  </div>
+                  <div style={{ marginTop: 4, whiteSpace: "pre-wrap" }}>{reply?.message || "(empty message)"}</div>
+                </article>
+              ))}
+            </div>
 
             <div style={{ display: "grid", gap: 8 }}>
               <label>

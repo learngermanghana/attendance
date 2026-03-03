@@ -37,23 +37,6 @@ function resolvePublishedClass(row) {
   return normalize(readPublishedLevel(row));
 }
 
-function mapPublishedStudent(row) {
-  return {
-    id: normalize(readPublishedStudentCode(row) || readPublishedStudentName(row)),
-    uid: normalize(readPublishedStudentCode(row)),
-    studentCode: normalize(readPublishedStudentCode(row)),
-    className: normalize(resolvePublishedClass(row)),
-    name: normalize(readPublishedStudentName(row)),
-    status: normalize(readPublishedStatus(row)) || "Active",
-    role: "student",
-  };
-}
-
-function isActivePublishedRow(row) {
-  const status = normalize(readPublishedStatus(row)).toLowerCase();
-  return !status || status === "active";
-}
-
 export async function listPublishedStudentsByClassWithLoader(classId, loadRows = loadPublishedStudentRows) {
   const targetClassName = normalizeComparable(classId);
   if (!targetClassName) return [];
