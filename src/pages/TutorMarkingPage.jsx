@@ -19,6 +19,21 @@ function formatTimestamp(value) {
   return String(value);
 }
 
+function toMillis(value) {
+  if (!value) return 0;
+  if (typeof value?.toDate === "function") return value.toDate().getTime();
+  if (value instanceof Date) return value.getTime();
+  if (typeof value?.seconds === "number") return value.seconds * 1000;
+  const parsed = Date.parse(String(value));
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function getNewReplies(review) {
+  const lastTutorActionMillis = toMillis(review?.reviewedAt);
+  const replies = Array.isArray(review?.studentReplies) ? review.studentReplies : [];
+  return replies.filter((reply) => toMillis(reply?.createdAt) > lastTutorActionMillis);
+}
+
 export default function TutorMarkingPage() {
   const { success, error } = useToast();
   const [loading, setLoading] = useState(true);
