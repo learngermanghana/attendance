@@ -12,13 +12,14 @@ import { resolveWithSheetFallback } from "./fallbackResolvers.js";
 
 function isRosterEligibleStatus(statusValue) {
   const status = String(statusValue || "").toLowerCase().trim();
-  return !status || status === "active" || status === "paid";
+  return status === "active" || status === "paid";
 }
 
 function isActiveStudent(data) {
+  const status = String(data?.status || "").toLowerCase();
   const role = String(data?.role || "").toLowerCase();
   const hasCompatibleRole = !role || role === "student";
-  return isRosterEligibleStatus(data?.status) && hasCompatibleRole;
+  return status === "active" && hasCompatibleRole;
 }
 
 function byNameAsc(a, b) {
@@ -46,7 +47,7 @@ function resolvePublishedClass(row) {
 
 
 function isActivePublishedRow(row) {
-  return isRosterEligibleStatus(readPublishedStatus(row));
+  return String(readPublishedStatus(row) || "").toLowerCase() === "active";
 }
 
 function mapPublishedStudent(row) {
