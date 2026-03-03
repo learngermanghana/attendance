@@ -19,24 +19,19 @@ function toMillis(value) {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
-function hasTutorReview(review) {
-  return toMillis(review?.reviewedAt) > 0;
-}
-
 function hasNewStudentReplySinceLastTutorAction(review) {
   const replies = Array.isArray(review?.studentReplies) ? review.studentReplies : [];
   if (replies.length === 0) return false;
 
   const lastReplyMillis = Math.max(...replies.map((reply) => toMillis(reply?.createdAt)));
-  const lastTutorActionMillis = toMillis(review?.reviewedAt);
+  const lastTutorActionMillis = Math.max(toMillis(review?.reviewedAt), toMillis(review?.updatedAt));
 
   return lastReplyMillis > lastTutorActionMillis;
 }
 
-function hasUnreviewedCampusWritingQuestion(review) {
+function hasCampusWritingQuestion(review) {
   if (review?.source !== "campus-writing") return false;
-  if (typeof review?.reflection !== "string" || !review.reflection.trim()) return false;
-  return !hasTutorReview(review);
+  return typeof review?.reflection === "string" && review.reflection.trim().length > 0;
 }
 
 function isActionableReview(review) {
@@ -44,7 +39,7 @@ function isActionableReview(review) {
   return (
     PENDING_REVIEW_STATUSES.has(normalizedStatus)
     || hasNewStudentReplySinceLastTutorAction(review)
-    || hasUnreviewedCampusWritingQuestion(review)
+    || hasCampusWritingQuestion(review)
   );
 }
 

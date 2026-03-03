@@ -85,7 +85,8 @@ export default function TutorMarkingPage() {
     <div style={{ padding: 16, display: "grid", gap: 16 }}>
       <h2>Tutor Marking Queue</h2>
       <p style={{ marginTop: -8, opacity: 0.8 }}>
-        Review actionable tutor threads, reply, and clear completed items so fresh student follow-ups are easy to spot.
+        Review actionable tutor threads (pending status, new student follow-ups, or campus-writing reflection requests),
+        then save your tutor response.
       </p>
 
       {loading && <p>Loading pending tutor reviews...</p>}
@@ -102,13 +103,12 @@ export default function TutorMarkingPage() {
         const revisedDraft = extractText(review, ["revisedDraft", "improvedDraft", "rewrittenDraft"]);
         const reflection = extractText(review, ["reflection"]);
         const studentReplies = Array.isArray(review.studentReplies) ? review.studentReplies : [];
-        const newReplies = getNewReplies(review);
 
         return (
           <section key={review.id} style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, display: "grid", gap: 10 }}>
             <div style={{ fontSize: 13, opacity: 0.8 }}>
               <b>Review ID:</b> {review.id} · <b>Student:</b> {review.studentName || review.studentId || "Unknown"} · <b>Updated:</b>{" "}
-              {formatTimestamp(review.updatedAt)} · <b>Source:</b> {review.source || "—"} · <b>New replies:</b> {newReplies.length}
+              {formatTimestamp(review.updatedAt)} · <b>Source:</b> {review.source || "—"}
             </div>
 
             <label>
@@ -133,11 +133,6 @@ export default function TutorMarkingPage() {
 
             <div style={{ display: "grid", gap: 6 }}>
               <b>Student follow-up replies ({studentReplies.length})</b>
-              {newReplies.length > 0 && (
-                <div style={{ color: "#8a4b00", fontSize: 12, fontWeight: 700 }}>
-                  New student messages needing follow-up: {newReplies.length}
-                </div>
-              )}
               {studentReplies.length === 0 && <p style={{ margin: 0, opacity: 0.75 }}>No student replies yet.</p>}
               {studentReplies.map((reply, index) => (
                 <article key={`${review.id}-reply-${index}`} style={{ border: "1px solid #eee", borderRadius: 6, padding: 8 }}>
