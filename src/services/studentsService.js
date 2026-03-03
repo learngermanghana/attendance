@@ -14,11 +14,6 @@ function isRosterEligibleStatus(statusValue) {
   return !status || status === "active" || status === "paid";
 }
 
-function isRosterEligibleStatus(statusValue) {
-  const status = String(statusValue || "").toLowerCase().trim();
-  return status === "active" || status === "paid";
-}
-
 function isActiveStudent(data) {
   const status = String(data?.status || "").toLowerCase();
   const role = String(data?.role || "").toLowerCase();
