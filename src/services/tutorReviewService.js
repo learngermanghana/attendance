@@ -24,14 +24,20 @@ function hasNewStudentReplySinceLastTutorAction(review) {
   if (replies.length === 0) return false;
 
   const lastReplyMillis = Math.max(...replies.map((reply) => toMillis(reply?.createdAt)));
-  const lastTutorActionMillis = Math.max(toMillis(review?.reviewedAt), toMillis(review?.updatedAt));
+  const lastTutorActionMillis = toMillis(review?.reviewedAt);
+
+  if (!lastTutorActionMillis) return true;
 
   return lastReplyMillis > lastTutorActionMillis;
 }
 
 function hasCampusWritingQuestion(review) {
   if (review?.source !== "campus-writing") return false;
-  return typeof review?.reflection === "string" && review.reflection.trim().length > 0;
+  const hasReflectionQuestion = typeof review?.reflection === "string" && review.reflection.trim().length > 0;
+  if (!hasReflectionQuestion) return false;
+
+  const hasTutorResponse = Boolean(toMillis(review?.reviewedAt) || String(review?.tutorFeedback || "").trim());
+  return !hasTutorResponse;
 }
 
 function isActionableReview(review) {

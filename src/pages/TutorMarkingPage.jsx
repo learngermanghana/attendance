@@ -105,6 +105,7 @@ export default function TutorMarkingPage() {
   const { success, error } = useToast();
   const [loading, setLoading] = useState(true);
   const [pendingReviews, setPendingReviews] = useState([]);
+  const [recentlyResponded, setRecentlyResponded] = useState([]);
   const [savingId, setSavingId] = useState("");
   const [saveStateById, setSaveStateById] = useState({});
   const [statusById, setStatusById] = useState({});
@@ -160,6 +161,11 @@ export default function TutorMarkingPage() {
       unassigned: sortedReviews.length - assigned,
     };
   }, [sortedReviews]);
+
+  const waitingOnTutorCount = useMemo(
+    () => sortedReviews.filter((review) => getNewReplies(review).length > 0).length,
+    [sortedReviews],
+  );
 
   useEffect(() => {
     (async () => {
@@ -244,6 +250,18 @@ export default function TutorMarkingPage() {
       setSaveStateById((prev) => ({ ...prev, [reviewId]: "saving" }));
       await saveTutorReviewResponse({ reviewId, reviewStatus, tutorFeedback });
       setPendingReviews((prev) => prev.filter((review) => review.id !== reviewId));
+      setRecentlyResponded((prev) => {
+        const existing = prev.filter((item) => item.id !== reviewId);
+        return [
+          {
+            id: reviewId,
+            studentName: activeReview?.studentName || activeReview?.studentId || "Unknown",
+            reviewStatus,
+            respondedAt: new Date(),
+          },
+          ...existing,
+        ].slice(0, 6);
+      });
       setFeedbackById((prev) => {
         const next = { ...prev };
         delete next[reviewId];
@@ -285,6 +303,7 @@ export default function TutorMarkingPage() {
         <b>Queue overview</b>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
           <span>Pending: <b>{queueStats.pending}</b></span>
+          <span>Waiting on tutor: <b>{waitingOnTutorCount}</b></span>
           <span>Oldest item age: <b>{queueStats.oldestHours}h</b></span>
           <span>Assigned: <b>{queueStats.assigned}</b></span>
           <span>Unassigned: <b>{queueStats.unassigned}</b></span>
@@ -326,6 +345,17 @@ export default function TutorMarkingPage() {
       {!loading && filteredReviews.length === 0 && (
         <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
           <p style={{ margin: 0 }}>No actionable reviews found for the current filter set.</p>
+        </section>
+      )}
+
+      {recentlyResponded.length > 0 && (
+        <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, display: "grid", gap: 6 }}>
+          <b>Recently responded</b>
+          {recentlyResponded.map((item) => (
+            <div key={`responded-${item.id}`} style={{ fontSize: 13, opacity: 0.9 }}>
+              {item.studentName} · {item.reviewStatus} · {formatTimestamp(item.respondedAt)}
+            </div>
+          ))}
         </section>
       )}
 
@@ -414,6 +444,11 @@ export default function TutorMarkingPage() {
                     {!saveStateById[review.id] && "Autosave draft enabled"}
                   </span>
                 </div>
+                {savingId === review.id && (
+                  <p style={{ margin: 0, fontSize: 12, color: "#1d4ed8" }}>
+                    Marking response and closing this thread from the waiting list...
+                  </p>
+                )}
               </div>
             </div>
 
