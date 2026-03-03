@@ -23,9 +23,9 @@ function normalize(value) {
 }
 
 function resolvePublishedClass(row) {
-  const level = normalize(readPublishedLevel(row));
-  if (level) return level;
-  return normalize(readPublishedClassName(row));
+  const className = normalize(readPublishedClassName(row));
+  if (className) return className;
+  return normalize(readPublishedLevel(row));
 }
 
 export async function listPublishedStudentsByClassWithLoader(classId, loadRows = loadPublishedStudentRows) {
