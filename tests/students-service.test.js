@@ -14,7 +14,7 @@ test("matches by full className when present", async () => {
   assert.deepEqual(result.map((s) => s.name), ["Student One"]);
 });
 
-test("falls back to level matching when no exact class match exists", async () => {
+test("does not fall back to level matching when class name does not match", async () => {
   const rows = [
     { classname: "", level: "A2", status: "Active", studentcode: "S-001", name: "Student One" },
     { classname: "", level: "B1", status: "Active", studentcode: "S-002", name: "Student Two" },
@@ -22,7 +22,7 @@ test("falls back to level matching when no exact class match exists", async () =
 
   const result = await listPublishedStudentsByClassWithLoader("A2 Stuttgart Klasse", async () => rows);
 
-  assert.deepEqual(result.map((s) => s.name), ["Student One"]);
+  assert.deepEqual(result.map((s) => s.name), []);
 });
 
 test("normalizes spacing in class name matching", async () => {
@@ -36,7 +36,7 @@ test("normalizes spacing in class name matching", async () => {
 });
 
 
-test("includes paid published students for class match", async () => {
+test("includes all students for matching class without status filtering", async () => {
   const rows = [
     { classname: "A2 Stuttgart Klasse", level: "A2", status: "Paid", studentcode: "S-003", name: "Paid Student" },
     { classname: "A2 Stuttgart Klasse", level: "A2", status: "Inactive", studentcode: "S-004", name: "Inactive Student" },
@@ -44,5 +44,5 @@ test("includes paid published students for class match", async () => {
 
   const result = await listPublishedStudentsByClassWithLoader("A2 Stuttgart Klasse", async () => rows);
 
-  assert.deepEqual(result.map((s) => s.name), ["Paid Student"]);
+  assert.deepEqual(result.map((s) => s.name), ["Inactive Student", "Paid Student"]);
 });
