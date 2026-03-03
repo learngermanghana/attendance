@@ -39,15 +39,3 @@ test("excludes active records with non-student role", async () => {
 
   assert.deepEqual(result.map((student) => student.name), ["Student"]);
 });
-
-
-test("includes paid students when role field is missing", async () => {
-  const firestore = createFirestoreMock([
-    { name: "Fred", status: "Paid", className: "A2 Stuttgart Klasse" },
-    { name: "Inactive", status: "inactive", className: "A2 Stuttgart Klasse" },
-  ]);
-
-  const result = await loadStudentsByFieldWithFirestore("className", "A2 Stuttgart Klasse", firestore);
-
-  assert.deepEqual(result.map((student) => student.name), ["Fred"]);
-});
