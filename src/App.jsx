@@ -10,6 +10,7 @@ import CourseSchedulePage from "./pages/CourseSchedulePage";
 import MarkingPage from "./pages/MarkingPage";
 import TutorMarkingPage from "./pages/TutorMarkingPage";
 import CommunicationPage from "./pages/CommunicationPage";
+import GrammarIssueReportsPage from "./pages/GrammarIssueReportsPage";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
 import "./App.css";
@@ -41,6 +42,7 @@ function TopBar() {
             <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
             <Link to="/course-schedule" onClick={() => setMenuOpen(false)}>Course Schedule</Link>
             <Link to="/marking" onClick={() => setMenuOpen(false)}>Mark Work</Link>
+            <Link to="/grammar-issues" onClick={() => setMenuOpen(false)}>Grammar Issues</Link>
             <Link to="/campus/tutor-marking" onClick={() => setMenuOpen(false)}>Tutor Marking</Link>
             <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
           </div>
@@ -139,6 +141,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <TutorMarkingPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/grammar-issues"
+            element={
+              <ProtectedRoute>
+                <GrammarIssueReportsPage />
               </ProtectedRoute>
             }
           />
