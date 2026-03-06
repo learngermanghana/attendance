@@ -340,11 +340,12 @@ async function postScoreToWebhookNoCors(payload) {
   });
 }
 
-export async function saveScoreRow({ studentCode, name, assignment, score, comments, level, link }) {
+export async function saveScoreRow({ studentCode, name, assignment, assignmentId, score, comments, level, link }) {
   const row = {
     studentcode: studentCode,
     name,
     assignment,
+    assignment_id: String(assignmentId || "").trim(),
     score,
     comments,
     date: new Date().toString(),
