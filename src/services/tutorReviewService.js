@@ -1,4 +1,6 @@
 import {
+  Timestamp,
+  arrayUnion,
   collection,
   getDocs,
   serverTimestamp,
@@ -41,12 +43,22 @@ function hasCampusWritingQuestion(review) {
 }
 
 function isActionableReview(review) {
+  const normalizedWorkflowStage = String(review?.workflowStage || "").trim().toLowerCase();
+  if (normalizedWorkflowStage === "pending_tutor") return true;
+  if (review?.unreadByTutor === true) return true;
+
   const normalizedStatus = String(review?.reviewStatus || "").trim().toLowerCase();
   return (
     PENDING_REVIEW_STATUSES.has(normalizedStatus)
     || hasNewStudentReplySinceLastTutorAction(review)
     || hasCampusWritingQuestion(review)
   );
+}
+
+function buildMessagePreview(value) {
+  const normalized = String(value || "").trim().replace(/\s+/g, " ");
+  if (!normalized) return "";
+  return normalized.length <= 180 ? normalized : `${normalized.slice(0, 177)}...`;
 }
 
 export async function loadPendingTutorReviews() {
@@ -57,7 +69,7 @@ export async function loadPendingTutorReviews() {
   })).filter(isActionableReview);
 }
 
-export async function saveTutorReviewResponse({ reviewId, reviewStatus, tutorFeedback }) {
+export async function saveTutorReviewResponse({ reviewId, reviewStatus, tutorFeedback, reviewedByUid, reviewedByName }) {
   const safeReviewId = String(reviewId || "").trim();
   if (!safeReviewId) {
     throw new Error("Missing reviewId.");
@@ -68,10 +80,42 @@ export async function saveTutorReviewResponse({ reviewId, reviewStatus, tutorFee
     throw new Error("reviewStatus must be approved or needs_improvement.");
   }
 
+  const normalizedFeedback = String(tutorFeedback || "").trim();
+  const reviewerName = String(reviewedByName || "").trim() || "Tutor";
+  const reviewerUid = String(reviewedByUid || "").trim();
+  const respondedAt = Timestamp.now();
+  const workflowStage = status === "needs_improvement" ? "pending_student" : "resolved";
+
   await updateDoc(doc(db, REVIEW_COLLECTION, safeReviewId), {
     reviewStatus: status,
-    tutorFeedback: String(tutorFeedback || "").trim(),
-    reviewedAt: serverTimestamp(),
+    tutorFeedback: normalizedFeedback,
+    reviewedAt: respondedAt,
+    reviewedByUid: reviewerUid || null,
+    reviewedByName: reviewerName,
+    reviewerName,
+    reviewerUid: reviewerUid || null,
+    unreadByTutor: false,
+    unreadByStudent: true,
+    lastTutorReplyAt: respondedAt,
+    lastActorRole: "tutor",
+    workflowStage,
+    lastMessageAt: respondedAt,
+    lastMessageRole: "tutor",
+    lastMessagePreview: buildMessagePreview(normalizedFeedback),
+    tutorResponses: arrayUnion({
+      message: normalizedFeedback,
+      status,
+      tutorId: reviewerUid || null,
+      tutorName: reviewerName,
+      createdAt: respondedAt,
+    }),
+    reviewHistory: arrayUnion({
+      reviewedAt: respondedAt,
+      reviewStatus: status,
+      tutorFeedback: normalizedFeedback,
+      reviewerName,
+      reviewerUid: reviewerUid || null,
+    }),
     updatedAt: serverTimestamp(),
   });
 }
