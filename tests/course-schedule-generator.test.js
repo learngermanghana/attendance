@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { buildScheduleExports, generateCourseSchedule } from "../src/utils/courseScheduleGenerator.js";
-import { buildAssignmentId } from "../src/utils/assignmentId.js";
+import { buildAssignmentId, buildSubmissionAssignmentId, normalizeIdPart } from "../src/utils/assignmentId.js";
 
 test("generateCourseSchedule assigns dates in curriculum order and skips holidays", () => {
   const rows = generateCourseSchedule({
@@ -59,4 +59,32 @@ test("buildScheduleExports serializes metadata and sessions", () => {
 test("buildAssignmentId composes level and assignment number", () => {
   assert.equal(buildAssignmentId("B1", "10.28. Klimafreundlich leben", 28), "B1-10.28");
   assert.equal(buildAssignmentId("A2", "No number topic", 7), "A2-7");
+});
+
+
+test("buildSubmissionAssignmentId matches submission-style construction order", () => {
+  assert.equal(
+    buildSubmissionAssignmentId({
+      preferredLevel: "A1",
+      title: "Anything",
+      entry: { assignmentId: "Day 9.1" },
+    }),
+    "a1-day_9_1",
+  );
+
+  assert.equal(
+    buildSubmissionAssignmentId({
+      preferredLevel: "B2",
+      title: "No number",
+      entry: { chapter: "Kapitel 4" },
+    }),
+    "b2-kapitel_4",
+  );
+
+  assert.equal(buildSubmissionAssignmentId({ preferredLevel: "A1", title: "Lesson 12.2 Grammar" }), "a1-12_2");
+  assert.equal(buildSubmissionAssignmentId({ preferredLevel: "", title: "Einführung" }), "general-einf_hrung");
+});
+
+test("normalizeIdPart lowercases and sanitizes", () => {
+  assert.equal(normalizeIdPart(" A1 + 12.2 "), "a1_12_2");
 });
