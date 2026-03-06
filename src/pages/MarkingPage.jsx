@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import answersDictionary from "../data/answers_dictionary.json";
 import { deleteSubmission, fetchSubmissions, loadRoster, loadSubmissions, saveScoreRow } from "../services/markingService.js";
 import { autoMarkSubmission } from "../utils/autoMarking.js";
+import { buildSubmissionAssignmentId } from "../utils/assignmentId.js";
 import { useToast } from "../context/ToastContext.jsx";
 
 const DEFAULT_REFERENCE_LINK =
@@ -305,13 +306,21 @@ export default function MarkingPage() {
 
     try {
       setSavingScore(true);
+      const level = selectedStudent.level || referenceEntry.level || inferLevel(referenceEntry.assignment);
+      const assignmentId = buildSubmissionAssignmentId({
+        title: referenceEntry.assignment,
+        preferredLevel: level,
+        entry: referenceEntry,
+      });
+
       const receipt = await saveScoreRow({
         studentCode: selectedStudent.studentCode,
         name: selectedStudent.name,
         assignment: referenceEntry.assignment,
+        assignmentId,
         score: Number(score),
         comments: feedback.trim(),
-        level: selectedStudent.level || referenceEntry.level || inferLevel(referenceEntry.assignment),
+        level,
         link: referenceEntry.answer_url || DEFAULT_REFERENCE_LINK,
       });
       setSaveReceipt(receipt);
@@ -508,7 +517,7 @@ export default function MarkingPage() {
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
         <h3>6) Save to Google Sheets (and optionally Firestore)</h3>
         <p style={{ marginTop: 0, fontSize: 13, opacity: 0.8 }}>
-          Saves row headers: studentcode, name, assignment, score, comments, date, level, link.
+          Saves row headers: studentcode, name, assignment, score, comments, date, level, link, assignment_id.
         </p>
         <button onClick={handleSave} disabled={loading || savingScore}>{savingScore ? "Saving..." : "Save score"}</button>
         {savingScore && <p style={{ marginTop: 8, fontSize: 13 }}>Saving score, please wait...</p>}
