@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useToast } from "../context/ToastContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 import { loadPendingTutorReviews, saveTutorReviewResponse } from "../services/tutorReviewService.js";
 
 const AUTOSAVE_KEY = "tutorMarkingDrafts.v1";
@@ -103,6 +104,7 @@ function loadAutosavedDrafts() {
 
 export default function TutorMarkingPage() {
   const { success, error } = useToast();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [pendingReviews, setPendingReviews] = useState([]);
   const [recentlyResponded, setRecentlyResponded] = useState([]);
@@ -248,7 +250,13 @@ export default function TutorMarkingPage() {
     try {
       setSavingId(reviewId);
       setSaveStateById((prev) => ({ ...prev, [reviewId]: "saving" }));
-      await saveTutorReviewResponse({ reviewId, reviewStatus, tutorFeedback });
+      await saveTutorReviewResponse({
+        reviewId,
+        reviewStatus,
+        tutorFeedback,
+        reviewedByUid: user?.uid,
+        reviewedByName: user?.displayName || user?.email || "Tutor",
+      });
       setPendingReviews((prev) => prev.filter((review) => review.id !== reviewId));
       setRecentlyResponded((prev) => {
         const existing = prev.filter((item) => item.id !== reviewId);
