@@ -370,11 +370,13 @@ async function postScoreToWebhookNoCors(payload) {
 }
 
 export async function saveScoreRow({ studentCode, name, assignment, assignmentId, score, comments, level, link }) {
+  const safeAssignmentId = String(assignmentId || "").trim();
   const row = {
     studentcode: studentCode,
     name,
     assignment,
-    assignment_id: String(assignmentId || "").trim(),
+    assignment_id: safeAssignmentId,
+    assignmentId: safeAssignmentId,
     score,
     comments,
     date: new Date().toString(),
