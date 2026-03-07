@@ -546,7 +546,7 @@ export default function MarkingPage() {
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
         <h3>6) Save to Google Sheets (and optionally Firestore)</h3>
         <p style={{ marginTop: 0, fontSize: 13, opacity: 0.8 }}>
-          Saves row headers: studentcode, name, assignment, score, comments, date, level, link, assignment_id.
+          Saves row headers: studentcode, studentCode, name, assignment, score, comments, date, level, link, assignment_id, assignmentId.
         </p>
         <button onClick={handleSave} disabled={loading || savingScore}>{savingScore ? "Saving..." : "Save score"}</button>
         {savingScore && <p style={{ marginTop: 8, fontSize: 13 }}>Saving score, please wait...</p>}

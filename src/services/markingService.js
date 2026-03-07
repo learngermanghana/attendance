@@ -370,15 +370,29 @@ async function postScoreToWebhookNoCors(payload) {
 }
 
 export async function saveScoreRow({ studentCode, name, assignment, assignmentId, score, comments, level, link }) {
+  const safeAssignmentId = String(assignmentId || "").trim();
+  const assignmentIdMatch = safeAssignmentId.match(/^([A-Za-z]\d+)\s*[-_]\s*(.+)$/);
+  const assignmentIdLevel = assignmentIdMatch?.[1] || "";
+  const assignmentIdNumber = assignmentIdMatch?.[2] || "";
+
+  const safeLevel = String(level || assignmentIdLevel || "").trim().toUpperCase();
+  const safeAssignment = String(assignment || "").trim();
+  const assignmentHasNumericPart = /(\d+(?:\.\d+)?)/.test(safeAssignment);
+  const assignmentForWebhook = !assignmentHasNumericPart && assignmentIdNumber
+    ? `${safeAssignment} ${assignmentIdNumber}`.trim()
+    : safeAssignment;
+
   const row = {
     studentcode: studentCode,
+    studentCode,
     name,
-    assignment,
-    assignment_id: String(assignmentId || "").trim(),
+    assignment: assignmentForWebhook,
+    assignment_id: safeAssignmentId,
+    assignmentId: safeAssignmentId,
     score,
     comments,
     date: new Date().toString(),
-    level,
+    level: safeLevel,
     link: Number(score) < 60 ? "" : link,
   };
 
