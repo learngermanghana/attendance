@@ -108,10 +108,10 @@ export default function WhatsAppRemindersPage() {
       </section>
 
       <section style={cardStyle}>
-        <h3 style={{ marginTop: 0 }}>Contracts ending soon (next 14 days)</h3>
+        <h3 style={{ marginTop: 0 }}>Contracts ending soon (next 10 days)</h3>
 
         {loading && <p>Loading contract expiry alerts...</p>}
-        {!loading && contractEndingSoon.length === 0 && <p>No contracts ending in the next 14 days.</p>}
+        {!loading && contractEndingSoon.length === 0 && <p>No contracts ending in the next 10 days.</p>}
 
         {!loading && contractEndingSoon.length > 0 && (
           <div style={{ overflowX: "auto" }}>

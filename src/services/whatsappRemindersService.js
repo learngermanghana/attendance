@@ -153,7 +153,7 @@ export async function loadWhatsappReminderDashboard() {
     });
 
   const contractEndingSoon = mappedRows
-    .filter((row) => row.daysUntilContractEnd != null && row.daysUntilContractEnd >= 0 && row.daysUntilContractEnd <= 14)
+    .filter((row) => row.daysUntilContractEnd != null && row.daysUntilContractEnd >= 0 && row.daysUntilContractEnd <= 10)
     .sort((a, b) => a.daysUntilContractEnd - b.daysUntilContractEnd);
 
   return {

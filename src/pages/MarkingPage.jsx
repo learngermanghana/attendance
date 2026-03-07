@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import answersDictionary from "../data/answers_dictionary.json";
-import { deleteSubmission, fetchSubmissions, loadRoster, loadSubmissions, saveScoreRow } from "../services/markingService.js";
+import { deleteSubmission, fetchSubmissions, hideSubmissionFromQueue, loadRoster, loadSubmissions, saveScoreRow } from "../services/markingService.js";
 import { autoMarkSubmission } from "../utils/autoMarking.js";
 import { buildAssignmentId } from "../utils/assignmentId.js";
 import { useToast } from "../context/ToastContext.jsx";
@@ -327,6 +327,7 @@ export default function MarkingPage() {
     try {
       setSavingScore(true);
       const level = selectedStudent.level || referenceEntry.level || inferLevel(referenceEntry.assignment);
+      const safeAssignment = assignmentValue.trim();
 
       const receipt = await saveScoreRow({
         studentCode: selectedStudent.studentCode,
@@ -348,6 +349,12 @@ export default function MarkingPage() {
       const targetMessage = successfulTargets.length
         ? `Saved to ${successfulTargets.join(" and ")}.`
         : "Save completed with warnings.";
+
+      if (selectedSubmission?.path) {
+        await hideSubmissionFromQueue(selectedSubmission.path);
+        setSubmissions((prev) => prev.filter((row) => row.path !== selectedSubmission.path));
+        setSubmissionNotifications((prev) => prev.filter((row) => row.path !== selectedSubmission.path));
+      }
 
       success(`Saved score for ${receipt.row.name} (${receipt.row.assignment}). ${targetMessage}`);
     } catch (err) {

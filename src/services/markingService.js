@@ -1,4 +1,4 @@
-import { addDoc, collection, collectionGroup, deleteDoc, doc, getDocs, query, where } from "firebase/firestore";
+import { addDoc, collection, collectionGroup, deleteDoc, doc, getDocs, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { db } from "../firebase.js";
 import {
   loadPublishedStudentRows,
@@ -223,6 +223,17 @@ function isFinalSubmission(submission) {
   return status !== "draft";
 }
 
+function isHiddenSubmission(submission = {}) {
+  return Boolean(
+    submission.hiddenFromQueue ||
+    submission.hidden_from_queue ||
+    submission.markedHidden ||
+    submission.marked_hidden ||
+    submission.archivedAt ||
+    submission.archived_at,
+  );
+}
+
 function sortNewestFirst(rows) {
   return [...rows].sort((a, b) => {
     const aTime = a.createdAt ? a.createdAt.getTime() : 0;
@@ -236,6 +247,7 @@ function normalizeDocs(snapshot) {
   snapshot.forEach((docSnap) => {
     const normalized = normalizeSubmission(docSnap.id, docSnap.data(), docSnap.ref.path);
     if (!isFinalSubmission(normalized)) return;
+    if (isHiddenSubmission(normalized.raw)) return;
     if (!normalized.studentCode && !normalized.studentName) return;
     rows.push({
       ...normalized,
@@ -299,6 +311,23 @@ export async function deleteSubmission(path) {
   }
 
   await deleteDoc(doc(db, path));
+}
+
+export async function hideSubmissionFromQueue(path) {
+  if (!path) return;
+
+  const submissionRef = doc(db, path);
+  const hiddenPayload = {
+    hiddenFromQueue: true,
+    hiddenAt: new Date().toISOString(),
+    hiddenReason: "marked",
+  };
+
+  try {
+    await updateDoc(submissionRef, hiddenPayload);
+  } catch {
+    await setDoc(submissionRef, hiddenPayload, { merge: true });
+  }
 }
 
 const DEFAULT_SCORES_WEBHOOK_URL =
