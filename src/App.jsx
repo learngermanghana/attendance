@@ -11,6 +11,7 @@ import MarkingPage from "./pages/MarkingPage";
 import TutorMarkingPage from "./pages/TutorMarkingPage";
 import CommunicationPage from "./pages/CommunicationPage";
 import GrammarIssueReportsPage from "./pages/GrammarIssueReportsPage";
+import WhatsAppRemindersPage from "./pages/WhatsAppRemindersPage";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
 import "./App.css";
@@ -45,6 +46,7 @@ function TopBar() {
             <Link to="/grammar-issues" onClick={() => setMenuOpen(false)}>Grammar Issues</Link>
             <Link to="/campus/tutor-marking" onClick={() => setMenuOpen(false)}>Tutor Marking</Link>
             <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
+            <Link to="/whatsapp-reminders" onClick={() => setMenuOpen(false)}>WhatsApp Reminders</Link>
           </div>
 
           <div className={`topbar-user ${menuOpen ? "topbar-user-open" : ""}`}>
@@ -157,6 +159,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <CommunicationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/whatsapp-reminders"
+            element={
+              <ProtectedRoute>
+                <WhatsAppRemindersPage />
               </ProtectedRoute>
             }
           />
