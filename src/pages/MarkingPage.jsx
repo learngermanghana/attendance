@@ -173,6 +173,11 @@ export default function MarkingPage() {
 
   const selectedSubmission = latestSubmission;
 
+  const assignmentId = useMemo(() => {
+    const level = selectedStudent?.level || referenceEntry?.level || inferLevel(referenceEntry?.assignment);
+    return buildAssignmentId(level, referenceEntry?.assignment);
+  }, [selectedStudent?.level, referenceEntry?.level, referenceEntry?.assignment]);
+
   const latestNotifications = useMemo(() => submissionNotifications.slice(0, 30), [submissionNotifications]);
 
   const combinedReferenceAndSubmission = useMemo(() => {
@@ -307,7 +312,6 @@ export default function MarkingPage() {
     try {
       setSavingScore(true);
       const level = selectedStudent.level || referenceEntry.level || inferLevel(referenceEntry.assignment);
-      const assignmentId = buildAssignmentId(level, referenceEntry.assignment);
 
       const receipt = await saveScoreRow({
         studentCode: selectedStudent.studentCode,
@@ -500,6 +504,10 @@ export default function MarkingPage() {
               style={{ fontSize: "1rem", lineHeight: 1.6, minHeight: 180 }}
               placeholder="Write clear, actionable feedback for the student..."
             />
+          </label>
+          <label>
+            Assignment ID (auto-generated from student level + assignment number)
+            <input value={assignmentId} readOnly />
           </label>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={handleAutoMark} disabled={autoMarking || !selectedSubmission}>
