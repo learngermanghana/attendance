@@ -175,13 +175,10 @@ export default function MarkingPage() {
 
   const selectedSubmission = latestSubmission;
 
-  useEffect(() => {
-    const nextAssignment = referenceEntry?.assignment || "";
-    const level = selectedStudent?.level || referenceEntry?.level || inferLevel(nextAssignment);
-
-    setAssignmentValue(nextAssignment);
-    setAssignmentIdValue(buildAssignmentId(level, nextAssignment));
-  }, [referenceEntry?.assignment, referenceEntry?.level, selectedStudent?.level]);
+  const assignmentId = useMemo(() => {
+    const level = selectedStudent?.level || referenceEntry?.level || inferLevel(referenceEntry?.assignment);
+    return buildAssignmentId(level, referenceEntry?.assignment);
+  }, [selectedStudent?.level, referenceEntry?.level, referenceEntry?.assignment]);
 
   const latestNotifications = useMemo(() => submissionNotifications.slice(0, 30), [submissionNotifications]);
 
@@ -329,8 +326,7 @@ export default function MarkingPage() {
 
     try {
       setSavingScore(true);
-      const safeAssignment = assignmentValue.trim();
-      const level = selectedStudent.level || referenceEntry.level || inferLevel(safeAssignment);
+      const level = selectedStudent.level || referenceEntry.level || inferLevel(referenceEntry.assignment);
 
       const receipt = await saveScoreRow({
         studentCode: selectedStudent.studentCode,
@@ -525,21 +521,8 @@ export default function MarkingPage() {
             />
           </label>
           <label>
-            Assignment (editable if incoming assignment needs correction)
-            <input
-              value={assignmentValue}
-              onChange={(e) => {
-                const nextAssignment = e.target.value;
-                setAssignmentValue(nextAssignment);
-
-                const level = selectedStudent?.level || referenceEntry?.level || inferLevel(nextAssignment);
-                setAssignmentIdValue(buildAssignmentId(level, nextAssignment));
-              }}
-            />
-          </label>
-          <label>
-            Assignment ID (auto-generated, editable for corrections)
-            <input value={assignmentIdValue} onChange={(e) => setAssignmentIdValue(e.target.value)} />
+            Assignment ID (auto-generated from student level + assignment number)
+            <input value={assignmentId} readOnly />
           </label>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={handleAutoMark} disabled={autoMarking || !selectedSubmission}>
