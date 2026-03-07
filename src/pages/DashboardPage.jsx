@@ -3,11 +3,13 @@ import { Link } from "react-router-dom";
 import { loadSubmissions } from "../services/markingService";
 import { loadPendingTutorReviews } from "../services/tutorReviewService";
 import { loadGrammarIssueReports } from "../services/grammarIssueService";
+import { loadWhatsappReminderDashboard } from "../services/whatsappRemindersService";
 
 export default function DashboardPage() {
   const [incomingAssignments, setIncomingAssignments] = useState([]);
   const [pendingTutorReviewsCount, setPendingTutorReviewsCount] = useState(0);
   const [grammarIssueReports, setGrammarIssueReports] = useState([]);
+  const [contractEndingSoon, setContractEndingSoon] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -16,15 +18,17 @@ export default function DashboardPage() {
       setLoading(true);
       setError("");
       try {
-        const [submissionRows, tutorReviewRows, grammarIssueRows] = await Promise.all([
+        const [submissionRows, tutorReviewRows, grammarIssueRows, reminderData] = await Promise.all([
           loadSubmissions(),
           loadPendingTutorReviews(),
           loadGrammarIssueReports(),
+          loadWhatsappReminderDashboard(),
         ]);
 
         setIncomingAssignments(submissionRows);
         setPendingTutorReviewsCount(tutorReviewRows.length);
         setGrammarIssueReports(grammarIssueRows);
+        setContractEndingSoon(reminderData.contractEndingSoon);
       } catch (err) {
         setError(err?.message || "Failed to load dashboard metrics");
       } finally {
@@ -111,8 +115,15 @@ export default function DashboardPage() {
             </div>
 
             <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 14, background: "#fff" }}>
-              <div style={{ fontWeight: 700 }}>Audit workspace</div>
-              <p style={{ margin: "8px 0 0" }}>Audit pages have been retired.</p>
+              <div style={{ fontWeight: 700 }}>WhatsApp reminder notifications</div>
+              <p style={{ margin: "8px 0 0" }}>
+                {contractEndingSoon.length > 0
+                  ? `${contractEndingSoon.length} contract reminder${contractEndingSoon.length === 1 ? "" : "s"} due in the next 10 days.`
+                  : "No contract reminders due in the next 10 days."}
+              </p>
+              <div style={{ marginTop: 8 }}>
+                <Link to="/whatsapp-reminders">Open WhatsApp reminders</Link>
+              </div>
             </div>
           </section>
         </>
