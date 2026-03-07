@@ -50,6 +50,8 @@ export default function MarkingPage() {
   });
   const [referenceQuery, setReferenceQuery] = useState("");
   const [score, setScore] = useState("");
+  const [assignmentValue, setAssignmentValue] = useState("");
+  const [assignmentIdValue, setAssignmentIdValue] = useState("");
   const [feedback, setFeedback] = useState("");
   const [saveReceipt, setSaveReceipt] = useState(null);
   const [savingScore, setSavingScore] = useState(false);
@@ -254,6 +256,11 @@ export default function MarkingPage() {
     if (matchingReference?.assignment) {
       setReferenceAssignment(matchingReference.assignment);
     }
+
+    const nextAssignment = matchingReference?.assignment || submission.assignment || "";
+    const level = matchingStudent.level || matchingReference?.level || inferLevel(nextAssignment);
+    setAssignmentValue(nextAssignment);
+    setAssignmentIdValue(buildAssignmentId(level, nextAssignment));
   };
 
   const handleCopyCombined = async () => {
@@ -300,6 +307,14 @@ export default function MarkingPage() {
       error("Pick a reference answer before saving.");
       return;
     }
+    if (!assignmentValue.trim()) {
+      error("Assignment is required.");
+      return;
+    }
+    if (!assignmentIdValue.trim()) {
+      error("Assignment ID is required.");
+      return;
+    }
     if (!feedback.trim()) {
       error("Feedback is required.");
       return;
@@ -316,8 +331,8 @@ export default function MarkingPage() {
       const receipt = await saveScoreRow({
         studentCode: selectedStudent.studentCode,
         name: selectedStudent.name,
-        assignment: referenceEntry.assignment,
-        assignmentId,
+        assignment: safeAssignment,
+        assignmentId: assignmentIdValue.trim(),
         score: Number(score),
         comments: feedback.trim(),
         level,
