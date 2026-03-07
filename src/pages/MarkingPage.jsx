@@ -50,6 +50,8 @@ export default function MarkingPage() {
   });
   const [referenceQuery, setReferenceQuery] = useState("");
   const [score, setScore] = useState("");
+  const [assignmentValue, setAssignmentValue] = useState("");
+  const [assignmentIdValue, setAssignmentIdValue] = useState("");
   const [feedback, setFeedback] = useState("");
   const [saveReceipt, setSaveReceipt] = useState(null);
   const [savingScore, setSavingScore] = useState(false);
@@ -173,6 +175,14 @@ export default function MarkingPage() {
 
   const selectedSubmission = latestSubmission;
 
+  useEffect(() => {
+    const nextAssignment = referenceEntry?.assignment || "";
+    const level = selectedStudent?.level || referenceEntry?.level || inferLevel(nextAssignment);
+
+    setAssignmentValue(nextAssignment);
+    setAssignmentIdValue(buildAssignmentId(level, nextAssignment));
+  }, [referenceEntry?.assignment, referenceEntry?.level, selectedStudent?.level]);
+
   const latestNotifications = useMemo(() => submissionNotifications.slice(0, 30), [submissionNotifications]);
 
   const combinedReferenceAndSubmission = useMemo(() => {
@@ -249,6 +259,11 @@ export default function MarkingPage() {
     if (matchingReference?.assignment) {
       setReferenceAssignment(matchingReference.assignment);
     }
+
+    const nextAssignment = matchingReference?.assignment || submission.assignment || "";
+    const level = matchingStudent.level || matchingReference?.level || inferLevel(nextAssignment);
+    setAssignmentValue(nextAssignment);
+    setAssignmentIdValue(buildAssignmentId(level, nextAssignment));
   };
 
   const handleCopyCombined = async () => {
@@ -295,6 +310,14 @@ export default function MarkingPage() {
       error("Pick a reference answer before saving.");
       return;
     }
+    if (!assignmentValue.trim()) {
+      error("Assignment is required.");
+      return;
+    }
+    if (!assignmentIdValue.trim()) {
+      error("Assignment ID is required.");
+      return;
+    }
     if (!feedback.trim()) {
       error("Feedback is required.");
       return;
@@ -306,14 +329,14 @@ export default function MarkingPage() {
 
     try {
       setSavingScore(true);
-      const level = selectedStudent.level || referenceEntry.level || inferLevel(referenceEntry.assignment);
-      const assignmentId = buildAssignmentId(level, referenceEntry.assignment);
+      const safeAssignment = assignmentValue.trim();
+      const level = selectedStudent.level || referenceEntry.level || inferLevel(safeAssignment);
 
       const receipt = await saveScoreRow({
         studentCode: selectedStudent.studentCode,
         name: selectedStudent.name,
-        assignment: referenceEntry.assignment,
-        assignmentId,
+        assignment: safeAssignment,
+        assignmentId: assignmentIdValue.trim(),
         score: Number(score),
         comments: feedback.trim(),
         level,
@@ -500,6 +523,23 @@ export default function MarkingPage() {
               style={{ fontSize: "1rem", lineHeight: 1.6, minHeight: 180 }}
               placeholder="Write clear, actionable feedback for the student..."
             />
+          </label>
+          <label>
+            Assignment (editable if incoming assignment needs correction)
+            <input
+              value={assignmentValue}
+              onChange={(e) => {
+                const nextAssignment = e.target.value;
+                setAssignmentValue(nextAssignment);
+
+                const level = selectedStudent?.level || referenceEntry?.level || inferLevel(nextAssignment);
+                setAssignmentIdValue(buildAssignmentId(level, nextAssignment));
+              }}
+            />
+          </label>
+          <label>
+            Assignment ID (auto-generated, editable for corrections)
+            <input value={assignmentIdValue} onChange={(e) => setAssignmentIdValue(e.target.value)} />
           </label>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={handleAutoMark} disabled={autoMarking || !selectedSubmission}>
