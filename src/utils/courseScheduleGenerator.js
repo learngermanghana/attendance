@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import { WEEKDAY_OPTIONS, courseLevels } from "../data/courseTemplates.js";
 import { buildAssignmentId } from "./assignmentId.js";
+import { getUnifiedTopicLabel } from "../data/courseDictionary.js";
 
 const DEFAULT_WEEKDAYS = ["Monday", "Tuesday", "Wednesday"];
 
@@ -59,7 +60,7 @@ export function generateCourseSchedule({
             day: `Day ${dayIndex}`,
             date: cursor.format("dddd, DD MMMM YYYY"),
             dateIso: cursorIso,
-            topic,
+            topic: getUnifiedTopicLabel(assignmentId, topic),
             assignmentId,
           });
           dayIndex += 1;
