@@ -1,6 +1,6 @@
 {
   "A1-0.1": {
-    "assignment_id": "A1-0.1",
+    "assignment_id": "A1-0.1 Greetings and Asking About Well-being",
     "chapter": "0.1",
     "de": "Begrüßungen und Wohlbefinden",
     "en": "Greetings and Asking About Well-being",
@@ -19,7 +19,7 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1AgS3Kb78KcvbJnZvZijM4-cBJ1PitCVnUwe19T4TMPQ/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective"
   },
-  "A1-0.2": {
+  "A1-0.2 German Alphabet ": {
     "assignment_id": "A1-0.2",
     "chapter": "0.2",
     "de": "Alphabet",
@@ -41,7 +41,7 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1XJcdMuaivOh2JCnXi1b9E4l5qN4KldyDSRNHJgiHnBs/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective"
   },
-  "A1-1.1": {
+  "A1-1.1 Personal Pronouns and Verb Conjugation": {
     "assignment_id": "A1-1.1",
     "chapter": "1.1",
     "de": "Personalpronomen und Verbkonjugation",
@@ -55,7 +55,7 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1KCNaM0_sgbrPhYMm89iC8WRzSfQgz80qUO9EAoCpXuo/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective"
   },
-  "A1-1.2": {
+  "A1-1.2 Introducing Yourself and Reviewing Pronouns": {
     "assignment_id": "A1-1.2",
     "chapter": "1.2",
     "de": "Sich vorstellen und Pronomen wiederholen",
@@ -79,7 +79,7 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1NuId_slE2LVNXvhfwQvdjYaqtBGa78aBNVETEw2RMmY/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective"
   },
-  "A1-2": {
+  "A1-2 Numbers and Addresses": {
     "assignment_id": "A1-2",
     "chapter": "2",
     "de": "Zahlen und Adressen",
@@ -104,7 +104,7 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1OVDkJimsz7wZwNa4s4QccST3TFvLkqzt720P_CWPdD8/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective"
   },
-  "A1-3": {
+  "A1-3 Asking About Prices and Preferences": {
     "assignment_id": "A1-3",
     "chapter": "3",
     "de": "Nach dem Preis fragen und Vorlieben ausdrücken (gern, lieber, mögen)",
@@ -128,11 +128,11 @@
       }
     }
   },
-  "A1-4": {
+  "A1-4 Countries and Languages": {
     "assignment_id": "A1-4",
     "chapter": "4",
-    "de": "Länder und Sprachen (schon mal, noch nie)",
-    "en": "Countries and Languages (Already / Never)",
+    "de": "Länder und Sprachen",
+    "en": "Countries and Languages",
     "answers": {
       "Answer1": "C) Neun",
       "Answer2": "B) Polnisch",
@@ -151,10 +151,10 @@
     "format": "objective"
   },
   "A1-5": {
-    "assignment_id": "A1-5",
+    "assignment_id": "A1-5 Nominative and Accusative Cases",
     "chapter": "5",
     "de": "Nominativ und Akkusativ – Artikel",
-    "en": "Nominative and Accusative – Articles",
+    "en": "Nominative and Accusative Cases",
     "answers": {
       "Answer1": "Der Tisch – the table",
       "Answer2": "Die Lampe – the lamp",
@@ -191,7 +191,7 @@
     "format": "objective"
   },
   "A1-6": {
-    "assignment_id": "A1-6",
+    "assignment_id": "A1-6 Objects, Colors and Possessive Articles",
     "chapter": "6",
     "de": "Gegenstände, Farben und Possessivartikel",
     "en": "Objects, Colors and Possessive Articles",
@@ -224,7 +224,7 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1yXUzZdoz-wKnorDUbg-7e_SGMklgUXNxGakDlw5chgA/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective"
   },
-  "A1-7": {
+  "A1-7 The 12 Hour Clock": {
     "assignment_id": "A1-7",
     "chapter": "7",
     "de": "Die 12-Stunden-Uhr",
@@ -254,7 +254,7 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1dCI5BbOvfvI4RekolDshv19jyNFPmzenDSrgBMGL9Uk/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective"
   },
-  "A1-8": {
+  "A1-8 The 24 Hour Clock and Dates": {
     "assignment_id": "A1-8",
     "chapter": "8",
     "de": "Die 24-Stunden-Uhr und Datum",
@@ -279,7 +279,7 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1Y8Zk4BvzbE2MhD2Wh0VIDbxwPib9biQ2zR60gaIQDYQ/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective"
   },
-  "A1-9": {
+  "A1-9 Food and Negation": {
     "assignment_id": "A1-9",
     "chapter": "9",
     "de": "Essen und Verneinung (nicht, kein, nein)",
@@ -304,11 +304,11 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1paS9hx9oc7iB2VnxGSUg5Y9-hMf8l08nCNGNSU4__SA/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective"
   },
-  "A1-10": {
+  "A1-10 Food and Daily Life": {
     "assignment_id": "A1-10",
     "chapter": "10",
     "de": "Essen und Alltag",
-    "en": "Food and Everyday Life",
+    "en": "Food and Daily Life",
     "answers": {
       "Answer1": "Falsch",
       "Answer2": "Wahr",
@@ -329,7 +329,7 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1OOxtH3ZuP6Vd8wfZScnV_Ht1ywke1C3OmFm5_kFrVGs/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective"
   },
-  "A1-11": {
+  "A1-11 Instructions and Directions": {
     "assignment_id": "A1-11",
     "chapter": "11",
     "de": "Anweisungen und Richtungen",
@@ -360,7 +360,7 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1kGGQZ89YZV-xGUdFKIHUFOVYG7wB7PnCBF8DqBd4Zok/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective"
   },
-  "A1-12.1": {
+  "A1-12.1 Two-Way Prepositions": {
     "assignment_id": "A1-12.1",
     "chapter": "12.1",
     "de": "Zwei-Wege-Präpositionen",
@@ -391,7 +391,7 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1vgjfS9u_dS8ypgMOkCkVp3j_04dM8hwGvQiJdCKT74c/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective"
   },
-  "A1-12.2": {
+  "A1-12.2 Professions and Prepositions": {
     "assignment_id": "A1-12.2",
     "chapter": "12.2",
     "de": "Berufe und Präpositionen",
@@ -431,7 +431,7 @@
       "Answer1": "Read comment for answers"
     }
   },
-  "A1-13": {
+  "A1-13 Weather": {
     "assignment_id": "A1-13",
     "chapter": "13",
     "de": "Wetter und einfache Konnektoren",
@@ -450,7 +450,7 @@
     "answer_url": "https://docs.google.com/spreadsheets/d/1VOz1kZqSXitbHO6ciV4GbGSZJkwXiZM1ifSxPVlvNNA/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective"
   },
-  "A1-14.1": {
+  "A1-14.1 Health and Body Parts": {
     "assignment_id": "A1-14.1",
     "chapter": "14.1",
     "de": "Gesundheit und Körperteile",
