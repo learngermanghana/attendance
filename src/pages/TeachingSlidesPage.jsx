@@ -7,6 +7,7 @@ import {
   teachingSlides,
 } from "../data/teachingSlides";
 import "./TeachingSlidesPage.css";
+import { getUnifiedTopicLabel } from "../data/courseDictionary.js";
 
 function SlideBlocks({ slide, handoutMode = false }) {
   return (
@@ -67,7 +68,7 @@ function SlideHeader({ slide }) {
     <header className="slide-header">
       <p className="slide-meta">{slide.course} · {slide.day}</p>
       <h1>{slide.title}</h1>
-      <p><strong>Topic:</strong> {slide.topic}</p>
+      <p><strong>Topic:</strong> {getUnifiedTopicLabel(slide.assignmentId, slide.topic)}</p>
       <p><strong>Goal:</strong> {slide.objective}</p>
       <p><strong>Duration:</strong> {slide.estimatedDuration}</p>
     </header>
@@ -91,7 +92,7 @@ function SlideIndex() {
           <article key={slide.id} className="slide-card">
             <p className="slide-meta">{slide.course} · {slide.day}</p>
             <h2>{slide.title}</h2>
-            <p>{slide.topic}</p>
+            <p>{getUnifiedTopicLabel(slide.assignmentId, slide.topic)}</p>
             <Link to={`/teaching-slides/${slide.id}`}>Open lesson slide</Link>
           </article>
         ))}

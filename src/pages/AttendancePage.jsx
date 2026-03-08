@@ -13,6 +13,7 @@ import {
 import { useToast } from "../context/ToastContext.jsx";
 import { buildAssignmentId } from "../utils/assignmentId.js";
 import { resolveScheduleKey } from "../data/classSchedules";
+import { getUnifiedTopicLabel } from "../data/courseDictionary.js";
 
 function normalizeScheduleDate(raw) {
   if (!raw) return "";
@@ -28,8 +29,9 @@ function buildScheduleMap(classId) {
   schedule.forEach((item, index) => {
     const sessionId = String(index);
     const assignmentId = String(item.assignmentId || item.assignment_id || buildAssignmentId(scheduleLevel, item.topic, index + 1));
+    const topicLabel = getUnifiedTopicLabel(assignmentId, item.topic);
     map[sessionId] = {
-      title: `${item.week}: ${item.topic}`,
+      title: `${item.week}: ${topicLabel}`,
       date: normalizeScheduleDate(item.date),
       assignmentId,
       students: {},
