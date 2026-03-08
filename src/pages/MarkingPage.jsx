@@ -33,6 +33,17 @@ function inferLevel(assignment = "") {
   return match ? match[1].toUpperCase() : "";
 }
 
+function formatReferenceAssignmentLabel(entry = {}) {
+  const assignment = String(entry.assignment || "").trim();
+  if (!assignment) return "";
+
+  const looksLikeBareId = /^[A-Z]\d+-/.test(assignment);
+  const topic = String(entry.de || entry.en || "").trim();
+
+  if (!looksLikeBareId || !topic) return assignment;
+  return `${assignment.replace("-", " ")} — ${topic}`;
+}
+
 export default function MarkingPage() {
   const { success, error } = useToast();
   const [roster, setRoster] = useState([]);
@@ -154,7 +165,9 @@ export default function MarkingPage() {
       const assignment = normalize(entry.assignment);
       const level = normalize(entry.level);
       const referenceText = normalize(entry.reference || "");
-      return assignment.includes(q) || level.includes(q) || referenceText.includes(q);
+      const topicDe = normalize(entry.de || "");
+      const topicEn = normalize(entry.en || "");
+      return assignment.includes(q) || level.includes(q) || referenceText.includes(q) || topicDe.includes(q) || topicEn.includes(q);
     });
   }, [referenceEntries, referenceQuery]);
 
@@ -420,7 +433,7 @@ export default function MarkingPage() {
           <select value={referenceAssignment} onChange={(e) => setReferenceAssignment(e.target.value)}>
             {filteredReferenceEntries.map((entry) => (
               <option key={entry.assignment} value={entry.assignment}>
-                {entry.assignment}
+                {formatReferenceAssignmentLabel(entry)}
               </option>
             ))}
           </select>
