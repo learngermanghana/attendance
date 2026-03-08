@@ -95,12 +95,12 @@ export default function MarkingPage() {
 
     return Object.entries(answersDictionary || {}).map(([assignmentKey, data]) => {
       const assignmentId = inferAssignmentId(data?.assignmentId, data?.assignment_id, assignmentKey);
-      const assignment = String(data?.assignment || assignmentId || assignmentKey || "").trim();
+      const assignment = String(data?.assignment || assignmentKey || assignmentId || "").trim();
       return {
         assignment,
         assignmentId,
         level: String(data?.level || inferLevel(assignment)).toUpperCase(),
-        assignmentAliases: [assignmentKey, assignmentId, assignment].filter(Boolean),
+        assignmentAliases: [assignmentKey, assignmentId, data?.assignment, assignment].filter(Boolean),
         ...data,
       };
     });
