@@ -12,6 +12,7 @@ import TutorMarkingPage from "./pages/TutorMarkingPage";
 import CommunicationPage from "./pages/CommunicationPage";
 import GrammarIssueReportsPage from "./pages/GrammarIssueReportsPage";
 import WhatsAppRemindersPage from "./pages/WhatsAppRemindersPage";
+import TeachingSlidesPage from "./pages/TeachingSlidesPage";
 import { useAuth } from "./context/AuthContext";
 import { useToast } from "./context/ToastContext";
 import "./App.css";
@@ -47,6 +48,7 @@ function TopBar() {
             <Link to="/campus/tutor-marking" onClick={() => setMenuOpen(false)}>Tutor Marking</Link>
             <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
             <Link to="/whatsapp-reminders" onClick={() => setMenuOpen(false)}>WhatsApp Reminders</Link>
+            <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Teaching Slides</Link>
           </div>
 
           <div className={`topbar-user ${menuOpen ? "topbar-user-open" : ""}`}>
@@ -167,6 +169,30 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <WhatsAppRemindersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teaching-slides"
+            element={
+              <ProtectedRoute>
+                <TeachingSlidesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teaching-slides/print/:courseId"
+            element={
+              <ProtectedRoute>
+                <TeachingSlidesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teaching-slides/:slideId"
+            element={
+              <ProtectedRoute>
+                <TeachingSlidesPage />
               </ProtectedRoute>
             }
           />
