@@ -33,6 +33,16 @@ function inferLevel(assignment = "") {
   return match ? match[1].toUpperCase() : "";
 }
 
+function inferAssignmentId(...candidates) {
+  for (const value of candidates) {
+    const match = String(value || "").trim().match(/([A-Z]\d+-[\d._]+)/i);
+    if (match?.[1]) {
+      return match[1].toUpperCase().replace(/_/g, ".");
+    }
+  }
+  return "";
+}
+
 function formatReferenceAssignmentLabel(entry = {}) {
   const assignment = String(entry.assignment || "").trim();
   if (!assignment) return "";
@@ -71,11 +81,29 @@ export default function MarkingPage() {
   const [activeSubmissionTab, setActiveSubmissionTab] = useState("latest");
 
   const referenceEntries = useMemo(() => {
-    if (Array.isArray(answersDictionary)) return answersDictionary;
-    return Object.entries(answersDictionary || {}).map(([assignment, data]) => ({
-      assignment,
-      ...data,
-    }));
+    if (Array.isArray(answersDictionary)) {
+      return answersDictionary.map((entry) => {
+        const assignmentId = inferAssignmentId(entry.assignmentId, entry.assignment_id, entry.assignment, entry.assignmentKey);
+        return {
+          ...entry,
+          assignment: String(entry.assignment || assignmentId || "").trim(),
+          assignmentId,
+          level: String(entry.level || inferLevel(entry.assignment || assignmentId)).toUpperCase(),
+        };
+      });
+    }
+
+    return Object.entries(answersDictionary || {}).map(([assignmentKey, data]) => {
+      const assignmentId = inferAssignmentId(data?.assignmentId, data?.assignment_id, assignmentKey);
+      const assignment = String(data?.assignment || assignmentId || assignmentKey || "").trim();
+      return {
+        assignment,
+        assignmentId,
+        level: String(data?.level || inferLevel(assignment)).toUpperCase(),
+        assignmentAliases: [assignmentKey, assignmentId, assignment].filter(Boolean),
+        ...data,
+      };
+    });
   }, []);
 
   useEffect(() => {
@@ -182,9 +210,20 @@ export default function MarkingPage() {
   const latestSubmission = useMemo(() => {
     if (!studentSubmissions.length) return null;
 
-    const exact = studentSubmissions.find((row) => normalize(row.assignment) === normalize(referenceAssignment));
+    const selectedReference = referenceEntries.find((entry) => entry.assignment === referenceAssignment);
+    const referenceAliases = [
+      selectedReference?.assignment,
+      selectedReference?.assignmentId,
+      ...(selectedReference?.assignmentAliases || []),
+    ].map(normalize).filter(Boolean);
+
+    const exact = studentSubmissions.find((row) => {
+      const submissionAssignmentId = inferAssignmentId(row.assignmentId, row.assignmentKey, row.assignment);
+      const submissionAliases = [row.assignment, row.assignmentId, row.assignmentKey, submissionAssignmentId].map(normalize);
+      return submissionAliases.some((alias) => referenceAliases.includes(alias));
+    });
     return exact || studentSubmissions[0];
-  }, [studentSubmissions, referenceAssignment]);
+  }, [studentSubmissions, referenceAssignment, referenceEntries]);
 
   const selectedSubmission = latestSubmission;
 
@@ -382,7 +421,7 @@ export default function MarkingPage() {
         setSubmissionNotifications((prev) => prev.filter((row) => row.path !== selectedSubmission.path));
       }
 
-      success(`Saved score for ${receipt.row.name} (${receipt.row.assignment}). ${targetMessage}`);
+      success(`Saved score for ${receipt.row.name} (${receipt.row.assignment} · ${receipt.row.assignment_id || "No assignment ID"}). ${targetMessage}`);
     } catch (err) {
       if (err?.receipt) {
         setSaveReceipt(err.receipt);
@@ -582,7 +621,7 @@ export default function MarkingPage() {
         {saveReceipt && (
           <div style={{ marginTop: 12, border: "1px solid #ddd", borderRadius: 8, padding: 10, background: "#fafafa", display: "grid", gap: 8 }}>
             <div style={{ fontSize: 13 }}>
-              <b>Save receipt:</b> {saveReceipt.row.name} · {saveReceipt.row.assignment}
+              <b>Save receipt:</b> {saveReceipt.row.name} · {saveReceipt.row.assignment} · ID: <code>{saveReceipt.row.assignment_id || "—"}</code>
             </div>
             <div style={{ fontSize: 13 }}>
               Google Sheets: <b>{saveReceipt.sheet.success ? "Success" : "Failed"}</b>
