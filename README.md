@@ -11,7 +11,7 @@ Attendance management app for teachers with two capture modes:
 - Database: Firestore
 - Auth: Firebase Authentication (teacher login)
 
-## Data Model
+## Data Model Structure
 
 Canonical attendance path:
 
