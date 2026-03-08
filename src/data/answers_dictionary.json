@@ -1,9 +1,5 @@
 {
-  "A1-0.1": {
-    "assignment_id": "A1-0.1 Greetings and Asking About Well-being",
-    "chapter": "0.1",
-    "de": "Begrüßungen und Wohlbefinden",
-    "en": "Greetings and Asking About Well-being",
+  "A1 Greetings and Asking About Well-being 0.1": {
     "answers": {
       "Answer1": "C) Guten Morgen",
       "Answer2": "D) Guten Tag",
@@ -18,14 +14,9 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1AgS3Kb78KcvbJnZvZijM4-cBJ1PitCVnUwe19T4TMPQ/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment": "A1-0.1",
-    "level": "A1"
+    "assignment_id": "A1-0.1"
   },
-  "A1-0.2 German Alphabet ": {
-    "assignment_id": "A1-0.2",
-    "chapter": "0.2",
-    "de": "Alphabet",
-    "en": "German Alphabet",
+  "A1 Alphabets German Alphabet  0.2": {
     "answers": {
       "Answer1": "C) 26",
       "Answer2": "A) A, O, U, B",
@@ -42,14 +33,9 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1XJcdMuaivOh2JCnXi1b9E4l5qN4KldyDSRNHJgiHnBs/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment": "A1-0.2",
-    "level": "A1"
+    "assignment_id": "A1-0.2"
   },
-  "A1-1.1 Personal Pronouns and Verb Conjugation": {
-    "assignment_id": "A1-1.1",
-    "chapter": "1.1",
-    "de": "Personalpronomen und Verbkonjugation",
-    "en": "Personal Pronouns and Verb Conjugation",
+  "A1 Pronouns and Verb Conjugation 1.1": {
     "answers": {
       "Answer1": "C Anna",
       "Answer2": "C München",
@@ -58,40 +44,9 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1KCNaM0_sgbrPhYMm89iC8WRzSfQgz80qUO9EAoCpXuo/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment": "A1-1.1",
-    "level": "A1"
+    "assignment_id": "A1-1.1"
   },
-  "A1-1.2 Introducing Yourself and Reviewing Pronouns": {
-    "assignment_id": "A1-1.2",
-    "chapter": "1.2",
-    "de": "Sich vorstellen und Pronomen wiederholen",
-    "en": "Introducing Yourself and Reviewing Pronouns",
-    "answers": {
-      "Answer1": "Ich heiße Anna",
-      "Answer2": "Du heißt Max",
-      "Answer3": "Er heißt Peter",
-      "Answer4": "Wir kommen aus Italien",
-      "Answer5": "Ihr kommt aus Brasilien",
-      "Answer6": "Sie kommt/k kommen aus Russland",
-      "Answer7": "Ich wohne in Berlin",
-      "Answer8": "Du wohnst in Madrid",
-      "Answer9": "Sie wohnt in Wien",
-      "Answer10": "A) Anna",
-      "Answer11": "C) Aus Italien",
-      "Answer12": "D) In Berlin",
-      "Answer13": "B) Tom",
-      "Answer14": "A) In Berlin"
-    },
-    "answer_url": "https://docs.google.com/spreadsheets/d/1NuId_slE2LVNXvhfwQvdjYaqtBGa78aBNVETEw2RMmY/gviz/tq?tqx=out:html&sheet=Key",
-    "format": "objective",
-    "assignment": "A1-1.2",
-    "level": "A1"
-  },
-  "A1-2 Numbers and Addresses": {
-    "assignment_id": "A1-2",
-    "chapter": "2",
-    "de": "Zahlen und Adressen",
-    "en": "Numbers and Addresses",
+  "A1 Numbers and Addresses 2": {
     "answers": {
       "Answer1": "A) sieben",
       "Answer2": "B) Drei",
@@ -111,40 +66,30 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1OVDkJimsz7wZwNa4s4QccST3TFvLkqzt720P_CWPdD8/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment": "A1-2",
-    "level": "A1"
+    "assignment_id": "A1-2"
   },
-  "A1-3 Asking About Prices and Preferences": {
-    "assignment_id": "A1-3",
-    "chapter": "3",
-    "de": "Nach dem Preis fragen und Vorlieben ausdrücken (gern, lieber, mögen)",
-    "en": "Asking About Prices and Expressing Preferences",
+  "A1 Introducing Yourself and Reviewing Pronouns 1.2": {
     "answers": {
-      "teil1": {
-        "Answer1": "Es kostet 20 Euro.",
-        "Answer2": "Sie kostet 15 Euro.",
-        "Answer3": "Es kostet 25.000 Euro.",
-        "Answer4": "Er kostet 50 Euro."
-      },
-      "teil3": {
-        "Answer1": "Ich spiele gern Fußball. / Ich spiele nicht gern Fußball.",
-        "Answer2": "Ich mag Schwimmen. / Ich mag nicht Schwimmen.",
-        "Answer3": "Ich mag Lesen. / Ich mag nicht Lesen.",
-        "Answer4": "Ich mag Malen. / Ich mag nicht Malen.",
-        "Answer5": "Ich mag Musik. / Ich mag nicht Musik.",
-        "Answer6": "Ich mag Kochen. / Ich mag nicht Kochen.",
-        "Answer7": "Ich mag Reisen. / Ich mag nicht Reisen.",
-        "Answer8": "Ich mag Gartenarbeit. / Ich mag nicht Gartenarbeit."
-      }
+      "Answer1": "Ich heiße Anna",
+      "Answer2": "Du heißt Max",
+      "Answer3": "Er heißt Peter",
+      "Answer4": "Wir kommen aus Italien",
+      "Answer5": "Ihr kommt aus Brasilien",
+      "Answer6": "Sie kommt/k kommen aus Russland",
+      "Answer7": "Ich wohne in Berlin",
+      "Answer8": "Du wohnst in Madrid",
+      "Answer9": "Sie wohnt in Wien",
+      "Answer10": "A) Anna",
+      "Answer11": "C) Aus Italien",
+      "Answer12": "D) In Berlin",
+      "Answer13": "B) Tom",
+      "Answer14": "A) In Berlin"
     },
-    "assignment": "A1-3",
-    "level": "A1"
+    "answer_url": "https://docs.google.com/spreadsheets/d/1NuId_slE2LVNXvhfwQvdjYaqtBGa78aBNVETEw2RMmY/gviz/tq?tqx=out:html&sheet=Key",
+    "format": "objective",
+    "assignment_id": "A1-1.2"
   },
-  "A1-4 Countries and Languages": {
-    "assignment_id": "A1-4",
-    "chapter": "4",
-    "de": "Länder und Sprachen",
-    "en": "Countries and Languages",
+  "A1 Countries and Languages 4": {
     "answers": {
       "Answer1": "C) Neun",
       "Answer2": "B) Polnisch",
@@ -161,14 +106,40 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1SiYvtaw-LwoeCff7yxlpWsfENMlIbQRqfuh3MPobPOE/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment": "A1-4",
-    "level": "A1"
+    "assignment_id": "A1-4"
   },
-  "A1-5": {
-    "assignment_id": "A1-5 Nominative and Accusative Cases",
-    "chapter": "5",
-    "de": "Nominativ und Akkusativ – Artikel",
-    "en": "Nominative and Accusative Cases",
+  "A1 Objects and Colors 6": {
+    "answers": {
+      "Answer1": "Das Wohnzimmer – the living room",
+      "Answer2": "Die Küche – the kitchen",
+      "Answer3": "Das Schlafzimmer – the bedroom",
+      "Answer4": "Das Badezimmer – the bathroom",
+      "Answer5": "Der Balkon – the balcony",
+      "Answer6": "Der Flur – the hallway",
+      "Answer7": "Das Bett – the bed",
+      "Answer8": "Der Tisch – the table",
+      "Answer9": "Der Stuhl – the chair",
+      "Answer10": "Der Schrank – the wardrobe",
+      "Answer11": "B) Vier",
+      "Answer12": "A) Ein Sofa und ein Fernseher",
+      "Answer13": "B) Einen Herd, einen Kühlschrank und einen Tisch mit vier Stühlen",
+      "Answer14": "C) Ein großes Bett",
+      "Answer15": "D) Eine Dusche, eine Badewanne und ein Waschbecken",
+      "Answer16": "B) Klein und schön",
+      "Answer17": "C) Blumen und einen kleinen Tisch mit zwei Stühlen",
+      "Answer18": "B",
+      "Answer19": "B",
+      "Answer20": "B",
+      "Answer21": "C",
+      "Answer22": "D",
+      "Answer23": "B",
+      "Answer24": "C"
+    },
+    "answer_url": "https://docs.google.com/spreadsheets/d/1yXUzZdoz-wKnorDUbg-7e_SGMklgUXNxGakDlw5chgA/gviz/tq?tqx=out:html&sheet=Key",
+    "format": "objective",
+    "assignment_id": "A1-6"
+  },
+  "A1 Nominative and Accusative Cases 5": {
     "answers": {
       "Answer1": "Der Tisch – the table",
       "Answer2": "Die Lampe – the lamp",
@@ -203,50 +174,9 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1d0dvYURPHf69KlJhToqOxn39V8GCcAsdrhrEAQ78phw/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment": "A1-5",
-    "level": "A1"
+    "assignment_id": "A1-5"
   },
-  "A1-6": {
-    "assignment_id": "A1-6 Objects, Colors and Possessive Articles",
-    "chapter": "6",
-    "de": "Gegenstände, Farben und Possessivartikel",
-    "en": "Objects, Colors and Possessive Articles",
-    "answers": {
-      "Answer1": "Das Wohnzimmer – the living room",
-      "Answer2": "Die Küche – the kitchen",
-      "Answer3": "Das Schlafzimmer – the bedroom",
-      "Answer4": "Das Badezimmer – the bathroom",
-      "Answer5": "Der Balkon – the balcony",
-      "Answer6": "Der Flur – the hallway",
-      "Answer7": "Das Bett – the bed",
-      "Answer8": "Der Tisch – the table",
-      "Answer9": "Der Stuhl – the chair",
-      "Answer10": "Der Schrank – the wardrobe",
-      "Answer11": "B) Vier",
-      "Answer12": "A) Ein Sofa und ein Fernseher",
-      "Answer13": "B) Einen Herd, einen Kühlschrank und einen Tisch mit vier Stühlen",
-      "Answer14": "C) Ein großes Bett",
-      "Answer15": "D) Eine Dusche, eine Badewanne und ein Waschbecken",
-      "Answer16": "B) Klein und schön",
-      "Answer17": "C) Blumen und einen kleinen Tisch mit zwei Stühlen",
-      "Answer18": "B",
-      "Answer19": "B",
-      "Answer20": "B",
-      "Answer21": "C",
-      "Answer22": "D",
-      "Answer23": "B",
-      "Answer24": "C"
-    },
-    "answer_url": "https://docs.google.com/spreadsheets/d/1yXUzZdoz-wKnorDUbg-7e_SGMklgUXNxGakDlw5chgA/gviz/tq?tqx=out:html&sheet=Key",
-    "format": "objective",
-    "assignment": "A1-6",
-    "level": "A1"
-  },
-  "A1-7 The 12 Hour Clock": {
-    "assignment_id": "A1-7",
-    "chapter": "7",
-    "de": "Die 12-Stunden-Uhr",
-    "en": "The 12-Hour Clock",
+  "A1 12 Hour Clock 7": {
     "answers": {
       "Answer1": "B) Um sieben Uhr",
       "Answer2": "B) Um acht Uhr",
@@ -271,14 +201,9 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1dCI5BbOvfvI4RekolDshv19jyNFPmzenDSrgBMGL9Uk/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment": "A1-7",
-    "level": "A1"
+    "assignment_id": "A1-12"
   },
-  "A1-8 The 24 Hour Clock and Dates": {
-    "assignment_id": "A1-8",
-    "chapter": "8",
-    "de": "Die 24-Stunden-Uhr und Datum",
-    "en": "The 24-Hour Clock and Dates",
+  "A1 The 24 Hour Clock and Dates 8": {
     "answers": {
       "Answer1": "B) Zwei Uhr nachmittags",
       "Answer2": "B) 29 Tage",
@@ -298,14 +223,9 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1Y8Zk4BvzbE2MhD2Wh0VIDbxwPib9biQ2zR60gaIQDYQ/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment": "A1-8",
-    "level": "A1"
+    "assignment_id": "A1-24"
   },
-  "A1-9 Food and Negation": {
-    "assignment_id": "A1-9",
-    "chapter": "9",
-    "de": "Essen und Verneinung (nicht, kein, nein)",
-    "en": "Food and Negation",
+  "A1 Food and Negation 9": {
     "answers": {
       "Answer1": "B) Apfel und Karotten",
       "Answer2": "C) Karotten",
@@ -325,14 +245,9 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1paS9hx9oc7iB2VnxGSUg5Y9-hMf8l08nCNGNSU4__SA/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment": "A1-9",
-    "level": "A1"
+    "assignment_id": "A1-9"
   },
-  "A1-10 Food and Daily Life": {
-    "assignment_id": "A1-10",
-    "chapter": "10",
-    "de": "Essen und Alltag",
-    "en": "Food and Daily Life",
+  "A1 Food and Daily Life 10": {
     "answers": {
       "Answer1": "Falsch",
       "Answer2": "Wahr",
@@ -352,14 +267,9 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1OOxtH3ZuP6Vd8wfZScnV_Ht1ywke1C3OmFm5_kFrVGs/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment": "A1-10",
-    "level": "A1"
+    "assignment_id": "A1-10"
   },
-  "A1-11 Instructions and Directions": {
-    "assignment_id": "A1-11",
-    "chapter": "11",
-    "de": "Anweisungen und Richtungen",
-    "en": "Instructions and Directions",
+  "A1 Instructions and Directions 11": {
     "answers": {
       "teil1": {
         "Answer1": "B) Entschuldigung, wo ist der Bahnhof?",
@@ -385,14 +295,9 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1kGGQZ89YZV-xGUdFKIHUFOVYG7wB7PnCBF8DqBd4Zok/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment": "A1-11",
-    "level": "A1"
+    "assignment_id": "A1-11"
   },
-  "A1-12.1 Two-Way Prepositions": {
-    "assignment_id": "A1-12.1",
-    "chapter": "12.1",
-    "de": "Zwei-Wege-Präpositionen",
-    "en": "Two-Way Prepositions",
+  "A1 Two Case Preposition 12.1": {
     "answers": {
       "Teil 1": {
         "Answer1": "B) Ärztin",
@@ -418,14 +323,9 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1vgjfS9u_dS8ypgMOkCkVp3j_04dM8hwGvQiJdCKT74c/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment": "A1-12.1",
-    "level": "A1"
+    "assignment_id": "A1-12.1"
   },
-  "A1-12.2 Professions and Prepositions": {
-    "assignment_id": "A1-12.2",
-    "chapter": "12.2",
-    "de": "Berufe und Präpositionen",
-    "en": "Professions and Prepositions",
+  "A1 Professions and Prepositions 12.2": {
     "answers": {
       "Teil 1": {
         "Answer1": "In Berlin",
@@ -451,25 +351,15 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1DiO7gh0xrt-SyWWhpxVNtMs9lFjEGuzqJww9OMmTjDY/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment": "A1-12.2",
-    "level": "A1"
+    "assignment_id": "A1-12.2"
   },
-  "A1-12.3": {
-    "assignment_id": "A1-12.3",
-    "chapter": "12.3",
-    "de": "Briefe schreiben (formal und informell)",
-    "en": "Writing Letters (Formal and Informal)",
+  "Introduction to Letter Writing  12.3": {
     "answers": {
       "Answer1": "Read comment for answers"
     },
-    "assignment": "A1-12.3",
-    "level": "A1"
+    "assignment_id": "A1-12.3"
   },
-  "A1-13 Weather": {
-    "assignment_id": "A1-13",
-    "chapter": "13",
-    "de": "Wetter und einfache Konnektoren",
-    "en": "Weather and Simple Connectors",
+  "A1 Weather 13": {
     "answers": {
       "Answer1": "A",
       "Answer2": "B",
@@ -483,14 +373,9 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1VOz1kZqSXitbHO6ciV4GbGSZJkwXiZM1ifSxPVlvNNA/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment": "A1-13",
-    "level": "A1"
+    "assignment_id": "A1-13"
   },
-  "A1-14.1 Health and Body Parts": {
-    "assignment_id": "A1-14.1",
-    "chapter": "14.1",
-    "de": "Gesundheit und Körperteile",
-    "en": "Health and Body Parts",
+  "A1 Health and Body Parts 14.1": {
     "answers": {
       "Answer1": "Frage 1: Anzeige A",
       "Answer2": "Frage 2: Anzeige B",
@@ -510,8 +395,7 @@
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1FUBXLMY-KhlaDrFbsgKIuHRENalKdl5Zdlqb4Td9Yds/gviz/tq?tqx=out:html&sheet=Key",
     "format": "objective",
-    "assignment": "A1-14.1",
-    "level": "A1"
+    "assignment_id": "A1-14.1"
   },
   "A2 1.1 Small Talk": {
     "answers": {
@@ -1750,5 +1634,26 @@
     "sheet_url": "https://docs.google.com/spreadsheets/d/1ZmpTcbi4zR5gxGt80Khu3E2M-1sneiJM0qCOCwa8UKo/edit",
     "format": "objective",
     "assignment_id": "B1-10.28"
+  },
+  "A1 Asking About Prices 3": {
+    "answers": {
+      "teil1": {
+        "Answer1": "Es kostet 20 Euro.",
+        "Answer2": "Sie kostet 15 Euro.",
+        "Answer3": "Es kostet 25.000 Euro.",
+        "Answer4": "Er kostet 50 Euro."
+      },
+      "teil3": {
+        "Answer1": "Ich spiele gern Fußball. / Ich spiele nicht gern Fußball.",
+        "Answer2": "Ich mag Schwimmen. / Ich mag nicht Schwimmen.",
+        "Answer3": "Ich mag Lesen. / Ich mag nicht Lesen.",
+        "Answer4": "Ich mag Malen. / Ich mag nicht Malen.",
+        "Answer5": "Ich mag Musik. / Ich mag nicht Musik.",
+        "Answer6": "Ich mag Kochen. / Ich mag nicht Kochen.",
+        "Answer7": "Ich mag Reisen. / Ich mag nicht Reisen.",
+        "Answer8": "Ich mag Gartenarbeit. / Ich mag nicht Gartenarbeit."
+      }
+    },
+    "assignment_id": "A1-3"
   }
 }
