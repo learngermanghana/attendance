@@ -181,7 +181,7 @@ export default function App() {
             }
           />
           <Route
-            path="/teaching-slides/print/:courseId"
+            path="/teaching-slides/course/:courseId"
             element={
               <ProtectedRoute>
                 <TeachingSlidesPage />
@@ -189,7 +189,15 @@ export default function App() {
             }
           />
           <Route
-            path="/teaching-slides/:slideId"
+            path="/teaching-slides/course/:courseId/:slideId"
+            element={
+              <ProtectedRoute>
+                <TeachingSlidesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teaching-slides/:legacySlideId"
             element={
               <ProtectedRoute>
                 <TeachingSlidesPage />

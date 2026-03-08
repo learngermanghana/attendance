@@ -1,4 +1,6 @@
-export const teachingSlides = [
+import { courseDictionary } from "./courseDictionary";
+
+const a2Slides = [
   {
     id: "a2-day-1-small-talk",
     course: "A2",
@@ -221,6 +223,54 @@ export const teachingSlides = [
   },
 ];
 
+function createA1Slide(entry, index) {
+  return {
+    id: `a1-${entry.assignment_id.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+    course: "A1",
+    day: `Lesson ${index + 1}`,
+    dayNumber: index + 1,
+    assignmentId: entry.assignment_id,
+    title: `A1 Lesson ${index + 1} · ${entry.de}`,
+    topic: `${entry.chapter} ${entry.de}`,
+    objective: `Students can communicate about ${entry.en.toLowerCase()} with clear A1 sentence patterns.`,
+    estimatedDuration: "45–60 minutes",
+    warmupQuestionsDe: [
+      `Was weißt du schon über das Thema „${entry.de}“?`,
+      `Wann brauchst du ${entry.de.toLowerCase()} im Alltag?`,
+      "Welche Wörter kennst du schon dazu?",
+    ],
+    keyPhrasesDe: [
+      `${entry.de}: wichtige Redemittel`,
+      "Ich denke, dass ...",
+      "Kannst du das bitte wiederholen?",
+      "Ich brauche ein Beispiel.",
+    ],
+    studentQuestionsDe: [
+      `Erkläre das Thema „${entry.de}“ mit einem einfachen Satz.`,
+      "Gib ein Beispiel aus deinem Alltag.",
+      "Stelle deinem Partner eine passende Frage.",
+      "Antworte mit mindestens zwei Sätzen.",
+      "Welche neue Struktur hast du heute gelernt?",
+    ],
+    teacherNotesEn: [
+      `Keep the lesson focused on high-frequency A1 language for ${entry.en}.`,
+      "Model one full exchange before pair speaking.",
+      "Use short correction slots after each speaking phase.",
+    ],
+    interactionFlow: [
+      { phase: "Input", detailEn: "8 min: activate vocabulary and useful sentence frames." },
+      { phase: "Guided pairs", detailEn: "12 min: students use prompts with controlled answers." },
+      { phase: "Free practice", detailEn: "12 min: switch partners and expand answers." },
+      { phase: "Reflection", detailEn: "8 min: quick class feedback + correction recap." },
+    ],
+    wrapUpTaskDe: `Schreibe 3 Sätze zum Thema „${entry.de}“ und nutze neue Wörter von heute.`,
+  };
+}
+
+const a1Slides = Object.values(courseDictionary.A1).map(createA1Slide);
+
+export const teachingSlides = [...a1Slides, ...a2Slides];
+
 export function getTeachingSlideById(id) {
   return teachingSlides.find((slide) => slide.id === id) || null;
 }
@@ -232,11 +282,16 @@ export function getSlidesByCourse(courseId) {
     .sort((a, b) => a.dayNumber - b.dayNumber);
 }
 
-export function getSlideNavigation(id) {
-  const index = teachingSlides.findIndex((slide) => slide.id === id);
+export function getSlideNavigation(id, courseId) {
+  const courseSlides = courseId ? getSlidesByCourse(courseId) : teachingSlides;
+  const index = courseSlides.findIndex((slide) => slide.id === id);
   if (index < 0) return { previous: null, next: null };
   return {
-    previous: teachingSlides[index - 1] || null,
-    next: teachingSlides[index + 1] || null,
+    previous: courseSlides[index - 1] || null,
+    next: courseSlides[index + 1] || null,
   };
+}
+
+export function getAvailableSlideCourses() {
+  return [...new Set(teachingSlides.map((slide) => slide.course))].sort();
 }
