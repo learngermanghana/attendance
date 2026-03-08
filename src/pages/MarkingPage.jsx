@@ -176,12 +176,21 @@ export default function MarkingPage() {
   const selectedSubmission = latestSubmission;
 
   useEffect(() => {
-    const nextAssignment = referenceEntry?.assignment || selectedSubmission?.assignment || "";
+    const submissionAssignment = selectedSubmission?.assignment || "";
+    const nextAssignment = submissionAssignment || referenceEntry?.assignment || "";
+    const submissionAssignmentId = selectedSubmission?.assignmentId || selectedSubmission?.assignmentKey || "";
     const level = selectedStudent?.level || referenceEntry?.level || inferLevel(nextAssignment);
 
     setAssignmentValue(nextAssignment);
-    setAssignmentIdValue(buildAssignmentId(level, nextAssignment));
-  }, [selectedStudent?.level, referenceEntry?.level, referenceEntry?.assignment, selectedSubmission?.assignment]);
+    setAssignmentIdValue(submissionAssignmentId || buildAssignmentId(level, nextAssignment));
+  }, [
+    selectedStudent?.level,
+    referenceEntry?.level,
+    referenceEntry?.assignment,
+    selectedSubmission?.assignment,
+    selectedSubmission?.assignmentId,
+    selectedSubmission?.assignmentKey,
+  ]);
 
   const latestNotifications = useMemo(() => submissionNotifications.slice(0, 30), [submissionNotifications]);
 
@@ -260,10 +269,11 @@ export default function MarkingPage() {
       setReferenceAssignment(matchingReference.assignment);
     }
 
-    const nextAssignment = matchingReference?.assignment || submission.assignment || "";
+    const nextAssignment = submission.assignment || matchingReference?.assignment || "";
+    const submissionAssignmentId = submission.assignmentId || submission.assignmentKey || "";
     const level = matchingStudent.level || matchingReference?.level || inferLevel(nextAssignment);
     setAssignmentValue(nextAssignment);
-    setAssignmentIdValue(buildAssignmentId(level, nextAssignment));
+    setAssignmentIdValue(submissionAssignmentId || buildAssignmentId(level, nextAssignment));
   };
 
   const handleCopyCombined = async () => {
@@ -448,7 +458,9 @@ export default function MarkingPage() {
           selectedSubmission ? (
             <>
               <div style={{ fontSize: 13, marginBottom: 8 }}>
-                Assignment: <b>{selectedSubmission.assignment || "Unknown"}</b> · Status: {selectedSubmission.status || "submitted"} · Submitted: {selectedSubmission.createdAt?.toLocaleString() || "Unknown"}
+                Assignment: <b>{selectedSubmission.assignment || "Unknown"}</b>
+                {selectedSubmission.assignmentId ? <> · ID: <code>{selectedSubmission.assignmentId}</code></> : null}
+                {" · "}Status: {selectedSubmission.status || "submitted"} · Submitted: {selectedSubmission.createdAt?.toLocaleString() || "Unknown"}
               </div>
               <textarea readOnly rows={8} value={selectedSubmission.text || "No submission text available."} />
             </>
@@ -531,7 +543,11 @@ export default function MarkingPage() {
             />
           </label>
           <label>
-            Assignment ID (auto-generated from student level + assignment number)
+            Assignment
+            <input value={assignmentValue} onChange={(e) => setAssignmentValue(e.target.value)} />
+          </label>
+          <label>
+            Assignment ID (loaded from submission when available; editable)
             <input value={assignmentIdValue} onChange={(e) => setAssignmentIdValue(e.target.value)} />
           </label>
           <div style={{ display: "flex", gap: 8 }}>
