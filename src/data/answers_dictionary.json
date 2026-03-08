@@ -17,7 +17,9 @@
       "Answer10": "D) Gute Nacht"
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1AgS3Kb78KcvbJnZvZijM4-cBJ1PitCVnUwe19T4TMPQ/gviz/tq?tqx=out:html&sheet=Key",
-    "format": "objective"
+    "format": "objective",
+    "assignment": "A1-0.1",
+    "level": "A1"
   },
   "A1-0.2 German Alphabet ": {
     "assignment_id": "A1-0.2",
@@ -39,7 +41,9 @@
       "Answer12": "Tisch"
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1XJcdMuaivOh2JCnXi1b9E4l5qN4KldyDSRNHJgiHnBs/gviz/tq?tqx=out:html&sheet=Key",
-    "format": "objective"
+    "format": "objective",
+    "assignment": "A1-0.2",
+    "level": "A1"
   },
   "A1-1.1 Personal Pronouns and Verb Conjugation": {
     "assignment_id": "A1-1.1",
@@ -53,7 +57,9 @@
       "Answer4": "B Hamburg"
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1KCNaM0_sgbrPhYMm89iC8WRzSfQgz80qUO9EAoCpXuo/gviz/tq?tqx=out:html&sheet=Key",
-    "format": "objective"
+    "format": "objective",
+    "assignment": "A1-1.1",
+    "level": "A1"
   },
   "A1-1.2 Introducing Yourself and Reviewing Pronouns": {
     "assignment_id": "A1-1.2",
@@ -77,7 +83,9 @@
       "Answer14": "A) In Berlin"
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1NuId_slE2LVNXvhfwQvdjYaqtBGa78aBNVETEw2RMmY/gviz/tq?tqx=out:html&sheet=Key",
-    "format": "objective"
+    "format": "objective",
+    "assignment": "A1-1.2",
+    "level": "A1"
   },
   "A1-2 Numbers and Addresses": {
     "assignment_id": "A1-2",
@@ -102,7 +110,9 @@
       "Answer15": "8553 – achttausendfünfhundertdreiundfünfzig"
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1OVDkJimsz7wZwNa4s4QccST3TFvLkqzt720P_CWPdD8/gviz/tq?tqx=out:html&sheet=Key",
-    "format": "objective"
+    "format": "objective",
+    "assignment": "A1-2",
+    "level": "A1"
   },
   "A1-3 Asking About Prices and Preferences": {
     "assignment_id": "A1-3",
@@ -126,7 +136,9 @@
         "Answer7": "Ich mag Reisen. / Ich mag nicht Reisen.",
         "Answer8": "Ich mag Gartenarbeit. / Ich mag nicht Gartenarbeit."
       }
-    }
+    },
+    "assignment": "A1-3",
+    "level": "A1"
   },
   "A1-4 Countries and Languages": {
     "assignment_id": "A1-4",
@@ -148,7 +160,9 @@
       "Answer12": "A) Nach Spanien"
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1SiYvtaw-LwoeCff7yxlpWsfENMlIbQRqfuh3MPobPOE/gviz/tq?tqx=out:html&sheet=Key",
-    "format": "objective"
+    "format": "objective",
+    "assignment": "A1-4",
+    "level": "A1"
   },
   "A1-5": {
     "assignment_id": "A1-5 Nominative and Accusative Cases",
@@ -188,7 +202,9 @@
       "Answer30": "Sie benutzen den Computer"
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1d0dvYURPHf69KlJhToqOxn39V8GCcAsdrhrEAQ78phw/gviz/tq?tqx=out:html&sheet=Key",
-    "format": "objective"
+    "format": "objective",
+    "assignment": "A1-5",
+    "level": "A1"
   },
   "A1-6": {
     "assignment_id": "A1-6 Objects, Colors and Possessive Articles",
@@ -222,7 +238,9 @@
       "Answer24": "C"
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1yXUzZdoz-wKnorDUbg-7e_SGMklgUXNxGakDlw5chgA/gviz/tq?tqx=out:html&sheet=Key",
-    "format": "objective"
+    "format": "objective",
+    "assignment": "A1-6",
+    "level": "A1"
   },
   "A1-7 The 12 Hour Clock": {
     "assignment_id": "A1-7",
@@ -252,7 +270,9 @@
       "Answer20": "B) Um sieben Uhr"
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1dCI5BbOvfvI4RekolDshv19jyNFPmzenDSrgBMGL9Uk/gviz/tq?tqx=out:html&sheet=Key",
-    "format": "objective"
+    "format": "objective",
+    "assignment": "A1-7",
+    "level": "A1"
   },
   "A1-8 The 24 Hour Clock and Dates": {
     "assignment_id": "A1-8",
@@ -277,7 +297,9 @@
       "Answer15": "D) Montag"
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1Y8Zk4BvzbE2MhD2Wh0VIDbxwPib9biQ2zR60gaIQDYQ/gviz/tq?tqx=out:html&sheet=Key",
-    "format": "objective"
+    "format": "objective",
+    "assignment": "A1-8",
+    "level": "A1"
   },
   "A1-9 Food and Negation": {
     "assignment_id": "A1-9",
@@ -302,7 +324,9 @@
       "Answer15": "C) Schokoladenkuchen"
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1paS9hx9oc7iB2VnxGSUg5Y9-hMf8l08nCNGNSU4__SA/gviz/tq?tqx=out:html&sheet=Key",
-    "format": "objective"
+    "format": "objective",
+    "assignment": "A1-9",
+    "level": "A1"
   },
   "A1-10 Food and Daily Life": {
     "assignment_id": "A1-10",
@@ -327,7 +351,9 @@
       "Answer15": "B) Einen schönen Tag"
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1OOxtH3ZuP6Vd8wfZScnV_Ht1ywke1C3OmFm5_kFrVGs/gviz/tq?tqx=out:html&sheet=Key",
-    "format": "objective"
+    "format": "objective",
+    "assignment": "A1-10",
+    "level": "A1"
   },
   "A1-11 Instructions and Directions": {
     "assignment_id": "A1-11",
@@ -358,7 +384,9 @@
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1kGGQZ89YZV-xGUdFKIHUFOVYG7wB7PnCBF8DqBd4Zok/gviz/tq?tqx=out:html&sheet=Key",
-    "format": "objective"
+    "format": "objective",
+    "assignment": "A1-11",
+    "level": "A1"
   },
   "A1-12.1 Two-Way Prepositions": {
     "assignment_id": "A1-12.1",
@@ -389,7 +417,9 @@
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1vgjfS9u_dS8ypgMOkCkVp3j_04dM8hwGvQiJdCKT74c/gviz/tq?tqx=out:html&sheet=Key",
-    "format": "objective"
+    "format": "objective",
+    "assignment": "A1-12.1",
+    "level": "A1"
   },
   "A1-12.2 Professions and Prepositions": {
     "assignment_id": "A1-12.2",
@@ -420,7 +450,9 @@
       }
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1DiO7gh0xrt-SyWWhpxVNtMs9lFjEGuzqJww9OMmTjDY/gviz/tq?tqx=out:html&sheet=Key",
-    "format": "objective"
+    "format": "objective",
+    "assignment": "A1-12.2",
+    "level": "A1"
   },
   "A1-12.3": {
     "assignment_id": "A1-12.3",
@@ -429,7 +461,9 @@
     "en": "Writing Letters (Formal and Informal)",
     "answers": {
       "Answer1": "Read comment for answers"
-    }
+    },
+    "assignment": "A1-12.3",
+    "level": "A1"
   },
   "A1-13 Weather": {
     "assignment_id": "A1-13",
@@ -448,7 +482,9 @@
       "Answer9": "B"
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1VOz1kZqSXitbHO6ciV4GbGSZJkwXiZM1ifSxPVlvNNA/gviz/tq?tqx=out:html&sheet=Key",
-    "format": "objective"
+    "format": "objective",
+    "assignment": "A1-13",
+    "level": "A1"
   },
   "A1-14.1 Health and Body Parts": {
     "assignment_id": "A1-14.1",
@@ -473,7 +509,9 @@
       "Answer15": "j. Stomach / Belly – Bauch"
     },
     "answer_url": "https://docs.google.com/spreadsheets/d/1FUBXLMY-KhlaDrFbsgKIuHRENalKdl5Zdlqb4Td9Yds/gviz/tq?tqx=out:html&sheet=Key",
-    "format": "objective"
+    "format": "objective",
+    "assignment": "A1-14.1",
+    "level": "A1"
   },
   "A2 1.1 Small Talk": {
     "answers": {
