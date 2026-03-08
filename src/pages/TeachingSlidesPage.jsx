@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
+  getAvailableSlideCourses,
   getSlideNavigation,
   getSlidesByCourse,
   getTeachingSlideById,
@@ -75,27 +76,26 @@ function SlideHeader({ slide }) {
   );
 }
 
-function SlideIndex() {
-  const a2Slides = useMemo(() => getSlidesByCourse("A2"), []);
+function SlideCoursesIndex() {
+  const courses = useMemo(() => getAvailableSlideCourses(), []);
 
   return (
     <section className="slides-index">
       <h1>Teaching Slides</h1>
       <p>Projector-friendly speaking slides with bilingual guidance and print-ready layouts.</p>
 
-      <div className="slide-actions no-print">
-        <Link to="/teaching-slides/print/A2">Open printable pack (A2)</Link>
-      </div>
-
       <div className="slide-card-grid">
-        {a2Slides.map((slide) => (
-          <article key={slide.id} className="slide-card">
-            <p className="slide-meta">{slide.course} · {slide.day}</p>
-            <h2>{slide.title}</h2>
-            <p>{getUnifiedTopicLabel(slide.assignmentId, slide.topic)}</p>
-            <Link to={`/teaching-slides/${slide.id}`}>Open lesson slide</Link>
-          </article>
-        ))}
+        {courses.map((courseId) => {
+          const slides = getSlidesByCourse(courseId);
+          return (
+            <article key={courseId} className="slide-card">
+              <p className="slide-meta">{courseId}</p>
+              <h2>{courseId} Teaching Pack</h2>
+              <p>{slides.length} lessons ready</p>
+              <Link to={`/teaching-slides/course/${courseId}`}>Open {courseId} slides</Link>
+            </article>
+          );
+        })}
       </div>
 
       {teachingSlides.length === 0 && <p>No teaching slides available yet.</p>}
@@ -103,9 +103,49 @@ function SlideIndex() {
   );
 }
 
-function SlideDetail({ slide }) {
+function CourseSlidesIndex({ courseId }) {
+  const slides = useMemo(() => getSlidesByCourse(courseId), [courseId]);
+
+  if (!slides.length) {
+    return (
+      <section className="slides-index">
+        <h1>No slide pack found</h1>
+        <p>We could not find slides for {courseId}.</p>
+        <Link to="/teaching-slides">Back to teaching slides</Link>
+      </section>
+    );
+  }
+
+  return (
+    <section className="slides-index">
+      <h1>{courseId.toUpperCase()} Teaching Slides</h1>
+      <p>Open individual lessons or print the full pack.</p>
+
+      <div className="slide-actions no-print">
+        <Link to={`/teaching-slides/course/${courseId}/print`}>Open printable pack ({courseId.toUpperCase()})</Link>
+      </div>
+
+      <div className="slide-card-grid">
+        {slides.map((slide) => (
+          <article key={slide.id} className="slide-card">
+            <p className="slide-meta">{slide.course} · {slide.day}</p>
+            <h2>{slide.title}</h2>
+            <p>{getUnifiedTopicLabel(slide.assignmentId, slide.topic)}</p>
+            <Link to={`/teaching-slides/course/${courseId}/${slide.id}`}>Open lesson slide</Link>
+          </article>
+        ))}
+      </div>
+
+      <div className="slide-actions no-print">
+        <Link to="/teaching-slides">Back to all courses</Link>
+      </div>
+    </section>
+  );
+}
+
+function SlideDetail({ slide, courseId }) {
   const [handoutMode, setHandoutMode] = useState(false);
-  const { previous, next } = getSlideNavigation(slide.id);
+  const { previous, next } = getSlideNavigation(slide.id, courseId);
 
   return (
     <article className={`teaching-slide ${handoutMode ? "handout-mode" : ""}`}>
@@ -128,9 +168,9 @@ function SlideDetail({ slide }) {
       </footer>
 
       <nav className="slide-nav no-print" aria-label="Slide navigation">
-        {previous ? <Link to={`/teaching-slides/${previous.id}`}>← Previous</Link> : <span />}
-        <Link to="/teaching-slides">Back to all slides</Link>
-        {next ? <Link to={`/teaching-slides/${next.id}`}>Next →</Link> : <span />}
+        {previous ? <Link to={`/teaching-slides/course/${courseId}/${previous.id}`}>← Previous</Link> : <span />}
+        <Link to={`/teaching-slides/course/${courseId}`}>Back to course slides</Link>
+        {next ? <Link to={`/teaching-slides/course/${courseId}/${next.id}`}>Next →</Link> : <span />}
       </nav>
     </article>
   );
@@ -156,7 +196,7 @@ function SlidePrintPack({ courseId }) {
         <p>Use print to save all slides as one PDF for students/teachers.</p>
         <div className="slide-actions">
           <button type="button" onClick={() => window.print()}>Print all {courseId.toUpperCase()} slides</button>
-          <Link to="/teaching-slides">Back to slide index</Link>
+          <Link to={`/teaching-slides/course/${courseId}`}>Back to course slide index</Link>
         </div>
       </header>
 
@@ -173,18 +213,15 @@ function SlidePrintPack({ courseId }) {
 }
 
 export default function TeachingSlidesPage() {
-  const { slideId, courseId } = useParams();
+  const { slideId, courseId, legacySlideId } = useParams();
 
-  if (courseId) {
-    return <SlidePrintPack courseId={courseId} />;
+  if (!courseId && !slideId && !legacySlideId) {
+    return <SlideCoursesIndex />;
   }
 
-  if (!slideId) {
-    return <SlideIndex />;
-  }
+  const activeCourseId = courseId || getTeachingSlideById(legacySlideId)?.course;
 
-  const slide = getTeachingSlideById(slideId);
-  if (!slide) {
+  if (!activeCourseId) {
     return (
       <section className="slides-index">
         <h1>Slide not found</h1>
@@ -194,5 +231,26 @@ export default function TeachingSlidesPage() {
     );
   }
 
-  return <SlideDetail slide={slide} />;
+  if (slideId === "print") {
+    return <SlidePrintPack courseId={activeCourseId} />;
+  }
+
+  if (!slideId && !legacySlideId) {
+    return <CourseSlidesIndex courseId={activeCourseId} />;
+  }
+
+  const resolvedSlideId = slideId || legacySlideId;
+  const slide = getTeachingSlideById(resolvedSlideId);
+
+  if (!slide || slide.course !== activeCourseId.toUpperCase()) {
+    return (
+      <section className="slides-index">
+        <h1>Slide not found</h1>
+        <p>We couldn't find that teaching slide in {activeCourseId}.</p>
+        <Link to={`/teaching-slides/course/${activeCourseId}`}>Back to course slides</Link>
+      </section>
+    );
+  }
+
+  return <SlideDetail slide={slide} courseId={activeCourseId.toUpperCase()} />;
 }
