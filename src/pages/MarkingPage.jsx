@@ -97,11 +97,11 @@ export default function MarkingPage() {
       const assignmentId = inferAssignmentId(data?.assignmentId, data?.assignment_id, assignmentKey);
       const assignment = String(data?.assignment || assignmentId || assignmentKey || "").trim();
       return {
-        ...data,
         assignment,
         assignmentId,
         level: String(data?.level || inferLevel(assignment)).toUpperCase(),
         assignmentAliases: [assignmentKey, assignmentId, assignment].filter(Boolean),
+        ...data,
       };
     });
   }, []);
