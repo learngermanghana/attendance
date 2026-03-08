@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import {
-  getCourseLevels,
   getSlideNavigation,
   getSlidesByCourse,
   getTeachingSlideById,
@@ -76,35 +75,19 @@ function SlideHeader({ slide }) {
 }
 
 function SlideIndex() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const levels = useMemo(() => getCourseLevels(), []);
-  const selectedLevel = searchParams.get("level") || levels[0] || "";
-  const selectedSlides = useMemo(() => getSlidesByCourse(selectedLevel), [selectedLevel]);
+  const a2Slides = useMemo(() => getSlidesByCourse("A2"), []);
 
   return (
     <section className="slides-index">
       <h1>Teaching Slides</h1>
       <p>Projector-friendly speaking slides with bilingual guidance and print-ready layouts.</p>
 
-      <div className="level-toolbar no-print">
-        <label htmlFor="level-select">Choose level</label>
-        <select
-          id="level-select"
-          value={selectedLevel}
-          onChange={(event) => {
-            const level = event.target.value;
-            setSearchParams(level ? { level } : {});
-          }}
-        >
-          {levels.map((level) => (
-            <option key={level} value={level}>{level}</option>
-          ))}
-        </select>
-        {selectedLevel && <Link to={`/teaching-slides/print/${selectedLevel}`}>Open printable pack ({selectedLevel})</Link>}
+      <div className="slide-actions no-print">
+        <Link to="/teaching-slides/print/A2">Open printable pack (A2)</Link>
       </div>
 
       <div className="slide-card-grid">
-        {selectedSlides.map((slide) => (
+        {a2Slides.map((slide) => (
           <article key={slide.id} className="slide-card">
             <p className="slide-meta">{slide.course} · {slide.day}</p>
             <h2>{slide.title}</h2>
@@ -115,7 +98,6 @@ function SlideIndex() {
       </div>
 
       {teachingSlides.length === 0 && <p>No teaching slides available yet.</p>}
-      {teachingSlides.length > 0 && selectedSlides.length === 0 && <p>No slides available for {selectedLevel} yet.</p>}
     </section>
   );
 }

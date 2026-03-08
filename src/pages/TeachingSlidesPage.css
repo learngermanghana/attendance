@@ -2,24 +2,6 @@
   padding: 1rem;
 }
 
-
-.level-toolbar {
-  margin-top: 1rem;
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.level-toolbar label {
-  font-weight: 600;
-}
-
-.level-toolbar select {
-  width: auto;
-  min-width: 120px;
-}
-
 .slide-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

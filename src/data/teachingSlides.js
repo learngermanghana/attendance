@@ -227,11 +227,6 @@ export function getSlidesByCourse(courseId) {
     .sort((a, b) => a.dayNumber - b.dayNumber);
 }
 
-
-export function getCourseLevels() {
-  return [...new Set(teachingSlides.map((slide) => slide.course))].sort();
-}
-
 export function getSlideNavigation(id) {
   const index = teachingSlides.findIndex((slide) => slide.id === id);
   if (index < 0) return { previous: null, next: null };
