@@ -20,6 +20,22 @@ test("parsePublishedTabs reads tab names and gids from published sheet html", ()
   });
 });
 
+test("parsePublishedTabs supports anchor labels wrapped in nested markup", () => {
+  const html = `
+    <a class="docs-sheet-link" href="/spreadsheets/d/e/abc/pubhtml?gid=444444&single=true"><span>Post_Tracker</span></a>
+    <a class="docs-sheet-link" href="/spreadsheets/d/e/abc/pubhtml?gid=555555&single=true"><span>Followers_Growth</span></a>
+    <a class="docs-sheet-link" href="/spreadsheets/d/e/abc/pubhtml?gid=666666&single=true"><span>Content_Calendar</span></a>
+  `;
+
+  const tabs = parsePublishedTabs(html);
+
+  assert.equal(tabs.length, 3);
+  assert.deepEqual(
+    tabs.map((tab) => tab.name),
+    ["Post_Tracker", "Followers_Growth", "Content_Calendar"],
+  );
+});
+
 test("buildCsvUrl converts pubhtml url into tab-specific csv export url", () => {
   const csvUrl = buildCsvUrl("https://docs.google.com/spreadsheets/d/e/id/pubhtml", "987654321");
   assert.equal(

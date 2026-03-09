@@ -53,17 +53,44 @@ function parseCsv(text) {
 }
 
 function parsePublishedTabs(html) {
+  const source = String(html || "");
+
+  if (typeof DOMParser !== "undefined") {
+    try {
+      const parser = new DOMParser();
+      const document = parser.parseFromString(source, "text/html");
+
+      return Array.from(document.querySelectorAll('a[href*="gid="]'))
+        .map((anchor) => {
+          const href = String(anchor.getAttribute("href") || "");
+          const gidMatch = href.match(/[?&]gid=([0-9]+)/);
+          if (!gidMatch) return null;
+
+          return {
+            href,
+            gid: gidMatch[1],
+            name: String(anchor.textContent || "").trim(),
+          };
+        })
+        .filter(Boolean);
+    } catch {
+      // Fall through to regex parser.
+    }
+  }
+
   const tabs = [];
-  const regex = /<a[^>]*href="([^"]*gid=([0-9]+)[^"]*)"[^>]*>([^<]+)<\/a>/g;
-  let match = regex.exec(html);
+  const regex = /<a[^>]*href="([^"]*gid=([0-9]+)[^"]*)"[^>]*>([\s\S]*?)<\/a>/g;
+  let match = regex.exec(source);
 
   while (match) {
     tabs.push({
       href: match[1],
       gid: match[2],
-      name: String(match[3] || "").trim(),
+      name: String(match[3] || "")
+        .replace(/<[^>]+>/g, "")
+        .trim(),
     });
-    match = regex.exec(html);
+    match = regex.exec(source);
   }
 
   return tabs;
