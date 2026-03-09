@@ -7,6 +7,7 @@ import AttendanceOverviewPage from "./pages/AttendanceOverviewPage";
 import AttendancePage from "./pages/AttendancePage";
 import CheckinPage from "./pages/CheckinPage";
 import CourseSchedulePage from "./pages/CourseSchedulePage";
+import PublicCourseSchedulePage from "./pages/PublicCourseSchedulePage";
 import MarkingPage from "./pages/MarkingPage";
 import TutorMarkingPage from "./pages/TutorMarkingPage";
 import CommunicationPage from "./pages/CommunicationPage";
@@ -132,6 +133,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/course-schedule/public" element={<PublicCourseSchedulePage />} />
           <Route
             path="/marking"
             element={
