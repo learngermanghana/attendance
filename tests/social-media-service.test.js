@@ -44,6 +44,18 @@ test("buildCsvUrl converts pubhtml url into tab-specific csv export url", () => 
   );
 });
 
+test("buildCsvUrl builds sheet-name export urls for standard Google Sheets edit links", () => {
+  const csvUrl = buildCsvUrl(
+    "https://docs.google.com/spreadsheets/d/1BxKGkGCWynv7jr1oze0MjfkM2SuQmohAQZtoIfV6jDk/edit",
+    "Post_Tracker",
+  );
+
+  assert.equal(
+    csvUrl,
+    "https://docs.google.com/spreadsheets/d/1BxKGkGCWynv7jr1oze0MjfkM2SuQmohAQZtoIfV6jDk/export?format=csv&sheet=Post_Tracker",
+  );
+});
+
 test("toRows maps csv headers and values to record objects", () => {
   const rows = toRows("Date,Brand,Platform\n2026-01-12,Falowen,Instagram\n");
 
