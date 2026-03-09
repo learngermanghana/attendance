@@ -215,15 +215,15 @@ export async function loadSocialMediaData() {
 
     const html = await htmlResponse.text();
     const tabs = parsePublishedTabs(html);
-    const tabByName = Object.fromEntries(tabs.map((tab) => [normalizeSheetName(tab.name), tab]));
-    const missingSheets = REQUIRED_SHEETS.filter((name) => !tabByName[normalizeSheetName(name)]);
+    const tabByName = Object.fromEntries(tabs.map((tab) => [tab.name, tab]));
+    const missingSheets = REQUIRED_SHEETS.filter((name) => !tabByName[name]);
 
     if (missingSheets.length > 0) {
       throw new Error(`Missing required sheet tabs: ${missingSheets.join(", ")}`);
     }
 
     sheetIdentifiersByName = Object.fromEntries(
-      REQUIRED_SHEETS.map((sheetName) => [sheetName, tabByName[normalizeSheetName(sheetName)].gid]),
+      REQUIRED_SHEETS.map((sheetName) => [sheetName, tabByName[sheetName].gid]),
     );
   }
 
