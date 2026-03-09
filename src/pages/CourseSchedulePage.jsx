@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import dayjs from "dayjs";
 import {
   DEFAULT_TEACHING_DAYS,
@@ -52,6 +53,18 @@ export default function CourseSchedulePage() {
     () => buildScheduleExports({ level, startDate, holidayDates, rows: scheduleRows }),
     [level, startDate, holidayDates, scheduleRows],
   );
+
+  const publicScheduleUrl = useMemo(() => {
+    const params = new URLSearchParams({
+      level,
+      startDate,
+      defaultWeekdays: defaultWeekdays.join(","),
+      holidayDates: holidayDates.join(","),
+      useAdvancedWeekdays: String(useAdvancedWeekdays),
+      weekDaysMap: JSON.stringify(weekDaysMap || {}),
+    });
+    return `${window.location.origin}/course-schedule/public?${params.toString()}`;
+  }, [level, startDate, defaultWeekdays, holidayDates, useAdvancedWeekdays, weekDaysMap]);
 
   return (
     <div style={{ padding: 16, display: "grid", gap: 16 }}>
@@ -213,6 +226,21 @@ export default function CourseSchedulePage() {
           >
             Print / Save as PDF
           </button>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(publicScheduleUrl);
+              } catch {
+                window.prompt("Copy public URL:", publicScheduleUrl);
+              }
+            }}
+          >
+            Copy Public URL
+          </button>
+          <Link to={`/course-schedule/public?${publicScheduleUrl.split("?")[1]}`} target="_blank" rel="noreferrer">
+            Open Public View
+          </Link>
         </div>
 
         <div style={{ overflowX: "auto" }}>
