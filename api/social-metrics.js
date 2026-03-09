@@ -1,9 +1,6 @@
 const DEFAULT_SOCIAL_SHEET_PUBLISHED_HTML_URL =
   "https://docs.google.com/spreadsheets/d/1BxKGkGCWynv7jr1oze0MjfkM2SuQmohAQZtoIfV6jDk/edit";
 
-const SOCIAL_SHEET_PUBLISHED_HTML_URL =
-  import.meta?.env?.VITE_SOCIAL_SHEET_PUBLISHED_HTML_URL || DEFAULT_SOCIAL_SHEET_PUBLISHED_HTML_URL;
-
 const REQUIRED_SHEETS = ["Post_Tracker", "Followers_Growth", "Content_Calendar"];
 
 function normalizeSheetName(value) {
@@ -62,36 +59,6 @@ function parseCsv(text) {
 
 function parsePublishedTabs(html) {
   const source = String(html || "");
-
-  if (typeof DOMParser !== "undefined") {
-    try {
-      const parser = new DOMParser();
-      const document = parser.parseFromString(source, "text/html");
-
-      return Array.from(document.querySelectorAll('a[href*="gid="]'))
-        .map((anchor) => {
-          const href = String(anchor.getAttribute("href") || "");
-          const gidMatch = href.match(/[?&]gid=([0-9]+)/);
-          if (!gidMatch) return null;
-
-          const textLabel = String(anchor.textContent || "").trim();
-          const attributeLabel =
-            String(anchor.getAttribute("aria-label") || "").trim() ||
-            String(anchor.getAttribute("data-name") || "").trim() ||
-            String(anchor.getAttribute("title") || "").trim();
-
-          return {
-            href,
-            gid: gidMatch[1],
-            name: textLabel || attributeLabel,
-          };
-        })
-        .filter(Boolean);
-    } catch {
-      // Fall through to regex parser.
-    }
-  }
-
   const tabs = [];
   const regex = /<a[^>]*href="([^"]*gid=([0-9]+)[^"]*)"[^>]*>([\s\S]*?)<\/a>/g;
   let match = regex.exec(source);
@@ -204,32 +171,44 @@ function buildSocialMetrics({ postTrackerRows, followerGrowthRows, contentCalend
   };
 }
 
-async function loadSocialMediaDataDirectFromSheets() {
+async function loadSocialSheetData() {
+  const publishedUrl =
+    process.env.SOCIAL_SHEET_PUBLISHED_HTML_URL ||
+    process.env.VITE_SOCIAL_SHEET_PUBLISHED_HTML_URL ||
+    DEFAULT_SOCIAL_SHEET_PUBLISHED_HTML_URL;
+
   let sheetIdentifiersByName = Object.fromEntries(REQUIRED_SHEETS.map((name) => [name, name]));
 
-  if (SOCIAL_SHEET_PUBLISHED_HTML_URL.includes("/d/e/")) {
-    const htmlResponse = await fetch(SOCIAL_SHEET_PUBLISHED_HTML_URL);
+  if (publishedUrl.includes("/d/e/")) {
+    const htmlResponse = await fetch(publishedUrl);
     if (!htmlResponse.ok) {
       throw new Error("Failed to load published social media sheet");
     }
 
     const html = await htmlResponse.text();
     const tabs = parsePublishedTabs(html);
-    const tabByName = Object.fromEntries(tabs.map((tab) => [tab.name, tab]));
-    const missingSheets = REQUIRED_SHEETS.filter((name) => !tabByName[name]);
+
+    const tabByNormalizedName = Object.fromEntries(
+      tabs.map((tab) => [normalizeSheetName(tab.name), tab]),
+    );
+
+    const missingSheets = REQUIRED_SHEETS.filter((name) => !tabByNormalizedName[normalizeSheetName(name)]);
 
     if (missingSheets.length > 0) {
       throw new Error(`Missing required sheet tabs: ${missingSheets.join(", ")}`);
     }
 
     sheetIdentifiersByName = Object.fromEntries(
-      REQUIRED_SHEETS.map((sheetName) => [sheetName, tabByName[sheetName].gid]),
+      REQUIRED_SHEETS.map((sheetName) => [
+        sheetName,
+        tabByNormalizedName[normalizeSheetName(sheetName)].gid,
+      ]),
     );
   }
 
   const [postTrackerCsv, followerGrowthCsv, contentCalendarCsv] = await Promise.all(
     REQUIRED_SHEETS.map(async (sheetName) => {
-      const csvUrl = buildCsvUrl(SOCIAL_SHEET_PUBLISHED_HTML_URL, sheetIdentifiersByName[sheetName]);
+      const csvUrl = buildCsvUrl(publishedUrl, sheetIdentifiersByName[sheetName]);
       const response = await fetch(csvUrl);
       if (!response.ok) {
         throw new Error(`Failed to load ${sheetName} CSV data`);
@@ -250,28 +229,19 @@ async function loadSocialMediaDataDirectFromSheets() {
   };
 }
 
-export async function loadSocialMediaData() {
-  const response = await fetch("/api/social-metrics");
-
-  if (response.ok) {
-    const payload = await response.json();
-    if (payload?.ok) {
-      return {
-        postTrackerRows: payload.postTrackerRows || [],
-        followerGrowthRows: payload.followerGrowthRows || [],
-        contentCalendarRows: payload.contentCalendarRows || [],
-        metrics:
-          payload.metrics ||
-          buildSocialMetrics({
-            postTrackerRows: payload.postTrackerRows || [],
-            followerGrowthRows: payload.followerGrowthRows || [],
-            contentCalendarRows: payload.contentCalendarRows || [],
-          }),
-      };
-    }
+export default async function handler(req, res) {
+  if (req.method !== "GET") {
+    res.setHeader("Allow", "GET");
+    return res.status(405).json({ ok: false, error: "Method Not Allowed" });
   }
 
-  return loadSocialMediaDataDirectFromSheets();
+  try {
+    const data = await loadSocialSheetData();
+    return res.status(200).json({ ok: true, ...data });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      error: error instanceof Error ? error.message : "Failed to fetch social metrics",
+    });
+  }
 }
-
-export { buildCsvUrl, buildSocialMetrics, parsePublishedTabs, toRows };
