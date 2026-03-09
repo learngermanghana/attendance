@@ -1,10 +1,18 @@
 const DEFAULT_SOCIAL_SHEET_PUBLISHED_HTML_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSrAPccTIO4pCnix1_DFfwN0a-tWmOC8FLXgfJBny6GhF62bdouqym0WLlkrk9oRtGgt9p_zebYza-j/pubhtml";
+  "https://docs.google.com/spreadsheets/d/1BxKGkGCWynv7jr1oze0MjfkM2SuQmohAQZtoIfV6jDk/edit";
 
 const SOCIAL_SHEET_PUBLISHED_HTML_URL =
   import.meta?.env?.VITE_SOCIAL_SHEET_PUBLISHED_HTML_URL || DEFAULT_SOCIAL_SHEET_PUBLISHED_HTML_URL;
 
 const REQUIRED_SHEETS = ["Post_Tracker", "Followers_Growth", "Content_Calendar"];
+
+function normalizeSheetName(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/[_-]+/g, "");
+}
 
 function normalizeHeader(value) {
   return String(value || "")
@@ -66,10 +74,16 @@ function parsePublishedTabs(html) {
           const gidMatch = href.match(/[?&]gid=([0-9]+)/);
           if (!gidMatch) return null;
 
+          const textLabel = String(anchor.textContent || "").trim();
+          const attributeLabel =
+            String(anchor.getAttribute("aria-label") || "").trim() ||
+            String(anchor.getAttribute("data-name") || "").trim() ||
+            String(anchor.getAttribute("title") || "").trim();
+
           return {
             href,
             gid: gidMatch[1],
-            name: String(anchor.textContent || "").trim(),
+            name: textLabel || attributeLabel,
           };
         })
         .filter(Boolean);
@@ -83,12 +97,16 @@ function parsePublishedTabs(html) {
   let match = regex.exec(source);
 
   while (match) {
+    const anchorHtml = String(match[0] || "");
+    const innerText = String(match[3] || "")
+      .replace(/<[^>]+>/g, "")
+      .trim();
+    const attributeNameMatch = anchorHtml.match(/(?:aria-label|data-name|title)="([^"]+)"/i);
+
     tabs.push({
       href: match[1],
       gid: match[2],
-      name: String(match[3] || "")
-        .replace(/<[^>]+>/g, "")
-        .trim(),
+      name: innerText || String(attributeNameMatch?.[1] || "").trim(),
     });
     match = regex.exec(source);
   }
@@ -97,6 +115,19 @@ function parsePublishedTabs(html) {
 }
 
 function buildCsvUrl(publishedHtmlUrl, gid) {
+  const sourceUrl = String(publishedHtmlUrl || "").trim();
+
+  const directSheetMatch = sourceUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if (directSheetMatch && !sourceUrl.includes("/d/e/")) {
+    const identifier = String(gid || "").trim();
+    const isNumericGid = /^\d+$/.test(identifier);
+    const query = isNumericGid
+      ? `gid=${encodeURIComponent(identifier)}`
+      : `sheet=${encodeURIComponent(identifier)}`;
+
+    return `https://docs.google.com/spreadsheets/d/${directSheetMatch[1]}/export?format=csv&${query}`;
+  }
+
   const base = String(publishedHtmlUrl || "").replace(/\/pubhtml(?:\?.*)?$/, "/pub");
   return `${base}?gid=${encodeURIComponent(gid)}&single=true&output=csv`;
 }
@@ -174,25 +205,31 @@ function buildSocialMetrics({ postTrackerRows, followerGrowthRows, contentCalend
 }
 
 export async function loadSocialMediaData() {
-  const htmlResponse = await fetch(SOCIAL_SHEET_PUBLISHED_HTML_URL);
-  if (!htmlResponse.ok) {
-    throw new Error("Failed to load published social media sheet");
-  }
+  let sheetIdentifiersByName = Object.fromEntries(REQUIRED_SHEETS.map((name) => [name, name]));
 
-  const html = await htmlResponse.text();
-  const tabs = parsePublishedTabs(html);
+  if (SOCIAL_SHEET_PUBLISHED_HTML_URL.includes("/d/e/")) {
+    const htmlResponse = await fetch(SOCIAL_SHEET_PUBLISHED_HTML_URL);
+    if (!htmlResponse.ok) {
+      throw new Error("Failed to load published social media sheet");
+    }
 
-  const tabByName = Object.fromEntries(tabs.map((tab) => [tab.name, tab]));
-  const missingSheets = REQUIRED_SHEETS.filter((name) => !tabByName[name]);
+    const html = await htmlResponse.text();
+    const tabs = parsePublishedTabs(html);
+    const tabByName = Object.fromEntries(tabs.map((tab) => [normalizeSheetName(tab.name), tab]));
+    const missingSheets = REQUIRED_SHEETS.filter((name) => !tabByName[normalizeSheetName(name)]);
 
-  if (missingSheets.length > 0) {
-    throw new Error(`Missing required sheet tabs: ${missingSheets.join(", ")}`);
+    if (missingSheets.length > 0) {
+      throw new Error(`Missing required sheet tabs: ${missingSheets.join(", ")}`);
+    }
+
+    sheetIdentifiersByName = Object.fromEntries(
+      REQUIRED_SHEETS.map((sheetName) => [sheetName, tabByName[normalizeSheetName(sheetName)].gid]),
+    );
   }
 
   const [postTrackerCsv, followerGrowthCsv, contentCalendarCsv] = await Promise.all(
     REQUIRED_SHEETS.map(async (sheetName) => {
-      const tab = tabByName[sheetName];
-      const csvUrl = buildCsvUrl(SOCIAL_SHEET_PUBLISHED_HTML_URL, tab.gid);
+      const csvUrl = buildCsvUrl(SOCIAL_SHEET_PUBLISHED_HTML_URL, sheetIdentifiersByName[sheetName]);
       const response = await fetch(csvUrl);
       if (!response.ok) {
         throw new Error(`Failed to load ${sheetName} CSV data`);
