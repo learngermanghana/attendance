@@ -6,19 +6,84 @@ import { loadPendingTutorReviews, saveTutorReviewResponse } from "../services/tu
 const AUTOSAVE_KEY = "tutorMarkingDrafts.v1";
 const FEEDBACK_SNIPPETS = [
   {
-    key: "clarity",
-    label: "Clarity",
-    text: "Your ideas are strong. Next, improve clarity by shortening long sentences and making each paragraph focus on one main point.",
+    key: "template_enquiry_opening",
+    label: "Template 1: Enquiry opening",
+    text: "Use this opening for enquiries: \"Ich schreibe Ihnen, weil ich eine Anfrage stellen möchte.\"",
   },
   {
-    key: "grammar",
-    label: "Grammar",
-    text: "Please revise grammar details (verb tense consistency, punctuation, and article usage) and re-submit for a final pass.",
+    key: "template_cancellation_opening",
+    label: "Template 2: Appointment cancellation opening",
+    text: "Use this opening to cancel an appointment: \"Ich schreibe Ihnen, weil ich den Termin absagen möchte.\"",
   },
   {
-    key: "thesis",
-    label: "Thesis strength",
-    text: "Your thesis can be stronger. Add a more specific claim and ensure each paragraph clearly supports that central argument.",
+    key: "template_enquiry_body",
+    label: "Template 3: Enquiry body (always ask price/payment)",
+    text: "For enquiries (hotel/school booking), include: \"Wie viel kostet das?\" \"Wie kann ich bezahlen? Mit Kreditkarte oder bar?\"",
+  },
+  {
+    key: "weil_rule",
+    label: "Template 4: Weil rule",
+    text: "With \"weil\", put the conjugated verb at the end: \"..., weil ich eine Anfrage stellen möchte.\"",
+  },
+  {
+    key: "statement_rule",
+    label: "Template 5: Statement word order",
+    text: "Statement rule: Subject + Verb + Time + Other details. Example: \"Ich lerne morgen in der Schule Deutsch.\"",
+  },
+  {
+    key: "modal_verb_rule",
+    label: "Template 6: Modal verb rule (fill-in)",
+    text: "Modal verb rule: Subject + modal verb + object/details + infinitive (at the end). Fill-in: \"Ich [modal verb] [object] [infinitive].\" Example: \"Ich möchte den Kurs buchen.\"",
+  },
+  {
+    key: "w_question_rule",
+    label: "Template 7: W-question rule (fill-in)",
+    text: "W-question rule: Question word + Verb + Subject + ... ? Fill-in: \"[W-word] [verb] [subject] ... ?\" Example: \"Wann beginnt der Kurs?\"",
+  },
+  {
+    key: "yes_no_question_rule",
+    label: "Template 8: Yes/No question rule (fill-in)",
+    text: "Yes/No question rule: Verb + Subject + ... ? Fill-in: \"[Verb] [subject] ... ?\" Example: \"Haben Sie morgen Zeit?\"",
+  },
+  {
+    key: "course_start_question",
+    label: "Template 9: Ask when the course starts",
+    text: "Use: \"Wann fängt der Kurs an?\"",
+  },
+  {
+    key: "polite_info_request",
+    label: "Template 10: Polite information request",
+    text: "Use: \"Könnten Sie Informationen über + [topic] geben?\" Example: \"Könnten Sie Informationen über die Adresse geben?\"",
+  },
+  {
+    key: "subject_line_enquiry",
+    label: "Template 11: Subject line for enquiry",
+    text: "Use a clear subject line: \"Betreff: Anfrage zum Deutschkurs\" / \"Betreff: Anfrage zur Hotelbuchung\".",
+  },
+  {
+    key: "course_duration_question",
+    label: "Template 12: Ask about duration and schedule",
+    text: "Use: \"Wie lange dauert der Kurs?\" and \"An welchen Tagen findet der Kurs statt?\"",
+  },
+  {
+    key: "documents_question",
+    label: "Template 13: Ask about required documents",
+    text: "Use: \"Welche Unterlagen muss ich mitbringen?\"",
+  },
+  {
+    key: "closing_polite",
+    label: "Template 14: Polite closing",
+    text: "Formal closing options: \"Ich freue mich auf Ihre Rückmeldung.\" + \"Mit freundlichen Grüßen\" + [Name].",
+  },
+  {
+    key: "reschedule_request",
+    label: "Template 15: Request a new appointment",
+    text: "If cancelling, suggest a new date: \"Könnten wir einen neuen Termin vereinbaren?\" \"Hätten Sie am [Tag] um [Uhrzeit] Zeit?\"",
+  },
+  {
+    key: "reason_and_apology",
+    label: "Template 16: Give reason + apology",
+    text: "Polite cancellation line: \"Leider kann ich den Termin nicht wahrnehmen, weil ich krank bin.\" + \"Entschuldigen Sie bitte die Umstände.\"",
   },
 ];
 
