@@ -36,6 +36,24 @@ test("parsePublishedTabs supports anchor labels wrapped in nested markup", () =>
   );
 });
 
+
+
+test("parsePublishedTabs reads tab names from aria-label when anchor text is empty", () => {
+  const html = `
+    <a class="docs-sheet-link" aria-label="Post_Tracker" href="/spreadsheets/d/e/abc/pubhtml?gid=777777&single=true"></a>
+    <a class="docs-sheet-link" aria-label="Followers_Growth" href="/spreadsheets/d/e/abc/pubhtml?gid=888888&single=true"></a>
+    <a class="docs-sheet-link" aria-label="Content_Calendar" href="/spreadsheets/d/e/abc/pubhtml?gid=999999&single=true"></a>
+  `;
+
+  const tabs = parsePublishedTabs(html);
+
+  assert.equal(tabs.length, 3);
+  assert.deepEqual(
+    tabs.map((tab) => tab.name),
+    ["Post_Tracker", "Followers_Growth", "Content_Calendar"],
+  );
+});
+
 test("buildCsvUrl converts pubhtml url into tab-specific csv export url", () => {
   const csvUrl = buildCsvUrl("https://docs.google.com/spreadsheets/d/e/id/pubhtml", "987654321");
   assert.equal(

@@ -6,6 +6,14 @@ const SOCIAL_SHEET_PUBLISHED_HTML_URL =
 
 const REQUIRED_SHEETS = ["Post_Tracker", "Followers_Growth", "Content_Calendar"];
 
+function normalizeSheetName(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/[_-]+/g, "");
+}
+
 function normalizeHeader(value) {
   return String(value || "")
     .trim()
@@ -66,10 +74,16 @@ function parsePublishedTabs(html) {
           const gidMatch = href.match(/[?&]gid=([0-9]+)/);
           if (!gidMatch) return null;
 
+          const textLabel = String(anchor.textContent || "").trim();
+          const attributeLabel =
+            String(anchor.getAttribute("aria-label") || "").trim() ||
+            String(anchor.getAttribute("data-name") || "").trim() ||
+            String(anchor.getAttribute("title") || "").trim();
+
           return {
             href,
             gid: gidMatch[1],
-            name: String(anchor.textContent || "").trim(),
+            name: textLabel || attributeLabel,
           };
         })
         .filter(Boolean);
@@ -83,12 +97,16 @@ function parsePublishedTabs(html) {
   let match = regex.exec(source);
 
   while (match) {
+    const anchorHtml = String(match[0] || "");
+    const innerText = String(match[3] || "")
+      .replace(/<[^>]+>/g, "")
+      .trim();
+    const attributeNameMatch = anchorHtml.match(/(?:aria-label|data-name|title)="([^"]+)"/i);
+
     tabs.push({
       href: match[1],
       gid: match[2],
-      name: String(match[3] || "")
-        .replace(/<[^>]+>/g, "")
-        .trim(),
+      name: innerText || String(attributeNameMatch?.[1] || "").trim(),
     });
     match = regex.exec(source);
   }
