@@ -4,14 +4,12 @@ import { loadSubmissions } from "../services/markingService";
 import { loadPendingTutorReviews } from "../services/tutorReviewService";
 import { loadGrammarIssueReports } from "../services/grammarIssueService";
 import { loadWhatsappReminderDashboard } from "../services/whatsappRemindersService";
-import { loadSocialMediaData } from "../services/socialMediaService";
 
 export default function DashboardPage() {
   const [incomingAssignments, setIncomingAssignments] = useState([]);
   const [pendingTutorReviewsCount, setPendingTutorReviewsCount] = useState(0);
   const [grammarIssueReports, setGrammarIssueReports] = useState([]);
   const [contractEndingSoon, setContractEndingSoon] = useState([]);
-  const [socialMediaMetrics, setSocialMediaMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -20,19 +18,17 @@ export default function DashboardPage() {
       setLoading(true);
       setError("");
       try {
-        const [submissionRows, tutorReviewRows, grammarIssueRows, reminderData, socialMediaResult] = await Promise.all([
+        const [submissionRows, tutorReviewRows, grammarIssueRows, reminderData] = await Promise.all([
           loadSubmissions(),
           loadPendingTutorReviews(),
           loadGrammarIssueReports(),
           loadWhatsappReminderDashboard(),
-          loadSocialMediaData().catch(() => null),
         ]);
 
         setIncomingAssignments(submissionRows);
         setPendingTutorReviewsCount(tutorReviewRows.length);
         setGrammarIssueReports(grammarIssueRows);
         setContractEndingSoon(reminderData.contractEndingSoon);
-        setSocialMediaMetrics(socialMediaResult?.metrics || null);
       } catch (err) {
         setError(err?.message || "Failed to load dashboard metrics");
       } finally {
@@ -130,22 +126,6 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 14, background: "#fff" }}>
-              <div style={{ fontWeight: 700 }}>Social media tracker updates</div>
-              <p style={{ margin: "8px 0 0" }}>
-                {socialMediaMetrics
-                  ? `${socialMediaMetrics.totalPosts} posts logged and ${socialMediaMetrics.totalFollowerSnapshots} follower snapshots tracked.`
-                  : "Social media metrics unavailable right now."}
-              </p>
-              {socialMediaMetrics?.recentPosts?.[0] && (
-                <p style={{ margin: "8px 0 0" }}>
-                  Latest post: <strong>{socialMediaMetrics.recentPosts[0].brand || "Unknown brand"}</strong> on {socialMediaMetrics.recentPosts[0].platform || "Unknown platform"}.
-                </p>
-              )}
-              <div style={{ marginTop: 8 }}>
-                <Link to="/social-media">Open social media tracker</Link>
-              </div>
-            </div>
           </section>
         </>
       )}
