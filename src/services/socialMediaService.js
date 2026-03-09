@@ -251,9 +251,15 @@ async function loadSocialMediaDataDirectFromSheets() {
 }
 
 export async function loadSocialMediaData() {
-  const response = await fetch("/api/social-metrics");
+  let response = null;
 
-  if (response.ok) {
+  try {
+    response = await fetch("/api/social-metrics");
+  } catch {
+    response = null;
+  }
+
+  if (response?.ok) {
     const payload = await response.json();
     if (payload?.ok) {
       return {

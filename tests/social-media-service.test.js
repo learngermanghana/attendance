@@ -108,3 +108,44 @@ test("buildSocialMetrics returns recent posts, platform snapshots and upcoming c
   assert.equal(metrics.latestSnapshotByPlatform.length, 2);
   assert.equal(metrics.upcomingContent.length, 2);
 });
+
+test("loadSocialMediaData falls back to direct sheet fetch when api route is unavailable", async () => {
+  const { loadSocialMediaData } = await import("../src/services/socialMediaService.js");
+
+  const originalFetch = global.fetch;
+  let call = 0;
+
+  global.fetch = async (url) => {
+    call += 1;
+
+    if (call === 1) {
+      throw new TypeError("NetworkError when attempting to fetch resource");
+    }
+
+    const requestUrl = String(url);
+    if (requestUrl.includes("Post_Tracker")) {
+      return { ok: true, text: async () => "Date,Topic\n2026-01-01,Welcome\n" };
+    }
+
+    if (requestUrl.includes("Followers_Growth")) {
+      return { ok: true, text: async () => "Date,Platform,Followers\n2026-01-01,Instagram,100\n" };
+    }
+
+    if (requestUrl.includes("Content_Calendar")) {
+      return { ok: true, text: async () => "Scheduled Date,Status\n2026-01-10,Planned\n" };
+    }
+
+    throw new Error(`Unexpected URL: ${requestUrl}`);
+  };
+
+  try {
+    const data = await loadSocialMediaData();
+
+    assert.equal(data.postTrackerRows.length, 1);
+    assert.equal(data.followerGrowthRows.length, 1);
+    assert.equal(data.contentCalendarRows.length, 1);
+    assert.equal(data.metrics.totalPosts, 1);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
