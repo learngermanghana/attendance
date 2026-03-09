@@ -55,36 +55,6 @@ const FEEDBACK_SNIPPETS = [
     label: "Template 10: Polite information request",
     text: "Use: \"Könnten Sie Informationen über + [topic] geben?\" Example: \"Könnten Sie Informationen über die Adresse geben?\"",
   },
-  {
-    key: "subject_line_enquiry",
-    label: "Template 11: Subject line for enquiry",
-    text: "Use a clear subject line: \"Betreff: Anfrage zum Deutschkurs\" / \"Betreff: Anfrage zur Hotelbuchung\".",
-  },
-  {
-    key: "course_duration_question",
-    label: "Template 12: Ask about duration and schedule",
-    text: "Use: \"Wie lange dauert der Kurs?\" and \"An welchen Tagen findet der Kurs statt?\"",
-  },
-  {
-    key: "documents_question",
-    label: "Template 13: Ask about required documents",
-    text: "Use: \"Welche Unterlagen muss ich mitbringen?\"",
-  },
-  {
-    key: "closing_polite",
-    label: "Template 14: Polite closing",
-    text: "Formal closing options: \"Ich freue mich auf Ihre Rückmeldung.\" + \"Mit freundlichen Grüßen\" + [Name].",
-  },
-  {
-    key: "reschedule_request",
-    label: "Template 15: Request a new appointment",
-    text: "If cancelling, suggest a new date: \"Könnten wir einen neuen Termin vereinbaren?\" \"Hätten Sie am [Tag] um [Uhrzeit] Zeit?\"",
-  },
-  {
-    key: "reason_and_apology",
-    label: "Template 16: Give reason + apology",
-    text: "Polite cancellation line: \"Leider kann ich den Termin nicht wahrnehmen, weil ich krank bin.\" + \"Entschuldigen Sie bitte die Umstände.\"",
-  },
 ];
 
 function extractText(review, keys) {
