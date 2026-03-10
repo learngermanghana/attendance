@@ -6,6 +6,62 @@ const SOCIAL_SHEET_PUBLISHED_HTML_URL =
 
 const REQUIRED_SHEETS = ["Post_Tracker", "Followers_Growth", "Content_Calendar"];
 
+const DEFAULT_POST_TRACKER_GID = "184774716";
+
+const SOCIAL_CSV_URLS = {
+  Post_Tracker:
+    import.meta?.env?.VITE_SOCIAL_POST_TRACKER_CSV_URL ||
+    buildCsvUrl(SOCIAL_SHEET_PUBLISHED_HTML_URL, DEFAULT_POST_TRACKER_GID),
+  Followers_Growth:
+    import.meta?.env?.VITE_SOCIAL_FOLLOWERS_GROWTH_CSV_URL ||
+    buildCsvUrl(SOCIAL_SHEET_PUBLISHED_HTML_URL, "Followers_Growth"),
+  Content_Calendar:
+    import.meta?.env?.VITE_SOCIAL_CONTENT_CALENDAR_CSV_URL ||
+    buildCsvUrl(SOCIAL_SHEET_PUBLISHED_HTML_URL, "Content_Calendar"),
+};
+
+function toErrorMessage(error) {
+  if (!error) return "Unknown error";
+  if (typeof error === "string") return error;
+
+  const name = String(error?.name || "").trim();
+  const message = String(error?.message || "").trim();
+  if (name && message && !message.startsWith(`${name}:`)) {
+    return `${name}: ${message}`;
+  }
+
+  return message || name || "Unknown error";
+}
+
+async function readErrorBody(response) {
+  try {
+    const body = await response.text();
+    return String(body || "").trim().slice(0, 200);
+  } catch {
+    return "";
+  }
+}
+
+async function fetchOrThrow(url, contextLabel) {
+  let response;
+
+  try {
+    response = await fetch(url);
+  } catch (error) {
+    throw new Error(`${contextLabel} request failed (${url}): ${toErrorMessage(error)}`, { cause: error });
+  }
+
+  if (!response.ok) {
+    const bodyPreview = await readErrorBody(response);
+    const bodySuffix = bodyPreview ? ` | body: ${bodyPreview}` : "";
+    throw new Error(
+      `${contextLabel} request failed (${url}) with HTTP ${response.status} ${response.statusText}${bodySuffix}`,
+    );
+  }
+
+  return response;
+}
+
 function normalizeSheetName(value) {
   return String(value || "")
     .trim()
@@ -205,35 +261,10 @@ function buildSocialMetrics({ postTrackerRows, followerGrowthRows, contentCalend
 }
 
 async function loadSocialMediaDataDirectFromSheets() {
-  let sheetIdentifiersByName = Object.fromEntries(REQUIRED_SHEETS.map((name) => [name, name]));
-
-  if (SOCIAL_SHEET_PUBLISHED_HTML_URL.includes("/d/e/")) {
-    const htmlResponse = await fetch(SOCIAL_SHEET_PUBLISHED_HTML_URL);
-    if (!htmlResponse.ok) {
-      throw new Error("Failed to load published social media sheet");
-    }
-
-    const html = await htmlResponse.text();
-    const tabs = parsePublishedTabs(html);
-    const tabByName = Object.fromEntries(tabs.map((tab) => [tab.name, tab]));
-    const missingSheets = REQUIRED_SHEETS.filter((name) => !tabByName[name]);
-
-    if (missingSheets.length > 0) {
-      throw new Error(`Missing required sheet tabs: ${missingSheets.join(", ")}`);
-    }
-
-    sheetIdentifiersByName = Object.fromEntries(
-      REQUIRED_SHEETS.map((sheetName) => [sheetName, tabByName[sheetName].gid]),
-    );
-  }
-
   const [postTrackerCsv, followerGrowthCsv, contentCalendarCsv] = await Promise.all(
     REQUIRED_SHEETS.map(async (sheetName) => {
-      const csvUrl = buildCsvUrl(SOCIAL_SHEET_PUBLISHED_HTML_URL, sheetIdentifiersByName[sheetName]);
-      const response = await fetch(csvUrl);
-      if (!response.ok) {
-        throw new Error(`Failed to load ${sheetName} CSV data`);
-      }
+      const csvUrl = SOCIAL_CSV_URLS[sheetName];
+      const response = await fetchOrThrow(csvUrl, `${sheetName} CSV`);
       return response.text();
     }),
   );
@@ -251,11 +282,8 @@ async function loadSocialMediaDataDirectFromSheets() {
 }
 
 export async function loadPostTrackerRows() {
-  const csvUrl = buildCsvUrl(SOCIAL_SHEET_PUBLISHED_HTML_URL, "Post_Tracker");
-  const response = await fetch(csvUrl);
-  if (!response.ok) {
-    throw new Error("Failed to load Post_Tracker CSV data");
-  }
+  const csvUrl = SOCIAL_CSV_URLS.Post_Tracker;
+  const response = await fetchOrThrow(csvUrl, "Post_Tracker CSV");
 
   const csv = await response.text();
   return toRows(csv);
@@ -263,11 +291,13 @@ export async function loadPostTrackerRows() {
 
 export async function loadSocialMediaData() {
   let response = null;
+  let apiFetchError = null;
 
   try {
     response = await fetch("/api/social-metrics");
-  } catch {
+  } catch (error) {
     response = null;
+    apiFetchError = error;
   }
 
   if (response?.ok) {
@@ -288,7 +318,18 @@ export async function loadSocialMediaData() {
     }
   }
 
-  return loadSocialMediaDataDirectFromSheets();
+  try {
+    return await loadSocialMediaDataDirectFromSheets();
+  } catch (sheetError) {
+    if (apiFetchError) {
+      throw new Error(
+        `Unable to load social media data. API fetch failed: ${toErrorMessage(apiFetchError)}. Direct sheet fetch failed: ${toErrorMessage(sheetError)}`,
+        { cause: sheetError },
+      );
+    }
+
+    throw sheetError;
+  }
 }
 
 export { buildCsvUrl, buildSocialMetrics, parsePublishedTabs, toRows };
