@@ -76,73 +76,16 @@ function SlideHeader({ slide }) {
   );
 }
 
-function formatDateTimeLocal(value) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-
-  const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  return localDate.toISOString().slice(0, 16);
-}
-
-function getDefaultStartTime() {
-  const now = new Date();
-  now.setMinutes(now.getMinutes() + 15, 0, 0);
-  return formatDateTimeLocal(now);
-}
-
-function resolveConversationBanner(course) {
-  const normalizedCourse = String(course || "").toUpperCase();
-  if (normalizedCourse === "A2") return "/Conversation A2.png";
-  if (normalizedCourse === "B1") return "/conversation_time_B1_safe.png";
-  return null;
-}
-
 function SlideStatusBanners({ course }) {
   const normalizedCourse = String(course || "").toUpperCase();
-  const conversationImage = resolveConversationBanner(normalizedCourse);
-  const [classStartTime, setClassStartTime] = useState(getDefaultStartTime);
-  const [minutesLeft, setMinutesLeft] = useState(null);
-  const timeInputId = useId();
-
-  useEffect(() => {
-    if (!classStartTime) {
-      setMinutesLeft(null);
-      return undefined;
-    }
-
-    const targetTime = new Date(classStartTime);
-    if (Number.isNaN(targetTime.getTime())) {
-      setMinutesLeft(null);
-      return undefined;
-    }
-
-    const updateMinutesLeft = () => {
-      const diffMs = targetTime.getTime() - Date.now();
-      setMinutesLeft(Math.max(0, Math.ceil(diffMs / 60000)));
-    };
-
-    updateMinutesLeft();
-    const timer = window.setInterval(updateMinutesLeft, 1000);
-    return () => window.clearInterval(timer);
-  }, [classStartTime]);
+  const conversationImage = normalizedCourse === "A2"
+    ? "/Conversation A2.png"
+    : normalizedCourse === "B1"
+      ? "/conversation_time_B1_safe.png"
+      : null;
 
   return (
     <div className="slide-status-banners">
-      <div className="slide-start-time-panel">
-        <label htmlFor={timeInputId} className="slide-start-time-label no-print">
-          Set class start time
-        </label>
-        <input
-          id={timeInputId}
-          className="slide-start-time-input no-print"
-          type="datetime-local"
-          value={classStartTime}
-          onChange={(event) => setClassStartTime(event.target.value)}
-        />
-        <p className="slide-countdown-text">
-          {minutesLeft === null ? "Set class start time" : `Class starts in ${minutesLeft} minute${minutesLeft === 1 ? "" : "s"}`}
-        </p>
-      </div>
       <img src="/zom.png" alt="Class about to start" className="slide-status-image" />
       {conversationImage && (
         <img
