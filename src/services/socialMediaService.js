@@ -250,6 +250,17 @@ async function loadSocialMediaDataDirectFromSheets() {
   };
 }
 
+export async function loadPostTrackerRows() {
+  const csvUrl = buildCsvUrl(SOCIAL_SHEET_PUBLISHED_HTML_URL, "Post_Tracker");
+  const response = await fetch(csvUrl);
+  if (!response.ok) {
+    throw new Error("Failed to load Post_Tracker CSV data");
+  }
+
+  const csv = await response.text();
+  return toRows(csv);
+}
+
 export async function loadSocialMediaData() {
   let response = null;
 
