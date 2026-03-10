@@ -1,7 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildCsvUrl, buildSocialMetrics, parsePublishedTabs, toRows } from "../src/services/socialMediaService.js";
+import {
+  buildCsvUrl,
+  buildSocialMetrics,
+  loadPostTrackerRows,
+  parsePublishedTabs,
+  toRows,
+} from "../src/services/socialMediaService.js";
 
 test("parsePublishedTabs reads tab names and gids from published sheet html", () => {
   const html = `
@@ -145,6 +151,29 @@ test("loadSocialMediaData falls back to direct sheet fetch when api route is una
     assert.equal(data.followerGrowthRows.length, 1);
     assert.equal(data.contentCalendarRows.length, 1);
     assert.equal(data.metrics.totalPosts, 1);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+
+test("loadPostTrackerRows fetches Post_Tracker only", async () => {
+  const originalFetch = global.fetch;
+  let capturedUrl = "";
+
+  global.fetch = async (url) => {
+    capturedUrl = String(url);
+    return {
+      ok: true,
+      text: async () => "Date,Brand,Platform\n3/9/2026 14:06:16,Falowen,Instagram\n",
+    };
+  };
+
+  try {
+    const rows = await loadPostTrackerRows();
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].brand, "Falowen");
+    assert.ok(capturedUrl.includes("Post_Tracker") || capturedUrl.includes("gid="));
   } finally {
     global.fetch = originalFetch;
   }
