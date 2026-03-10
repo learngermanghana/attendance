@@ -7,11 +7,12 @@ const SOCIAL_SHEET_PUBLISHED_HTML_URL =
 const REQUIRED_SHEETS = ["Post_Tracker", "Followers_Growth", "Content_Calendar"];
 
 const DEFAULT_POST_TRACKER_GID = "184774716";
+const DEFAULT_POST_TRACKER_CSV_URL =
+  "https://docs.google.com/spreadsheets/d/1BxKGkGCWynv7jr1oze0MjfkM2SuQmohAQZtoIfV6jDk/export?format=csv&gid=184774716";
 
 const SOCIAL_CSV_URLS = {
   Post_Tracker:
-    import.meta?.env?.VITE_SOCIAL_POST_TRACKER_CSV_URL ||
-    buildCsvUrl(SOCIAL_SHEET_PUBLISHED_HTML_URL, DEFAULT_POST_TRACKER_GID),
+    import.meta?.env?.VITE_SOCIAL_POST_TRACKER_CSV_URL || DEFAULT_POST_TRACKER_CSV_URL,
   Followers_Growth:
     import.meta?.env?.VITE_SOCIAL_FOLLOWERS_GROWTH_CSV_URL ||
     buildCsvUrl(SOCIAL_SHEET_PUBLISHED_HTML_URL, "Followers_Growth"),
