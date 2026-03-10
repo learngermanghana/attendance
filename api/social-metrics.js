@@ -1,3 +1,5 @@
+import crypto from "node:crypto";
+
 const DEFAULT_SOCIAL_SHEET_PUBLISHED_HTML_URL =
   "https://docs.google.com/spreadsheets/d/1BxKGkGCWynv7jr1oze0MjfkM2SuQmohAQZtoIfV6jDk/edit";
 
@@ -119,6 +121,156 @@ function toRows(csvText) {
   });
 }
 
+function toRowsFromValues(values = []) {
+  if (!Array.isArray(values) || values.length === 0) return [];
+
+  const [headersRaw = [], ...dataRows] = values;
+  const headers = headersRaw.map(normalizeHeader);
+
+  return dataRows.map((row) => {
+    const record = {};
+    headers.forEach((header, index) => {
+      record[header || `column${index + 1}`] = String(row[index] || "").trim();
+    });
+    return record;
+  });
+}
+
+function sheetIdFromUrl(url) {
+  const match = String(url || "").match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  return match?.[1] || null;
+}
+
+function getServiceAccountCredentials() {
+  const clientEmail =
+    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL ||
+    process.env.GCP_CLIENT_EMAIL ||
+    process.env.GOOGLE_CLIENT_EMAIL;
+  const privateKeyRaw =
+    process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY ||
+    process.env.GCP_PRIVATE_KEY ||
+    process.env.GOOGLE_PRIVATE_KEY;
+  const privateKey = String(privateKeyRaw || "").replace(/\\n/g, "\n");
+
+  if (!clientEmail || !privateKey) {
+    return null;
+  }
+
+  return { clientEmail, privateKey };
+}
+
+async function loadSocialSheetDataFromServiceAccount({ publishedUrl, originalError }) {
+  const credentials = getServiceAccountCredentials();
+  if (!credentials) {
+    throw originalError;
+  }
+
+  const spreadsheetId =
+    process.env.SOCIAL_SHEET_ID ||
+    process.env.GOOGLE_SOCIAL_SHEET_ID ||
+    sheetIdFromUrl(publishedUrl);
+
+  if (!spreadsheetId) {
+    throw originalError;
+  }
+
+  const accessToken = await getAccessTokenFromServiceAccount(credentials);
+  const [postTrackerValues, followerGrowthValues, contentCalendarValues] = await Promise.all(
+    REQUIRED_SHEETS.map((sheetName) =>
+      readSheetValues({
+        spreadsheetId,
+        sheetName,
+        accessToken,
+      }),
+    ),
+  );
+
+  const postTrackerRows = toRowsFromValues(postTrackerValues);
+  const followerGrowthRows = toRowsFromValues(followerGrowthValues);
+  const contentCalendarRows = toRowsFromValues(contentCalendarValues);
+
+  return {
+    postTrackerRows,
+    followerGrowthRows,
+    contentCalendarRows,
+    metrics: buildSocialMetrics({ postTrackerRows, followerGrowthRows, contentCalendarRows }),
+  };
+}
+
+function encodeBase64Url(input) {
+  return Buffer.from(input)
+    .toString("base64")
+    .replace(/=/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
+}
+
+function createSignedJwt({ clientEmail, privateKey }) {
+  const now = Math.floor(Date.now() / 1000);
+  const header = { alg: "RS256", typ: "JWT" };
+  const payload = {
+    iss: clientEmail,
+    scope: "https://www.googleapis.com/auth/spreadsheets.readonly",
+    aud: "https://oauth2.googleapis.com/token",
+    iat: now,
+    exp: now + 3600,
+  };
+
+  const encodedHeader = encodeBase64Url(JSON.stringify(header));
+  const encodedPayload = encodeBase64Url(JSON.stringify(payload));
+  const signatureInput = `${encodedHeader}.${encodedPayload}`;
+
+  const signature = crypto
+    .createSign("RSA-SHA256")
+    .update(signatureInput)
+    .sign(privateKey, "base64")
+    .replace(/=/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
+
+  return `${signatureInput}.${signature}`;
+}
+
+async function getAccessTokenFromServiceAccount(credentials) {
+  const assertion = createSignedJwt(credentials);
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+      assertion,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to obtain service account access token");
+  }
+
+  const body = await response.json();
+  if (!body?.access_token) {
+    throw new Error("Missing service account access token");
+  }
+
+  return body.access_token;
+}
+
+async function readSheetValues({ spreadsheetId, sheetName, accessToken }) {
+  const range = encodeURIComponent(`${sheetName}!A:ZZ`);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(spreadsheetId)}/values/${range}`;
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to load ${sheetName} via service account`);
+  }
+
+  const body = await response.json();
+  return body.values || [];
+}
+
 function parseDate(value) {
   if (!value) return null;
   const direct = new Date(value);
@@ -214,32 +366,39 @@ async function loadSocialSheetData() {
     );
   }
 
-  const [postTrackerCsv, followerGrowthCsv, contentCalendarCsv] = await Promise.all(
-    REQUIRED_SHEETS.map(async (sheetName) => {
-      const csvUrl =
-        sheetName === "Post_Tracker"
-          ? process.env.SOCIAL_POST_TRACKER_CSV_URL ||
-            process.env.VITE_SOCIAL_POST_TRACKER_CSV_URL ||
-            DEFAULT_POST_TRACKER_CSV_URL
-          : buildCsvUrl(publishedUrl, sheetIdentifiersByName[sheetName]);
-      const response = await fetch(csvUrl);
-      if (!response.ok) {
-        throw new Error(`Failed to load ${sheetName} CSV data`);
-      }
-      return response.text();
-    }),
-  );
+  try {
+    const [postTrackerCsv, followerGrowthCsv, contentCalendarCsv] = await Promise.all(
+      REQUIRED_SHEETS.map(async (sheetName) => {
+        const csvUrl =
+          sheetName === "Post_Tracker"
+            ? process.env.SOCIAL_POST_TRACKER_CSV_URL ||
+              process.env.VITE_SOCIAL_POST_TRACKER_CSV_URL ||
+              DEFAULT_POST_TRACKER_CSV_URL
+            : buildCsvUrl(publishedUrl, sheetIdentifiersByName[sheetName]);
+        const response = await fetch(csvUrl);
+        if (!response.ok) {
+          throw new Error(`Failed to load ${sheetName} CSV data`);
+        }
+        return response.text();
+      }),
+    );
 
-  const postTrackerRows = toRows(await postTrackerCsv);
-  const followerGrowthRows = toRows(await followerGrowthCsv);
-  const contentCalendarRows = toRows(await contentCalendarCsv);
+    const postTrackerRows = toRows(await postTrackerCsv);
+    const followerGrowthRows = toRows(await followerGrowthCsv);
+    const contentCalendarRows = toRows(await contentCalendarCsv);
 
-  return {
-    postTrackerRows,
-    followerGrowthRows,
-    contentCalendarRows,
-    metrics: buildSocialMetrics({ postTrackerRows, followerGrowthRows, contentCalendarRows }),
-  };
+    return {
+      postTrackerRows,
+      followerGrowthRows,
+      contentCalendarRows,
+      metrics: buildSocialMetrics({ postTrackerRows, followerGrowthRows, contentCalendarRows }),
+    };
+  } catch (csvError) {
+    return loadSocialSheetDataFromServiceAccount({
+      publishedUrl,
+      originalError: csvError,
+    });
+  }
 }
 
 export default async function handler(req, res) {
