@@ -33,6 +33,48 @@
   box-shadow: 0 12px 28px rgba(18, 38, 101, 0.08);
 }
 
+
+.slide-status-banners {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.slide-status-image {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid #dbe1ef;
+  display: block;
+}
+
+.slide-start-time-panel {
+  border: 1px solid #dbe1ef;
+  border-radius: 12px;
+  padding: 0.8rem;
+  background: #f8fbff;
+}
+
+.slide-start-time-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.slide-start-time-input {
+  max-width: 320px;
+  width: 100%;
+  padding: 0.4rem 0.55rem;
+  border-radius: 8px;
+  border: 1px solid #c7d2eb;
+  margin-bottom: 0.45rem;
+}
+
+.slide-countdown-text {
+  margin: 0;
+  font-weight: 700;
+  color: #173d90;
+}
+
 .slide-header h1 {
   font-size: clamp(1.7rem, 4vw, 2.5rem);
   margin-bottom: 0.55rem;
