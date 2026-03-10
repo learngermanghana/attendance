@@ -3,6 +3,10 @@ const DEFAULT_SOCIAL_SHEET_PUBLISHED_HTML_URL =
 
 const REQUIRED_SHEETS = ["Post_Tracker", "Followers_Growth", "Content_Calendar"];
 
+const DEFAULT_POST_TRACKER_GID = "184774716";
+const DEFAULT_POST_TRACKER_CSV_URL =
+  "https://docs.google.com/spreadsheets/d/1BxKGkGCWynv7jr1oze0MjfkM2SuQmohAQZtoIfV6jDk/export?format=csv&gid=184774716";
+
 function normalizeSheetName(value) {
   return String(value || "")
     .trim()
@@ -177,7 +181,11 @@ async function loadSocialSheetData() {
     process.env.VITE_SOCIAL_SHEET_PUBLISHED_HTML_URL ||
     DEFAULT_SOCIAL_SHEET_PUBLISHED_HTML_URL;
 
-  let sheetIdentifiersByName = Object.fromEntries(REQUIRED_SHEETS.map((name) => [name, name]));
+  let sheetIdentifiersByName = {
+    Post_Tracker: DEFAULT_POST_TRACKER_GID,
+    Followers_Growth: "Followers_Growth",
+    Content_Calendar: "Content_Calendar",
+  };
 
   if (publishedUrl.includes("/d/e/")) {
     const htmlResponse = await fetch(publishedUrl);
@@ -208,7 +216,12 @@ async function loadSocialSheetData() {
 
   const [postTrackerCsv, followerGrowthCsv, contentCalendarCsv] = await Promise.all(
     REQUIRED_SHEETS.map(async (sheetName) => {
-      const csvUrl = buildCsvUrl(publishedUrl, sheetIdentifiersByName[sheetName]);
+      const csvUrl =
+        sheetName === "Post_Tracker"
+          ? process.env.SOCIAL_POST_TRACKER_CSV_URL ||
+            process.env.VITE_SOCIAL_POST_TRACKER_CSV_URL ||
+            DEFAULT_POST_TRACKER_CSV_URL
+          : buildCsvUrl(publishedUrl, sheetIdentifiersByName[sheetName]);
       const response = await fetch(csvUrl);
       if (!response.ok) {
         throw new Error(`Failed to load ${sheetName} CSV data`);
