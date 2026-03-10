@@ -129,7 +129,7 @@ test("loadSocialMediaData falls back to direct sheet fetch when api route is una
     }
 
     const requestUrl = String(url);
-    if (requestUrl.includes("Post_Tracker")) {
+    if (requestUrl.includes("Post_Tracker") || requestUrl.includes("gid=184774716")) {
       return { ok: true, text: async () => "Date,Topic\n2026-01-01,Welcome\n" };
     }
 
