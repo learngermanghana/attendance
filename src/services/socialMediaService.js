@@ -62,6 +62,42 @@ async function fetchOrThrow(url, contextLabel) {
   return response;
 }
 
+function buildCsvCandidateUrls(sheetSourceUrl, identifier) {
+  const primaryUrl = buildCsvUrl(sheetSourceUrl, identifier);
+  const urls = [primaryUrl];
+
+  const directSheetMatch = String(sheetSourceUrl || "").match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if (directSheetMatch) {
+    const sheetId = directSheetMatch[1];
+    const value = String(identifier || "").trim();
+    const isNumericGid = /^\d+$/.test(value);
+
+    const gvizQuery = isNumericGid
+      ? `gid=${encodeURIComponent(value)}`
+      : `sheet=${encodeURIComponent(value)}`;
+
+    urls.push(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&${gvizQuery}`);
+  }
+
+  return [...new Set(urls)];
+}
+
+async function fetchCsvWithFallback(sheetName, identifier) {
+  const csvCandidates = buildCsvCandidateUrls(SOCIAL_SHEET_PUBLISHED_HTML_URL, identifier);
+  const errors = [];
+
+  for (const csvUrl of csvCandidates) {
+    try {
+      const response = await fetchOrThrow(csvUrl, `${sheetName} CSV`);
+      return response.text();
+    } catch (error) {
+      errors.push(toErrorMessage(error));
+    }
+  }
+
+  throw new Error(`${sheetName} CSV request failed. Tried ${csvCandidates.length} URL(s): ${errors.join(" | ")}`);
+}
+
 function normalizeSheetName(value) {
   return String(value || "")
     .trim()
@@ -261,11 +297,21 @@ function buildSocialMetrics({ postTrackerRows, followerGrowthRows, contentCalend
 }
 
 async function loadSocialMediaDataDirectFromSheets() {
+  const sheetIdentifiers = {
+    Post_Tracker: DEFAULT_POST_TRACKER_GID,
+    Followers_Growth: "Followers_Growth",
+    Content_Calendar: "Content_Calendar",
+  };
+
   const [postTrackerCsv, followerGrowthCsv, contentCalendarCsv] = await Promise.all(
     REQUIRED_SHEETS.map(async (sheetName) => {
-      const csvUrl = SOCIAL_CSV_URLS[sheetName];
-      const response = await fetchOrThrow(csvUrl, `${sheetName} CSV`);
-      return response.text();
+      const explicitCsvUrl = String(SOCIAL_CSV_URLS[sheetName] || "").trim();
+      if (explicitCsvUrl && import.meta?.env?.[`VITE_SOCIAL_${sheetName.toUpperCase()}_CSV_URL`]) {
+        const response = await fetchOrThrow(explicitCsvUrl, `${sheetName} CSV`);
+        return response.text();
+      }
+
+      return fetchCsvWithFallback(sheetName, sheetIdentifiers[sheetName] || sheetName);
     }),
   );
 
@@ -282,10 +328,14 @@ async function loadSocialMediaDataDirectFromSheets() {
 }
 
 export async function loadPostTrackerRows() {
-  const csvUrl = SOCIAL_CSV_URLS.Post_Tracker;
-  const response = await fetchOrThrow(csvUrl, "Post_Tracker CSV");
+  const explicitCsvUrl = String(import.meta?.env?.VITE_SOCIAL_POST_TRACKER_CSV_URL || "").trim();
+  if (explicitCsvUrl) {
+    const response = await fetchOrThrow(explicitCsvUrl, "Post_Tracker CSV");
+    const csv = await response.text();
+    return toRows(csv);
+  }
 
-  const csv = await response.text();
+  const csv = await fetchCsvWithFallback("Post_Tracker", DEFAULT_POST_TRACKER_GID);
   return toRows(csv);
 }
 
