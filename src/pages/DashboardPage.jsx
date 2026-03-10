@@ -126,6 +126,16 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 14, background: "#fff" }}>
+              <div style={{ fontWeight: 700 }}>Social media post tracker</div>
+              <p style={{ margin: "8px 0 0" }}>
+                View live Post_Tracker data from your published content sheet.
+              </p>
+              <div style={{ marginTop: 8 }}>
+                <Link to="/social-post-tracker">Open social post tracker</Link>
+              </div>
+            </div>
+
           </section>
         </>
       )}
