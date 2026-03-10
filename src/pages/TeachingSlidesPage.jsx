@@ -76,6 +76,29 @@ function SlideHeader({ slide }) {
   );
 }
 
+function SlideStatusBanners({ course }) {
+  const normalizedCourse = String(course || "").toUpperCase();
+  const conversationImage = normalizedCourse === "A2"
+    ? "/Conversation A2.png"
+    : normalizedCourse === "B1"
+      ? "/conversation_time_B1_safe.png"
+      : null;
+
+  return (
+    <div className="slide-status-banners">
+      <img src="/zom.png" alt="Class about to start" className="slide-status-image" />
+      {conversationImage && (
+        <img
+          src={conversationImage}
+          alt={`${normalizedCourse} conversation time`}
+          className="slide-status-image"
+        />
+      )}
+      <img src="/class_has_ended_banner.png" alt="Class has ended" className="slide-status-image" />
+    </div>
+  );
+}
+
 function SlideCoursesIndex() {
   const courses = useMemo(() => getAvailableSlideCourses(), []);
 
@@ -149,6 +172,7 @@ function SlideDetail({ slide, courseId }) {
 
   return (
     <article className={`teaching-slide ${handoutMode ? "handout-mode" : ""}`}>
+      <SlideStatusBanners course={slide.course} />
       <SlideHeader slide={slide} />
 
       <div className="slide-grid">
@@ -202,6 +226,7 @@ function SlidePrintPack({ courseId }) {
 
       {slides.map((slide) => (
         <article key={slide.id} className="teaching-slide print-pack-slide">
+          <SlideStatusBanners course={slide.course} />
           <SlideHeader slide={slide} />
           <div className="slide-grid">
             <SlideBlocks slide={slide} handoutMode />
