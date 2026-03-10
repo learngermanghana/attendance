@@ -178,3 +178,42 @@ test("loadPostTrackerRows fetches Post_Tracker only", async () => {
     global.fetch = originalFetch;
   }
 });
+
+test("loadPostTrackerRows retries with gviz csv endpoint when export endpoint fails", async () => {
+  const originalFetch = global.fetch;
+  const attemptedUrls = [];
+
+  global.fetch = async (url) => {
+    const requestUrl = String(url);
+    attemptedUrls.push(requestUrl);
+
+    if (requestUrl.includes("/export?format=csv")) {
+      return {
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        text: async () => "blocked",
+      };
+    }
+
+    if (requestUrl.includes("/gviz/tq?tqx=out:csv")) {
+      return {
+        ok: true,
+        text: async () => "Date,Brand,Platform\n2026-03-09,Falowen,Instagram\n",
+      };
+    }
+
+    throw new Error(`Unexpected URL: ${requestUrl}`);
+  };
+
+  try {
+    const rows = await loadPostTrackerRows();
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].platform, "Instagram");
+    assert.equal(attemptedUrls.length, 2);
+    assert.ok(attemptedUrls[0].includes("/export?format=csv"));
+    assert.ok(attemptedUrls[1].includes("/gviz/tq?tqx=out:csv"));
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
