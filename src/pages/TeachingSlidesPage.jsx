@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   getAvailableSlideCourses,
