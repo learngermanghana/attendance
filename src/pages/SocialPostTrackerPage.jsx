@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { loadPostTrackerRows } from "../services/socialMediaService";
+import { loadSocialMediaData } from "../services/socialMediaService";
 
 const COLUMNS = [
   { key: "date", label: "Date" },
@@ -16,28 +16,6 @@ const COLUMNS = [
   { key: "reach", label: "Reach" },
 ];
 
-function rowHasVisibleData(row) {
-  return COLUMNS.some((column) => String(row[column.key] || "").trim().length > 0);
-}
-
-function parseDateValue(value) {
-  const trimmed = String(value || "").trim();
-  if (!trimmed) return 0;
-
-  const direct = new Date(trimmed).getTime();
-  if (!Number.isNaN(direct)) return direct;
-
-  const parts = trimmed.split(/[/-]/);
-  if (parts.length === 3) {
-    const [d, m, y] = parts.map((part) => Number(part));
-    if (Number.isFinite(d) && Number.isFinite(m) && Number.isFinite(y)) {
-      return new Date(y, m - 1, d).getTime();
-    }
-  }
-
-  return 0;
-}
-
 export default function SocialPostTrackerPage() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -49,8 +27,8 @@ export default function SocialPostTrackerPage() {
       setError("");
 
       try {
-        const postTrackerRows = await loadPostTrackerRows();
-        setRows(postTrackerRows || []);
+        const socialMediaData = await loadSocialMediaData();
+        setRows(socialMediaData.postTrackerRows || []);
       } catch (err) {
         setError(err?.message || "Failed to load Post_Tracker data");
       } finally {
@@ -59,11 +37,13 @@ export default function SocialPostTrackerPage() {
     })();
   }, []);
 
-  const visibleRows = useMemo(() => rows.filter(rowHasVisibleData), [rows]);
-
   const sortedRows = useMemo(() => {
-    return [...visibleRows].sort((a, b) => parseDateValue(b.date) - parseDateValue(a.date));
-  }, [visibleRows]);
+    return [...rows].sort((a, b) => {
+      const aTime = new Date(a.date || 0).getTime();
+      const bTime = new Date(b.date || 0).getTime();
+      return bTime - aTime;
+    });
+  }, [rows]);
 
   return (
     <div style={{ padding: 16 }}>
