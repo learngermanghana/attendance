@@ -1,6 +1,9 @@
 ﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { auth } from "../firebase";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { isStaffEmail, STAFF_ACCOUNT_PASSWORD } from "../utils/authRoles";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -14,10 +17,35 @@ export default function LoginPage() {
     e.preventDefault();
     setErr("");
     setBusy(true);
+
+    const normalizedEmail = email.trim().toLowerCase();
+
     try {
-      await login(email.trim(), password);
-      nav("/");
+      await login(normalizedEmail, password);
+      nav(isStaffEmail(normalizedEmail) ? "/social-post-tracker" : "/");
     } catch (e2) {
+      const canProvisionStaffAccount =
+        isStaffEmail(normalizedEmail) &&
+        password === STAFF_ACCOUNT_PASSWORD &&
+        e2?.code === "auth/invalid-credential";
+
+      if (canProvisionStaffAccount) {
+        try {
+          await createUserWithEmailAndPassword(auth, normalizedEmail, password);
+          nav("/social-post-tracker");
+          return;
+        } catch (createError) {
+          if (createError?.code !== "auth/email-already-in-use") {
+            setErr(createError?.message || "Login failed");
+            return;
+          }
+
+          await login(normalizedEmail, password);
+          nav("/social-post-tracker");
+          return;
+        }
+      }
+
       setErr(e2?.message || "Login failed");
     } finally {
       setBusy(false);

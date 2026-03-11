@@ -20,7 +20,7 @@ import { useToast } from "./context/ToastContext";
 import "./App.css";
 
 function TopBar() {
-  const { user, logout } = useAuth();
+  const { user, logout, isStaff } = useAuth();
   const nav = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -42,16 +42,22 @@ function TopBar() {
           </button>
 
           <div id="topbar-navigation" className={`topbar-links ${menuOpen ? "topbar-links-open" : ""}`}>
-            <Link to="/" onClick={() => setMenuOpen(false)}>Dashboard</Link>
-            <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
-            <Link to="/course-schedule" onClick={() => setMenuOpen(false)}>Course Schedule</Link>
-            <Link to="/marking" onClick={() => setMenuOpen(false)}>Mark Work</Link>
-            <Link to="/grammar-issues" onClick={() => setMenuOpen(false)}>Grammar Issues</Link>
-            <Link to="/campus/tutor-marking" onClick={() => setMenuOpen(false)}>Tutor Marking</Link>
-            <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
-            <Link to="/whatsapp-reminders" onClick={() => setMenuOpen(false)}>WhatsApp Reminders</Link>
-            <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Teaching Slides</Link>
-            <Link to="/social-post-tracker" onClick={() => setMenuOpen(false)}>Social Post Tracker</Link>
+            {isStaff ? (
+              <Link to="/social-post-tracker" onClick={() => setMenuOpen(false)}>Social Post Tracker</Link>
+            ) : (
+              <>
+                <Link to="/" onClick={() => setMenuOpen(false)}>Dashboard</Link>
+                <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
+                <Link to="/course-schedule" onClick={() => setMenuOpen(false)}>Course Schedule</Link>
+                <Link to="/marking" onClick={() => setMenuOpen(false)}>Mark Work</Link>
+                <Link to="/grammar-issues" onClick={() => setMenuOpen(false)}>Grammar Issues</Link>
+                <Link to="/campus/tutor-marking" onClick={() => setMenuOpen(false)}>Tutor Marking</Link>
+                <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
+                <Link to="/whatsapp-reminders" onClick={() => setMenuOpen(false)}>WhatsApp Reminders</Link>
+                <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Teaching Slides</Link>
+                <Link to="/social-post-tracker" onClick={() => setMenuOpen(false)}>Social Post Tracker</Link>
+              </>
+            )}
           </div>
 
           <div className={`topbar-user ${menuOpen ? "topbar-user-open" : ""}`}>
@@ -103,7 +109,7 @@ export default function App() {
           <Route
             path="/"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowStaff={false}>
                 <DashboardPage />
               </ProtectedRoute>
             }
@@ -112,7 +118,7 @@ export default function App() {
           <Route
             path="/attendance"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowStaff={false}>
                 <AttendanceOverviewPage />
               </ProtectedRoute>
             }
@@ -121,7 +127,7 @@ export default function App() {
           <Route
             path="/attendance/:classId"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowStaff={false}>
                 <AttendancePage />
               </ProtectedRoute>
             }
@@ -130,7 +136,7 @@ export default function App() {
           <Route
             path="/course-schedule"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowStaff={false}>
                 <CourseSchedulePage />
               </ProtectedRoute>
             }
@@ -139,7 +145,7 @@ export default function App() {
           <Route
             path="/marking"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowStaff={false}>
                 <MarkingPage />
               </ProtectedRoute>
             }
@@ -147,7 +153,7 @@ export default function App() {
           <Route
             path="/campus/tutor-marking"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowStaff={false}>
                 <TutorMarkingPage />
               </ProtectedRoute>
             }
@@ -155,7 +161,7 @@ export default function App() {
           <Route
             path="/grammar-issues"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowStaff={false}>
                 <GrammarIssueReportsPage />
               </ProtectedRoute>
             }
@@ -163,7 +169,7 @@ export default function App() {
           <Route
             path="/communication"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowStaff={false}>
                 <CommunicationPage />
               </ProtectedRoute>
             }
@@ -171,7 +177,7 @@ export default function App() {
           <Route
             path="/whatsapp-reminders"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowStaff={false}>
                 <WhatsAppRemindersPage />
               </ProtectedRoute>
             }
@@ -179,7 +185,7 @@ export default function App() {
           <Route
             path="/teaching-slides"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowStaff={false}>
                 <TeachingSlidesPage />
               </ProtectedRoute>
             }
@@ -195,7 +201,7 @@ export default function App() {
           <Route
             path="/teaching-slides/course/:courseId"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowStaff={false}>
                 <TeachingSlidesPage />
               </ProtectedRoute>
             }
@@ -203,7 +209,7 @@ export default function App() {
           <Route
             path="/teaching-slides/course/:courseId/:slideId"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowStaff={false}>
                 <TeachingSlidesPage />
               </ProtectedRoute>
             }
@@ -211,7 +217,7 @@ export default function App() {
           <Route
             path="/teaching-slides/:legacySlideId"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowStaff={false}>
                 <TeachingSlidesPage />
               </ProtectedRoute>
             }

@@ -21,8 +21,42 @@ const INITIAL_FORM = FORM_FIELDS.reduce((accumulator, field) => {
   return accumulator;
 }, {});
 
+const DAILY_POST_TODOS = [
+  {
+    brand: "Falowen",
+    platform: "Instagram",
+    contentType: "Vocabulary",
+    topic: "Vocab of the Day",
+  },
+  {
+    brand: "Falowen",
+    platform: "Instagram",
+    contentType: "Grammar Tip",
+    topic: "Quick grammar lesson",
+  },
+  {
+    brand: "Learn Language Education Academy",
+    platform: "Facebook",
+    contentType: "Learning Tip",
+    topic: "Study tip / learning advice",
+  },
+  {
+    brand: "Falowen",
+    platform: "LinkedIn",
+    contentType: "Feature Highlight",
+    topic: "Falowen feature or workflow",
+  },
+  {
+    brand: "Learn Language Education Academy",
+    platform: "Instagram",
+    contentType: "Motivation",
+    topic: "Motivation / student success / reminder",
+  },
+];
+
 export default function SocialPostTrackerPage() {
   const [form, setForm] = useState(INITIAL_FORM);
+  const [completedTodos, setCompletedTodos] = useState({});
   const [savedRows, setSavedRows] = useState([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -55,6 +89,13 @@ export default function SocialPostTrackerPage() {
 
   function resetForm() {
     setForm(INITIAL_FORM);
+  }
+
+  function toggleTodo(index) {
+    setCompletedTodos((current) => ({
+      ...current,
+      [index]: !current[index],
+    }));
   }
 
   async function onSubmit(event) {
@@ -95,6 +136,95 @@ export default function SocialPostTrackerPage() {
       <p style={{ marginTop: 0, color: "#555" }}>
         Add a post entry and press <strong>Save to Google Sheet</strong>.
       </p>
+
+      <section
+        style={{
+          marginBottom: 18,
+          background: "#f7f9ff",
+          border: "1px solid #dbe4ff",
+          borderRadius: 10,
+          padding: 12,
+        }}
+      >
+        <h2 style={{ margin: "0 0 8px" }}>Daily Social Media To-Do List</h2>
+        <p style={{ marginTop: 0, color: "#555", fontSize: 14 }}>
+          Staff can use this checklist to track what should be posted each day.
+        </p>
+
+        <div style={{ overflowX: "auto", border: "1px solid #ddd", borderRadius: 8, background: "#fff" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 640 }}>
+            <thead>
+              <tr style={{ background: "#f1f4ff" }}>
+                <th style={{ textAlign: "left", padding: 10, borderBottom: "1px solid #ddd", width: 70 }}>
+                  Status
+                </th>
+                <th style={{ textAlign: "left", padding: 10, borderBottom: "1px solid #ddd" }}>Brand</th>
+                <th style={{ textAlign: "left", padding: 10, borderBottom: "1px solid #ddd" }}>Platform</th>
+                <th style={{ textAlign: "left", padding: 10, borderBottom: "1px solid #ddd" }}>Content Type</th>
+                <th style={{ textAlign: "left", padding: 10, borderBottom: "1px solid #ddd" }}>Topic</th>
+              </tr>
+            </thead>
+            <tbody>
+              {DAILY_POST_TODOS.map((todo, index) => {
+                const isCompleted = Boolean(completedTodos[index]);
+
+                return (
+                  <tr key={`${todo.brand}-${todo.platform}-${todo.contentType}`}>
+                    <td style={{ padding: 10, borderBottom: "1px solid #eee" }}>
+                      <input
+                        type="checkbox"
+                        checked={isCompleted}
+                        onChange={() => toggleTodo(index)}
+                        aria-label={`Mark ${todo.brand} ${todo.platform} ${todo.contentType} as completed`}
+                      />
+                    </td>
+                    <td
+                      style={{
+                        padding: 10,
+                        borderBottom: "1px solid #eee",
+                        textDecoration: isCompleted ? "line-through" : "none",
+                        color: isCompleted ? "#777" : "inherit",
+                      }}
+                    >
+                      {todo.brand}
+                    </td>
+                    <td
+                      style={{
+                        padding: 10,
+                        borderBottom: "1px solid #eee",
+                        textDecoration: isCompleted ? "line-through" : "none",
+                        color: isCompleted ? "#777" : "inherit",
+                      }}
+                    >
+                      {todo.platform}
+                    </td>
+                    <td
+                      style={{
+                        padding: 10,
+                        borderBottom: "1px solid #eee",
+                        textDecoration: isCompleted ? "line-through" : "none",
+                        color: isCompleted ? "#777" : "inherit",
+                      }}
+                    >
+                      {todo.contentType}
+                    </td>
+                    <td
+                      style={{
+                        padding: 10,
+                        borderBottom: "1px solid #eee",
+                        textDecoration: isCompleted ? "line-through" : "none",
+                        color: isCompleted ? "#777" : "inherit",
+                      }}
+                    >
+                      {todo.topic}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 10 }}>
