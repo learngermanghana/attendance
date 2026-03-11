@@ -330,16 +330,17 @@ async function loadSocialMediaDataDirectFromSheets() {
 
 
 export async function saveSocialMediaEntry(entry) {
-  const webhookUrl = String(import.meta?.env?.VITE_SOCIAL_WEBHOOK_URL || "").trim();
+  const env = import.meta?.env || globalThis.__ATTENDANCE_ENV__ || {};
+  const webhookUrl = String(env.VITE_SOCIAL_WEBHOOK_URL || "").trim();
 
   if (!webhookUrl) {
     throw new Error("Missing VITE_SOCIAL_WEBHOOK_URL. Add your Apps Script /exec URL in .env.");
   }
 
   const payload = {
-    token: String(import.meta?.env?.VITE_SOCIAL_WEBHOOK_TOKEN || "").trim() || undefined,
-    sheet_name: String(import.meta?.env?.VITE_SOCIAL_WEBHOOK_SHEET_NAME || "").trim() || undefined,
-    sheet_gid: String(import.meta?.env?.VITE_SOCIAL_WEBHOOK_SHEET_GID || "").trim() || undefined,
+    token: String(env.VITE_SOCIAL_WEBHOOK_TOKEN || "").trim() || undefined,
+    sheet_name: String(env.VITE_SOCIAL_WEBHOOK_SHEET_NAME || "").trim() || undefined,
+    sheet_gid: String(env.VITE_SOCIAL_WEBHOOK_SHEET_GID || "").trim() || undefined,
     row: {
       date: String(entry?.date || ""),
       brand: String(entry?.brand || ""),
@@ -357,29 +358,56 @@ export async function saveSocialMediaEntry(entry) {
     },
   };
 
-  const response = await fetch(webhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+  const isLikelyNetworkError = (error) => {
+    return error instanceof TypeError || /networkerror|failed to fetch|cors/i.test(String(error?.message || ""));
+  };
 
-  if (!response.ok) {
-    const details = await response.text().catch(() => "");
-    throw new Error(`Webhook save failed (${response.status} ${response.statusText})${details ? `: ${details}` : ""}`);
-  }
+  const saveWithNoCorsFallback = async () => {
+    await fetch(webhookUrl, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=UTF-8" },
+      body: JSON.stringify(payload),
+    });
 
-  let body = {};
+    return {
+      ok: true,
+      unverified: true,
+      message: "Sheet request sent via no-cors fallback (delivery cannot be confirmed by browser).",
+    };
+  };
+
   try {
-    body = await response.json();
-  } catch {
-    body = { ok: true };
-  }
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
-  if (body?.ok === false) {
-    throw new Error(body.error || "Webhook returned a failure response.");
-  }
+    if (!response.ok) {
+      const details = await response.text().catch(() => "");
+      throw new Error(`Webhook save failed (${response.status} ${response.statusText})${details ? `: ${details}` : ""}`);
+    }
 
-  return body;
+    let body = {};
+    try {
+      body = await response.json();
+    } catch {
+      body = { ok: true };
+    }
+
+    if (body?.ok === false) {
+      throw new Error(body.error || "Webhook returned a failure response.");
+    }
+
+    return body;
+  } catch (error) {
+    if (!isLikelyNetworkError(error)) {
+      throw error;
+    }
+
+    return saveWithNoCorsFallback();
+  }
 }
 
 export async function loadPostTrackerRows() {

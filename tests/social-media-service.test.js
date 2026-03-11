@@ -6,6 +6,7 @@ import {
   buildSocialMetrics,
   loadPostTrackerRows,
   parsePublishedTabs,
+  saveSocialMediaEntry,
   toRows,
 } from "../src/services/socialMediaService.js";
 
@@ -214,6 +215,38 @@ test("loadPostTrackerRows retries with gviz csv endpoint when export endpoint fa
     assert.ok(attemptedUrls[0].includes("/export?format=csv"));
     assert.ok(attemptedUrls[1].includes("/gviz/tq?tqx=out:csv"));
   } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test("saveSocialMediaEntry falls back to no-cors when CORS/network fetch fails", async () => {
+  const originalFetch = global.fetch;
+  const calls = [];
+
+  global.fetch = async (url, options = {}) => {
+    calls.push({ url: String(url), options });
+
+    if (!options.mode) {
+      throw new TypeError("Failed to fetch");
+    }
+
+    return { ok: true };
+  };
+
+  globalThis.__ATTENDANCE_ENV__ = {
+    VITE_SOCIAL_WEBHOOK_URL: "https://script.google.com/macros/s/example/exec",
+  };
+
+  try {
+    const result = await saveSocialMediaEntry({ date: "2026-04-01", brand: "Falowen", platform: "Instagram" });
+
+    assert.equal(calls.length, 2);
+    assert.equal(calls[0].options.mode, undefined);
+    assert.equal(calls[1].options.mode, "no-cors");
+    assert.equal(result.ok, true);
+    assert.equal(result.unverified, true);
+  } finally {
+    delete globalThis.__ATTENDANCE_ENV__;
     global.fetch = originalFetch;
   }
 });
