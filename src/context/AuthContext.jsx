@@ -1,6 +1,7 @@
 ﻿import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { auth } from "../firebase";
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { isStaffEmail } from "../utils/authRoles";
 
 const AuthCtx = createContext(null);
 
@@ -19,6 +20,7 @@ export function AuthProvider({ children }) {
   const value = useMemo(() => ({
     user,
     loading,
+    isStaff: isStaffEmail(user?.email),
     login: (email, password) => signInWithEmailAndPassword(auth, email, password),
     logout: () => signOut(auth),
   }), [user, loading]);
