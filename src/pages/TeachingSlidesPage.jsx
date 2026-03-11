@@ -10,6 +10,14 @@ import {
 import "./TeachingSlidesPage.css";
 import { getUnifiedTopicLabel } from "../data/courseDictionary.js";
 
+function getStoredStartTime() {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  return window.localStorage.getItem("teachingSlides.classStartTime") || "";
+}
+
 function SlideBlocks({ slide, handoutMode = false }) {
   return (
     <>
