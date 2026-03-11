@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { loadSocialMediaData, saveSocialMediaEntry } from "../services/socialMediaService";
+import { useMemo, useState } from "react";
+import { saveSocialMediaEntry } from "../services/socialMediaService";
 
 const FORM_FIELDS = [
   { key: "date", label: "Date", type: "date", required: true },
@@ -20,15 +20,6 @@ const INITIAL_FORM = FORM_FIELDS.reduce((accumulator, field) => {
   accumulator[field.key] = "";
   return accumulator;
 }, {});
-
-function MetricCard({ label, value }) {
-  return (
-    <div style={{ border: "1px solid #dce2ef", borderRadius: 8, padding: 12, background: "#fff" }}>
-      <div style={{ fontSize: 13, color: "#57627a" }}>{label}</div>
-      <div style={{ fontSize: 24, fontWeight: 700, marginTop: 4 }}>{value}</div>
-    </div>
-  );
-}
 
 export default function SocialPostTrackerPage() {
   const [form, setForm] = useState(INITIAL_FORM);
@@ -58,9 +49,9 @@ export default function SocialPostTrackerPage() {
     }
   }
 
-  useEffect(() => {
-    refreshMetrics();
-  }, []);
+  const canSubmit = useMemo(() => {
+    return Boolean(form.date && form.brand && form.platform && !saving);
+  }, [form, saving]);
 
   function updateField(key, value) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -95,7 +86,6 @@ export default function SocialPostTrackerPage() {
       setSavedRows((current) => [payload, ...current]);
       setMessage("Saved! The row was sent to Google Sheets webhook.");
       resetForm();
-      await refreshMetrics();
     } catch (submissionError) {
       setError(submissionError?.message || "Failed to save row.");
     } finally {
@@ -104,7 +94,7 @@ export default function SocialPostTrackerPage() {
   }
 
   return (
-    <div style={{ padding: 16, maxWidth: 1000 }}>
+    <div style={{ padding: 16, maxWidth: 960 }}>
       <h1 style={{ marginTop: 0 }}>Social Media Tracker</h1>
       <p style={{ marginTop: 0, color: "#555" }}>
         Add a post entry and press <strong>Save to Google Sheet</strong>.
@@ -162,91 +152,6 @@ export default function SocialPostTrackerPage() {
 
       {message && <p style={{ color: "#067d32", marginTop: 12 }}>✅ {message}</p>}
       {error && <p style={{ color: "#a00000", marginTop: 12 }}>❌ {error}</p>}
-
-      <section style={{ marginTop: 18 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-          <h2 style={{ marginBottom: 8 }}>Metrics from sheet</h2>
-          <button
-            type="button"
-            onClick={refreshMetrics}
-            disabled={sheetLoading}
-            style={{ border: "1px solid #cdd3df", padding: "8px 12px", borderRadius: 8, background: "#fff" }}
-          >
-            {sheetLoading ? "Refreshing..." : "Refresh metrics"}
-          </button>
-        </div>
-
-        {sheetLoading && <p style={{ color: "#666" }}>Loading metrics...</p>}
-        {sheetError && <p style={{ color: "#a00000" }}>❌ {sheetError}</p>}
-
-        {!sheetLoading && !sheetError && sheetMetrics && (
-          <>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
-              <MetricCard label="Total Posts" value={sheetMetrics.totalPosts || 0} />
-              <MetricCard label="Follower Snapshots" value={sheetMetrics.totalFollowerSnapshots || 0} />
-              <MetricCard label="Calendar Items" value={sheetMetrics.totalCalendarItems || 0} />
-            </div>
-
-            <div style={{ marginTop: 14 }}>
-              <h3 style={{ marginBottom: 8 }}>Latest snapshot by platform</h3>
-              {sheetMetrics.latestSnapshotByPlatform?.length ? (
-                <div style={{ overflowX: "auto", border: "1px solid #ddd", borderRadius: 8, background: "#fff" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 450 }}>
-                    <thead>
-                      <tr style={{ background: "#f7f9ff" }}>
-                        <th style={{ textAlign: "left", padding: 10, borderBottom: "1px solid #ddd" }}>Platform</th>
-                        <th style={{ textAlign: "left", padding: 10, borderBottom: "1px solid #ddd" }}>Followers</th>
-                        <th style={{ textAlign: "left", padding: 10, borderBottom: "1px solid #ddd" }}>Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sheetMetrics.latestSnapshotByPlatform.map((row, index) => (
-                        <tr key={`${row.platform || "unknown"}-${index}`}>
-                          <td style={{ padding: 10, borderBottom: "1px solid #eee" }}>{row.platform || "—"}</td>
-                          <td style={{ padding: 10, borderBottom: "1px solid #eee" }}>{row.followers || "—"}</td>
-                          <td style={{ padding: 10, borderBottom: "1px solid #eee" }}>{row.date || "—"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <p style={{ color: "#666" }}>No platform snapshot rows yet.</p>
-              )}
-            </div>
-
-            <div style={{ marginTop: 14 }}>
-              <h3 style={{ marginBottom: 8 }}>Recent posts</h3>
-              {sheetMetrics.recentPosts?.length ? (
-                <div style={{ overflowX: "auto", border: "1px solid #ddd", borderRadius: 8, background: "#fff" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}>
-                    <thead>
-                      <tr style={{ background: "#f7f9ff" }}>
-                        <th style={{ textAlign: "left", padding: 10, borderBottom: "1px solid #ddd" }}>Date</th>
-                        <th style={{ textAlign: "left", padding: 10, borderBottom: "1px solid #ddd" }}>Brand</th>
-                        <th style={{ textAlign: "left", padding: 10, borderBottom: "1px solid #ddd" }}>Platform</th>
-                        <th style={{ textAlign: "left", padding: 10, borderBottom: "1px solid #ddd" }}>Topic</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sheetMetrics.recentPosts.map((row, index) => (
-                        <tr key={`${row.date || "unknown"}-${row.platform || "unknown"}-${index}`}>
-                          <td style={{ padding: 10, borderBottom: "1px solid #eee" }}>{row.date || "—"}</td>
-                          <td style={{ padding: 10, borderBottom: "1px solid #eee" }}>{row.brand || "—"}</td>
-                          <td style={{ padding: 10, borderBottom: "1px solid #eee" }}>{row.platform || "—"}</td>
-                          <td style={{ padding: 10, borderBottom: "1px solid #eee" }}>{row.topic || "—"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <p style={{ color: "#666" }}>No recent post rows yet.</p>
-              )}
-            </div>
-          </>
-        )}
-      </section>
 
       <section style={{ marginTop: 18 }}>
         <h2 style={{ marginBottom: 8 }}>Saved in this session</h2>
