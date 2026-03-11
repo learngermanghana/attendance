@@ -13,7 +13,7 @@ const FORM_FIELDS = [
   { key: "likes", label: "Likes", type: "number", min: 0 },
   { key: "comments", label: "Comments", type: "number", min: 0 },
   { key: "shares", label: "Shares", type: "number", min: 0 },
-  { key: "reach", label: "Reach", type: "number", min: 0 },
+  { key: "followers", label: "Followers", type: "number", min: 0 },
 ];
 
 const INITIAL_FORM = FORM_FIELDS.reduce((accumulator, field) => {
@@ -116,7 +116,7 @@ export default function SocialPostTrackerPage() {
         likes: form.likes ? Number(form.likes) : "",
         comments: form.comments ? Number(form.comments) : "",
         shares: form.shares ? Number(form.shares) : "",
-        reach: form.reach ? Number(form.reach) : "",
+        followers: form.followers ? Number(form.followers) : "",
       };
 
       await saveSocialMediaEntry(payload);

@@ -353,7 +353,7 @@ export async function saveSocialMediaEntry(entry) {
       likes: entry?.likes ?? "",
       comments: entry?.comments ?? "",
       shares: entry?.shares ?? "",
-      reach: entry?.reach ?? "",
+      followers: entry?.followers ?? "",
       created_at: new Date().toISOString(),
     },
   };

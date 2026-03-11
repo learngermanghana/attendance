@@ -34,7 +34,7 @@ function doPost(e) {
       row.likes ?? "",
       row.comments ?? "",
       row.shares ?? "",
-      row.reach ?? "",
+      row.followers ?? "",
       row.created_at || new Date().toISOString(),
     ]);
 
