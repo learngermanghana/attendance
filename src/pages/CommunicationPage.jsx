@@ -31,6 +31,12 @@ const QUICK_TEMPLATES = [
     announcement:
       "Hi NRW class, your class time has been updated to {new_time} starting {date}. Please reply if you have any conflicts.",
   },
+  {
+    label: "Course material updated",
+    topic: "Course Material Update",
+    announcement:
+      "Hi everyone, today's course material has been updated. Please use the latest version here: {link}",
+  },
 ];
 
 const fieldStyle = { display: "grid", gap: 6 };
