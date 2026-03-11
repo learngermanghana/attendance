@@ -57,6 +57,10 @@ VITE_ANNOUNCEMENT_WEBHOOK_TOKEN=<optional-token-configured-in-app-script>
 VITE_ANNOUNCEMENT_WEBHOOK_SHEET_NAME=<optional-target-sheet-name>
 VITE_ANNOUNCEMENT_WEBHOOK_SHEET_GID=<optional-target-sheet-gid>
 VITE_ENABLE_ANNOUNCEMENT_FIRESTORE=false
+VITE_SOCIAL_WEBHOOK_URL=https://script.google.com/macros/s/<deployment-id>/exec
+VITE_SOCIAL_WEBHOOK_TOKEN=<optional-token-configured-in-app-script>
+VITE_SOCIAL_WEBHOOK_SHEET_NAME=<optional-target-sheet-name>
+VITE_SOCIAL_WEBHOOK_SHEET_GID=<optional-target-sheet-gid>
 ```
 
 3. Run locally:
@@ -323,3 +327,27 @@ Use this once so clicking **Save broadcast** in the Communication page writes di
    ```
 
 6. Restart frontend and open **Communication** to send broadcasts.
+
+
+## Social Media Tracker Save Flow
+
+The **Social Post Tracker** page now saves new social rows directly to a Google Sheets webhook.
+
+1. In your target sheet, create header columns (row 1):
+
+   ```
+   date,brand,platform,content_type,topic,format,account,time,likes,comments,shares,reach,created_at
+   ```
+
+2. Open **Extensions → Apps Script**, paste the code from `docs/social-media-webhook.gs`, and deploy it as a **Web app**.
+3. Put the deployment `/exec` URL in `VITE_SOCIAL_WEBHOOK_URL`.
+4. If you configured token/sheet selectors in Apps Script, add:
+
+   ```bash
+   VITE_SOCIAL_WEBHOOK_TOKEN=REPLACE_WITH_OPTIONAL_SHARED_TOKEN
+   VITE_SOCIAL_WEBHOOK_SHEET_NAME=Post_Tracker
+   # or
+   VITE_SOCIAL_WEBHOOK_SHEET_GID=123456789
+   ```
+
+5. Restart `npm run dev` and use **Social Post Tracker → Save to Google Sheet**.
