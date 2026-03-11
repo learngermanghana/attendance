@@ -135,6 +135,19 @@ export default function AttendancePage() {
     return `${base}/checkin?${qs}`;
   }, [classId, checkinSessionDate, checkinSessionId, sessionLabel, selectedSession.assignmentId]);
 
+
+
+  const checkinDisplayUrl = useMemo(() => {
+    const base = window.location.origin;
+    const qs = new URLSearchParams({
+      classId,
+      sessionId: checkinSessionId,
+      date: checkinSessionDate,
+      sessionLabel,
+      assignmentId: String(selectedSession.assignmentId || ""),
+    }).toString();
+    return `${base}/checkin/display?${qs}`;
+  }, [classId, checkinSessionDate, checkinSessionId, sessionLabel, selectedSession.assignmentId]);
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -395,6 +408,10 @@ export default function AttendancePage() {
           <button disabled={sessionBusy || !sessionOpen} onClick={closeCheckin}>
             {sessionBusy && sessionOpen ? "Closing..." : "Close Check-in"}
           </button>
+
+          <a href={checkinDisplayUrl} target="_blank" rel="noreferrer" style={{ fontSize: 13 }}>
+            Open Full-Screen QR Page
+          </a>
 
           <div style={{ marginLeft: "auto", fontSize: 12, opacity: 0.85 }}>Status: {sessionOpen ? "OPEN" : "CLOSED"}</div>
         </div>

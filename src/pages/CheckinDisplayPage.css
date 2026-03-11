@@ -1,0 +1,60 @@
+.checkin-display-page {
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #eef4ff 0%, #f8fafc 45%, #ffffff 100%);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.checkin-display-card {
+  width: min(900px, 100%);
+  border: 1px solid #dbe4ff;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+  padding: 28px;
+  text-align: center;
+}
+
+.checkin-display-card h1 {
+  margin: 0;
+}
+
+.checkin-display-card p {
+  margin: 10px 0 24px;
+  color: #475569;
+}
+
+.checkin-display-qr-wrap {
+  display: inline-flex;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+  background: #ffffff;
+}
+
+.checkin-display-meta {
+  margin-top: 18px;
+  display: grid;
+  gap: 8px;
+  font-size: 15px;
+}
+
+.checkin-display-link {
+  margin-top: 16px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: 12px;
+  color: #334155;
+  word-break: break-all;
+}
+
+.checkin-display-warning {
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  color: #9f1239;
+}

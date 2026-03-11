@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Routes, Route, Link, useNavigate } from "react-router-dom";
+import { Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import AttendanceOverviewPage from "./pages/AttendanceOverviewPage";
 import AttendancePage from "./pages/AttendancePage";
 import CheckinPage from "./pages/CheckinPage";
+import CheckinDisplayPage from "./pages/CheckinDisplayPage";
 import CourseSchedulePage from "./pages/CourseSchedulePage";
 import PublicCourseSchedulePage from "./pages/PublicCourseSchedulePage";
 import MarkingPage from "./pages/MarkingPage";
@@ -22,9 +23,10 @@ import "./App.css";
 function TopBar() {
   const { user, logout, isStaff } = useAuth();
   const nav = useNavigate();
+  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  if (!user) return null;
+  if (!user || location.pathname === "/checkin/display") return null;
 
   return (
     <header className="topbar">
@@ -96,15 +98,19 @@ function ToastViewport() {
 }
 
 export default function App() {
+  const location = useLocation();
+  const isFullscreenRoute = location.pathname === "/checkin/display";
+
   return (
     <>
       <TopBar />
       <ToastViewport />
 
-      <main className="page-shell">
+      <main className={isFullscreenRoute ? undefined : "page-shell"}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/checkin" element={<CheckinPage />} />
+          <Route path="/checkin/display" element={<CheckinDisplayPage />} />
 
           <Route
             path="/"

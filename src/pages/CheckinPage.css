@@ -1,0 +1,81 @@
+.checkin-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+  padding: 24px 16px;
+}
+
+.checkin-card {
+  max-width: 720px;
+  margin: 0 auto;
+  background: #fff;
+  border: 1px solid #dde7ff;
+  border-radius: 16px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  padding: 20px;
+}
+
+.checkin-card h2 {
+  margin: 0 0 8px;
+}
+
+.checkin-subtitle {
+  margin: 0 0 16px;
+  color: #475569;
+}
+
+.checkin-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 8px 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 14px;
+  font-size: 13px;
+}
+
+.checkin-warning {
+  padding: 10px;
+  border: 1px solid #fecaca;
+  background: #fff1f2;
+  color: #9f1239;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.checkin-form {
+  display: grid;
+  gap: 10px;
+}
+
+.checkin-form input {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.checkin-help {
+  font-size: 12px;
+  color: #475569;
+}
+
+.checkin-inline-error {
+  color: #a00000;
+  font-size: 12px;
+}
+
+.checkin-share {
+  margin-top: 18px;
+  border-top: 1px dashed #dbe4ff;
+  padding-top: 16px;
+}
+
+.checkin-share-box {
+  margin-top: 10px;
+  display: inline-flex;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px;
+  background: #fff;
+}
