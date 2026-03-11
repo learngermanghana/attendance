@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { getClassSchedule } from "../data/classSchedules";
+import { QRCodeCanvas } from "qrcode.react";
 import { useToast } from "../context/ToastContext.jsx";
+import "./CheckinPage.css";
 
 export default function CheckinPage() {
   const { success, error } = useToast();
@@ -38,6 +40,8 @@ export default function CheckinPage() {
     if (!digits) return "";
     return digits.length > 9 ? digits.slice(-9) : digits;
   }, [phoneNumber]);
+
+  const selfCheckinUrl = useMemo(() => window.location.href, []);
 
   const assignmentStoragePath = useMemo(() => {
     if (!classId || !sessionId) return "-";
@@ -89,59 +93,59 @@ export default function CheckinPage() {
   };
 
   return (
-    <div style={{ maxWidth: 520, margin: "30px auto", padding: 16 }}>
-      <h2>Student Check-in</h2>
+    <div className="checkin-page">
+      <div className="checkin-card">
+        <h2>Student Check-in</h2>
+        <p className="checkin-subtitle">Fill in your details to mark your attendance.</p>
 
-      <div style={{ marginBottom: 12, fontSize: 13, opacity: 0.85 }}>
-        <div>
-          <b>Class:</b> {classId || "-"}
+        <div className="checkin-meta">
+          <div><b>Class:</b> {classId || "-"}</div>
+          <div><b>Date:</b> {dateLabel || "-"}</div>
+          <div><b>Session:</b> {sessionDisplayLabel || "-"}</div>
+          <div><b>Assignment ID:</b> {assignmentId || "-"}</div>
+          <div><b>Saved to:</b> <code>{assignmentStoragePath}</code></div>
         </div>
-        <div>
-          <b>Date:</b> {dateLabel || "-"}
-        </div>
-        <div>
-          <b>Session:</b> {sessionDisplayLabel || "-"}
-        </div>
-        <div>
-          <b>Assignment ID:</b> {assignmentId || "-"}
-        </div>
-        <div>
-          <b>Saved to:</b> <code>{assignmentStoragePath}</code>
-        </div>
-      </div>
 
-      {(!classId || !sessionId) && (
-        <div style={{ padding: 10, border: "1px solid #ddd", borderRadius: 8, marginBottom: 12 }}>
-          Missing classId/sessionId in QR link. Ask your teacher to show the QR again.
-        </div>
-      )}
-
-      <form onSubmit={submit} style={{ display: "grid", gap: 10 }}>
-        <input
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          aria-label="Email"
-          type="email"
-        />
-        <input
-          placeholder="Phone number"
-          value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value)}
-          aria-label="Phone number"
-          type="tel"
-        />
-
-        {normalizedPhonePreview && (
-          <div style={{ fontSize: 12, opacity: 0.85 }}>
-            Normalized student number: <b>{normalizedPhonePreview}</b>
+        {(!classId || !sessionId) && (
+          <div className="checkin-warning">
+            Missing classId/sessionId in QR link. Ask your teacher to show the QR again.
           </div>
         )}
 
-        {!canSubmit && classId && sessionId && <div style={{ color: "#a00000", fontSize: 12 }}>{validationError}</div>}
+        <form onSubmit={submit} className="checkin-form">
+          <input
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            aria-label="Email"
+            type="email"
+          />
+          <input
+            placeholder="Phone number"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            aria-label="Phone number"
+            type="tel"
+          />
 
-        <button disabled={!canSubmit || busy}>{busy ? "Submitting..." : "Mark me present"}</button>
-      </form>
+          {normalizedPhonePreview && (
+            <div className="checkin-help">
+              Normalized student number: <b>{normalizedPhonePreview}</b>
+            </div>
+          )}
+
+          {!canSubmit && classId && sessionId && <div className="checkin-inline-error">{validationError}</div>}
+
+          <button disabled={!canSubmit || busy}>{busy ? "Submitting..." : "Mark me present"}</button>
+        </form>
+
+        <div className="checkin-share">
+          <div><b>Need to continue on another device?</b> Scan this QR code to open this same form.</div>
+          <div className="checkin-share-box">
+            <QRCodeCanvas value={selfCheckinUrl} size={130} includeMargin />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
