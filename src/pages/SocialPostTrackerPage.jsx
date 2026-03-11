@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { saveSocialMediaEntry } from "../services/socialMediaService";
+import { loadSocialMediaData, saveSocialMediaEntry } from "../services/socialMediaService";
 
 const FORM_FIELDS = [
   { key: "date", label: "Date", type: "date", required: true },
@@ -48,10 +48,6 @@ export default function SocialPostTrackerPage() {
       setSheetLoading(false);
     }
   }
-
-  const canSubmit = useMemo(() => {
-    return Boolean(form.date && form.brand && form.platform && !saving);
-  }, [form, saving]);
 
   function updateField(key, value) {
     setForm((current) => ({ ...current, [key]: value }));
