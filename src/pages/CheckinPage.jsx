@@ -7,7 +7,7 @@ export default function CheckinPage() {
   const { success, error } = useToast();
   const [sp] = useSearchParams();
   const classId = sp.get("classId") || sp.get("className") || "";
-  const sessionId = sp.get("sessionId") || sp.get("session") || sp.get("date") || "";
+  const sessionId = sp.get("sessionId") || sp.get("session") || "";
   const date = sp.get("date") || "";
   const sessionLabel = sp.get("sessionLabel") || sp.get("lesson") || "";
   const assignmentId = sp.get("assignmentId") || sp.get("assignment_id") || "";
@@ -32,6 +32,17 @@ export default function CheckinPage() {
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const normalizedPhonePreview = useMemo(() => {
+    const digits = String(phoneNumber || "").replace(/\D+/g, "");
+    if (!digits) return "";
+    return digits.length > 9 ? digits.slice(-9) : digits;
+  }, [phoneNumber]);
+
+  const assignmentStoragePath = useMemo(() => {
+    if (!classId || !sessionId) return "-";
+    return `attendance/${classId}/sessions/${sessionId}/checkins`;
+  }, [classId, sessionId]);
 
   const validationError = useMemo(() => {
     if (!email.trim()) return "Email is required.";
@@ -94,6 +105,9 @@ export default function CheckinPage() {
         <div>
           <b>Assignment ID:</b> {assignmentId || "-"}
         </div>
+        <div>
+          <b>Saved to:</b> <code>{assignmentStoragePath}</code>
+        </div>
       </div>
 
       {(!classId || !sessionId) && (
@@ -117,6 +131,12 @@ export default function CheckinPage() {
           aria-label="Phone number"
           type="tel"
         />
+
+        {normalizedPhonePreview && (
+          <div style={{ fontSize: 12, opacity: 0.85 }}>
+            Normalized student number: <b>{normalizedPhonePreview}</b>
+          </div>
+        )}
 
         {!canSubmit && classId && sessionId && <div style={{ color: "#a00000", fontSize: 12 }}>{validationError}</div>}
 
