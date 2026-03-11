@@ -249,8 +249,20 @@ export default function MarkingPage() {
   const combinedReferenceAndSubmission = useMemo(() => {
     const referenceText = (formattedReferenceAnswers || "No reference answer available.").trim();
     const submissionText = (selectedSubmission?.text || "No student submission available.").trim();
+    const improvementSummary = (selectedSubmission?.improvementSummary || "").trim();
+    const previousSubmissionText = (selectedSubmission?.previousSubmissionText || "").trim();
 
-    return `Reference Answer\n${referenceText}\n\nStudent Submission\n${submissionText}`;
+    const resubmissionContext = [];
+    if (improvementSummary) {
+      resubmissionContext.push(`Resubmission improvement summary\n${improvementSummary}`);
+    }
+    if (previousSubmissionText) {
+      resubmissionContext.push(`Previous submission\n${previousSubmissionText}`);
+    }
+
+    const contextBlock = resubmissionContext.length ? `\n\n${resubmissionContext.join("\n\n")}` : "";
+
+    return `Reference Answer\n${referenceText}\n\nStudent Submission\n${submissionText}${contextBlock}`;
   }, [formattedReferenceAnswers, selectedSubmission]);
 
   const handleDeleteSubmission = async (submission) => {
@@ -514,6 +526,18 @@ export default function MarkingPage() {
                 {selectedSubmission.assignmentId ? <> · ID: <code>{selectedSubmission.assignmentId}</code></> : null}
                 {" · "}Status: {selectedSubmission.status || "submitted"} · Submitted: {selectedSubmission.createdAt?.toLocaleString() || "Unknown"}
               </div>
+              {selectedSubmission.improvementSummary ? (
+                <div style={{ marginBottom: 8, padding: 8, borderRadius: 6, background: "#f8fafc", border: "1px solid #e2e8f0" }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Resubmission improvement summary</div>
+                  <div style={{ whiteSpace: "pre-wrap", fontSize: 13 }}>{selectedSubmission.improvementSummary}</div>
+                </div>
+              ) : null}
+              {selectedSubmission.previousSubmissionText ? (
+                <details style={{ marginBottom: 8 }}>
+                  <summary style={{ cursor: "pointer", fontSize: 13 }}>View previous submission text</summary>
+                  <textarea readOnly rows={6} value={selectedSubmission.previousSubmissionText} style={{ marginTop: 8 }} />
+                </details>
+              ) : null}
               <textarea readOnly rows={8} value={selectedSubmission.text || "No submission text available."} />
             </>
           ) : (
@@ -532,6 +556,11 @@ export default function MarkingPage() {
                   <div style={{ fontSize: 13 }}>
                     <b>{row.assignment || "Unknown assignment"}</b> · {row.status || "submitted"} · {row.createdAt?.toLocaleString() || "Unknown time"}
                   </div>
+                  {row.improvementSummary ? (
+                    <div style={{ fontSize: 12, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 6, padding: 6 }}>
+                      <b>Improvement summary:</b> {row.improvementSummary}
+                    </div>
+                  ) : null}
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
                     <button onClick={() => void handleSelectFromNotification(row)}>Load for marking</button>
                     <button
