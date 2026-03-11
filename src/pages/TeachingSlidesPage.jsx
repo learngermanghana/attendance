@@ -166,7 +166,7 @@ function CourseSlidesIndex({ courseId }) {
   );
 }
 
-function SlideDetail({ slide, courseId }) {
+function SlideDetail({ slide, courseId, classStartTime, onClassStartTimeChange }) {
   const [handoutMode, setHandoutMode] = useState(false);
   const { previous, next } = getSlideNavigation(slide.id, courseId);
 
@@ -200,7 +200,7 @@ function SlideDetail({ slide, courseId }) {
   );
 }
 
-function SlidePrintPack({ courseId }) {
+function SlidePrintPack({ courseId, classStartTime, onClassStartTimeChange }) {
   const slides = getSlidesByCourse(courseId);
 
   if (!slides.length) {
@@ -239,6 +239,12 @@ function SlidePrintPack({ courseId }) {
 
 export default function TeachingSlidesPage() {
   const { slideId, courseId, legacySlideId } = useParams();
+  const [classStartTime, setClassStartTime] = useState(getStoredStartTime);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("teachingSlides.classStartTime", classStartTime);
+  }, [classStartTime]);
 
   if (!courseId && !slideId && !legacySlideId) {
     return <SlideCoursesIndex />;
@@ -257,7 +263,13 @@ export default function TeachingSlidesPage() {
   }
 
   if (slideId === "print") {
-    return <SlidePrintPack courseId={activeCourseId} />;
+    return (
+      <SlidePrintPack
+        courseId={activeCourseId}
+        classStartTime={classStartTime}
+        onClassStartTimeChange={setClassStartTime}
+      />
+    );
   }
 
   if (!slideId && !legacySlideId) {
@@ -277,5 +289,12 @@ export default function TeachingSlidesPage() {
     );
   }
 
-  return <SlideDetail slide={slide} courseId={activeCourseId.toUpperCase()} />;
+  return (
+    <SlideDetail
+      slide={slide}
+      courseId={activeCourseId.toUpperCase()}
+      classStartTime={classStartTime}
+      onClassStartTimeChange={setClassStartTime}
+    />
+  );
 }

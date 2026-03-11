@@ -171,6 +171,10 @@
     gap: 0.5rem;
   }
 
+  .slide-start-time-panel {
+    display: none;
+  }
+
   .slide-panel {
     break-inside: avoid;
     page-break-inside: avoid;
