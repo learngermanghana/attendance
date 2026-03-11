@@ -27,6 +27,27 @@ export default function SocialPostTrackerPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [sheetLoading, setSheetLoading] = useState(true);
+  const [sheetError, setSheetError] = useState("");
+  const [sheetMetrics, setSheetMetrics] = useState(null);
+
+  const canSubmit = useMemo(() => {
+    return Boolean(form.date && form.brand && form.platform && !saving);
+  }, [form, saving]);
+
+  async function refreshMetrics() {
+    setSheetLoading(true);
+    setSheetError("");
+
+    try {
+      const data = await loadSocialMediaData();
+      setSheetMetrics(data.metrics || null);
+    } catch (metricsError) {
+      setSheetError(metricsError?.message || "Failed to load sheet metrics.");
+    } finally {
+      setSheetLoading(false);
+    }
+  }
 
   const canSubmit = useMemo(() => {
     return Boolean(form.date && form.brand && form.platform && !saving);
