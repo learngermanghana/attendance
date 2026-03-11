@@ -59,13 +59,24 @@ function normalizePhone(value) {
   return String(value || "").replace(/\D+/g, "");
 }
 
+function normalizePhoneKey(value) {
+  const digits = normalizePhone(value);
+  if (!digits) return "";
+  return digits.length > 9 ? digits.slice(-9) : digits;
+}
+
 function candidatePhoneNumbers(value) {
   const digits = normalizePhone(value);
   if (!digits) return [];
 
-  const variants = new Set([digits]);
+  const key = normalizePhoneKey(digits);
+  const variants = new Set([digits, key]);
   if (digits.startsWith("0") && digits.length > 1) variants.add(digits.slice(1));
   if (!digits.startsWith("0")) variants.add(`0${digits}`);
+  if (key) {
+    variants.add(`0${key}`);
+    variants.add(`233${key}`);
+  }
 
   return Array.from(variants);
 }
@@ -139,7 +150,7 @@ app.post("/openSession", async (req, res) => {
     const body = req.body || {};
     const classId = normalizeClassId(body.classId || body.className);
     const { sessionId: rawSessionId, date, action, windowMinutes, sessionLabel, lesson, assignmentId } = body;
-    const sessionId = String(rawSessionId || date || "").trim();
+    const sessionId = String(rawSessionId || "").trim();
 
     if (!classId || !sessionId) {
       return res.status(400).json({ error: "classId and sessionId are required" });
@@ -197,7 +208,7 @@ app.post("/checkin", async (req, res) => {
     const body = req.body || {};
     const classId = normalizeClassId(body.classId || body.className);
     const { sessionId: rawSessionId, date, email, phoneNumber, sessionLabel, lesson, assignmentId } = body;
-    const sessionId = String(rawSessionId || date || "").trim();
+    const sessionId = String(rawSessionId || "").trim();
 
     if (!classId || !sessionId || !email || !phoneNumber) {
       return res.status(400).json({ error: "classId, sessionId, email, phoneNumber are required" });
@@ -219,7 +230,7 @@ app.post("/checkin", async (req, res) => {
 
     const rawEmail = String(email || "").trim();
     const normalizedEmail = normalizeText(rawEmail);
-    const normalizedPhone = normalizePhone(phoneNumber);
+    const normalizedPhone = normalizePhoneKey(phoneNumber);
 
     async function findStudentByEmail(candidateEmail) {
       const qs = await db.collection(STUDENTS_COLLECTION).where("email", "==", candidateEmail).limit(1).get();
@@ -250,7 +261,7 @@ app.post("/checkin", async (req, res) => {
     if (!studentDoc) return res.status(404).json({ error: "Student not found" });
 
     const st = studentDoc.data();
-    const storedPhone = normalizePhone(resolveStudentPhone(st));
+    const storedPhone = normalizePhoneKey(resolveStudentPhone(st));
     if (!storedPhone) return res.status(400).json({ error: "Student phone is missing in records" });
     if (!normalizedPhone || storedPhone !== normalizedPhone) {
       return res.status(400).json({ error: "Email and phone number do not match student records" });
