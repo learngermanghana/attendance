@@ -1,9 +1,31 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { getClassSchedule } from "../data/classSchedules";
 import { QRCodeCanvas } from "qrcode.react";
 import { useToast } from "../context/ToastContext.jsx";
 import "./CheckinPage.css";
+
+function resolveStatusApiUrl() {
+  const checkinUrl = String(import.meta.env.VITE_CHECKIN_API_URL || "").trim();
+  if (!checkinUrl) return "";
+  return checkinUrl.replace(/\/checkin\/?$/, "/checkinStatus");
+}
+
+function formatClock(timestamp) {
+  if (!timestamp) return "-";
+  const d = new Date(Number(timestamp));
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+function formatDuration(ms) {
+  if (!Number.isFinite(ms)) return "-";
+  if (ms <= 0) return "00:00";
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
 
 export default function CheckinPage() {
   const { success, error } = useToast();
@@ -34,6 +56,12 @@ export default function CheckinPage() {
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [busy, setBusy] = useState(false);
+  const [submittedInfo, setSubmittedInfo] = useState(null);
+
+  const [statusBusy, setStatusBusy] = useState(false);
+  const [statusError, setStatusError] = useState("");
+  const [checkinStatus, setCheckinStatus] = useState(null);
+  const [serverTimeMs, setServerTimeMs] = useState(null);
 
   const normalizedPhonePreview = useMemo(() => {
     const digits = String(phoneNumber || "").replace(/\D+/g, "");
@@ -58,6 +86,96 @@ export default function CheckinPage() {
     return classId && sessionId && !validationError;
   }, [classId, sessionId, validationError]);
 
+  const statusApiUrl = useMemo(resolveStatusApiUrl, []);
+
+  useEffect(() => {
+    if (!classId || !sessionId || !statusApiUrl) return;
+
+    let canceled = false;
+
+    const loadStatus = async () => {
+      setStatusBusy(true);
+      setStatusError("");
+      try {
+        const u = new URL(statusApiUrl);
+        u.searchParams.set("classId", classId);
+        u.searchParams.set("sessionId", sessionId);
+        const res = await fetch(u.toString());
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data?.error || "Failed to load check-in status");
+        if (canceled) return;
+        setCheckinStatus(data);
+        if (Number.isFinite(data?.serverTime)) setServerTimeMs(Number(data.serverTime));
+      } catch (e) {
+        if (canceled) return;
+        setStatusError(e?.message || "Failed to load check-in status");
+      } finally {
+        if (!canceled) setStatusBusy(false);
+      }
+    };
+
+    loadStatus();
+    const poll = window.setInterval(loadStatus, 30000);
+    return () => {
+      canceled = true;
+      window.clearInterval(poll);
+    };
+  }, [classId, sessionId, statusApiUrl]);
+
+  useEffect(() => {
+    if (!Number.isFinite(serverTimeMs)) return undefined;
+    const t = window.setInterval(() => {
+      setServerTimeMs((prev) => (Number.isFinite(prev) ? prev + 1000 : prev));
+    }, 1000);
+    return () => window.clearInterval(t);
+  }, [serverTimeMs]);
+
+  const statusSummary = useMemo(() => {
+    if (!checkinStatus) return null;
+
+    const status = String(checkinStatus.status || "");
+    const openFrom = Number(checkinStatus.openFrom || 0) || null;
+    const openTo = Number(checkinStatus.openTo || 0) || null;
+
+    if (status === "open") {
+      return {
+        tone: "open",
+        label: "Open now",
+        detail: openTo && serverTimeMs ? `Closes in ${formatDuration(openTo - serverTimeMs)}` : "",
+      };
+    }
+
+    if (status === "scheduled") {
+      return {
+        tone: "scheduled",
+        label: "Not started yet",
+        detail: `Starts at ${formatClock(openFrom)}`,
+      };
+    }
+
+    if (status === "ended") {
+      return {
+        tone: "closed",
+        label: "Check-in ended",
+        detail: `Closed at ${formatClock(openTo)}`,
+      };
+    }
+
+    if (status === "not_opened") {
+      return {
+        tone: "closed",
+        label: "Session not opened",
+        detail: "Ask your teacher to open check-in.",
+      };
+    }
+
+    return {
+      tone: "closed",
+      label: "Check-in closed",
+      detail: "Ask your teacher to open check-in.",
+    };
+  }, [checkinStatus, serverTimeMs]);
+
   const submit = async (e) => {
     e.preventDefault();
     if (validationError) {
@@ -67,6 +185,8 @@ export default function CheckinPage() {
 
     setBusy(true);
     try {
+      const trimmedEmail = email.trim();
+      const trimmedPhone = phoneNumber.trim();
       const res = await fetch(import.meta.env.VITE_CHECKIN_API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -74,8 +194,8 @@ export default function CheckinPage() {
           classId,
           sessionId,
           date,
-          email: email.trim(),
-          phoneNumber: phoneNumber.trim(),
+          email: trimmedEmail,
+          phoneNumber: trimmedPhone,
           sessionLabel: sessionDisplayLabel,
           assignmentId: assignmentId.trim(),
         }),
@@ -83,6 +203,10 @@ export default function CheckinPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || "Check-in failed");
       success("Check-in successful. You are marked present.");
+      setSubmittedInfo({
+        checkedInAt: Date.now(),
+        maskedEmail: trimmedEmail.replace(/(^.).*(@.*$)/, "$1***$2"),
+      });
       setEmail("");
       setPhoneNumber("");
     } catch (err) {
@@ -98,6 +222,15 @@ export default function CheckinPage() {
         <h2>Student Check-in</h2>
         <p className="checkin-subtitle">Fill in your details to mark your attendance.</p>
 
+        {statusSummary && (
+          <div className={`checkin-status checkin-status-${statusSummary.tone}`}>
+            <div className="checkin-status-label">{statusSummary.label}</div>
+            {statusSummary.detail && <div className="checkin-status-detail">{statusSummary.detail}</div>}
+          </div>
+        )}
+        {statusBusy && <div className="checkin-help">Refreshing check-in status...</div>}
+        {statusError && <div className="checkin-inline-error">{statusError}</div>}
+
         <div className="checkin-meta">
           <div><b>Class:</b> {classId || "-"}</div>
           <div><b>Date:</b> {dateLabel || "-"}</div>
@@ -105,6 +238,15 @@ export default function CheckinPage() {
           <div><b>Assignment ID:</b> {assignmentId || "-"}</div>
           <div><b>Saved to:</b> <code>{assignmentStoragePath}</code></div>
         </div>
+
+        {submittedInfo && (
+          <div className="checkin-success-card" role="status" aria-live="polite">
+            <div><b>✅ You are checked in.</b></div>
+            <div>Time: {new Date(submittedInfo.checkedInAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
+            <div>Email: {submittedInfo.maskedEmail}</div>
+            <div>Session: {sessionDisplayLabel || "-"}</div>
+          </div>
+        )}
 
         {(!classId || !sessionId) && (
           <div className="checkin-warning">

@@ -115,6 +115,10 @@ firebase deploy --only functions
 4. Function validates check-in window, student record match, and class membership, then writes check-in with an auto-generated secret code.
 5. Teacher can save manual attendance records, mark student work, and send broadcast announcements to Google Sheets.
 
+## Product Backlog Notes
+
+- Self check-in improvement ideas: `docs/self-checkin-updates.md`.
+
 ## Notes
 
 - `createdAt` fields are only set on first write; subsequent writes only update `updatedAt`.
