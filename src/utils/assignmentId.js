@@ -10,7 +10,13 @@ export function normalizeIdPart(value) {
 }
 
 export function getAssignmentNumber(topic, fallbackValue = "") {
-  const match = String(topic || "").match(/(\d+(?:\.\d+)?)/);
+  const topicText = String(topic || "");
+  const chapterMatch = topicText.match(/\bchapter\s+(\d+(?:\.\d+)?(?:\s*(?:and|&)\s*\d+(?:\.\d+)?)?)/i);
+  if (chapterMatch?.[1]) {
+    return chapterMatch[1].replace(/\s*(?:and|&)\s*/gi, "_").replace(/\s+/g, "");
+  }
+
+  const match = topicText.match(/(\d+(?:\.\d+)?)/);
   return match?.[1] || String(fallbackValue || "");
 }
 
@@ -30,8 +36,7 @@ export function buildSubmissionAssignmentId({ title, preferredLevel, entry } = {
   const chapterFromEntry = normalizeIdPart(entry?.chapter || "");
   if (chapterFromEntry) return `${level}-${chapterFromEntry}`;
 
-  const numericMatch = String(title || "").match(/(\d+(?:\.\d+)?)/)?.[1];
-  const normalizedNumber = normalizeIdPart(numericMatch || "");
+  const normalizedNumber = normalizeIdPart(getAssignmentNumber(title));
   if (normalizedNumber) return `${level}-${normalizedNumber}`;
 
   const chapterKey = buildChapterKey(title);

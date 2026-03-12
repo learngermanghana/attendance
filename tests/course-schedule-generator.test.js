@@ -59,6 +59,11 @@ test("buildScheduleExports serializes metadata and sessions", () => {
 test("buildAssignmentId composes level and assignment number", () => {
   assert.equal(buildAssignmentId("B1", "10.28. Klimafreundlich leben", 28), "B1-10.28");
   assert.equal(buildAssignmentId("A2", "No number topic", 7), "A2-7");
+
+  assert.equal(
+    buildAssignmentId("A1", "Day 3 • Task 1: Introducing Yourself • Chapter 1.2", 3),
+    "A1-1.2",
+  );
 });
 
 
