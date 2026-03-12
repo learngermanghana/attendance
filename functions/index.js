@@ -309,4 +309,50 @@ app.post("/checkin", async (req, res) => {
   }
 });
 
+app.get("/checkinStatus", async (req, res) => {
+  try {
+    const classId = normalizeClassId(req.query.classId || req.query.className);
+    const sessionId = String(req.query.sessionId || req.query.session || "").trim();
+
+    if (!classId || !sessionId) {
+      return res.status(400).json({ error: "classId and sessionId are required" });
+    }
+
+    const sessionRef = sessionDocRef(classId, sessionId);
+    const sessionSnap = await sessionRef.get();
+    if (!sessionSnap.exists) {
+      return res.json({
+        ok: true,
+        status: "not_opened",
+        opened: false,
+        serverTime: admin.firestore.Timestamp.now().toMillis(),
+      });
+    }
+
+    const session = sessionSnap.data() || {};
+    const now = admin.firestore.Timestamp.now().toMillis();
+    const opened = Boolean(session.opened);
+    const openFrom = session.openFrom?.toMillis?.() || null;
+    const openTo = session.openTo?.toMillis?.() || null;
+
+    let status = "closed";
+    if (opened) {
+      if (openFrom && now < openFrom) status = "scheduled";
+      else if (openTo && now > openTo) status = "ended";
+      else status = "open";
+    }
+
+    return res.json({
+      ok: true,
+      status,
+      opened,
+      openFrom,
+      openTo,
+      serverTime: now,
+    });
+  } catch (e) {
+    return res.status(500).json({ error: e?.message || "Server error" });
+  }
+});
+
 exports.api = onRequest({ secrets: [attendancePinSaltSecret] }, app);
