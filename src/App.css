@@ -23,6 +23,14 @@
   flex-wrap: wrap;
 }
 
+
+.topbar-brand {
+  font-weight: 700;
+  color: #1b2540;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
 .topbar-links,
 .topbar-user {
   display: flex;

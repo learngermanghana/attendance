@@ -43,6 +43,10 @@ function TopBar() {
             ☰
           </button>
 
+          <Link to={isStaff ? "/social-post-tracker" : "/"} className="topbar-brand" onClick={() => setMenuOpen(false)}>
+            Falowen Dashboard
+          </Link>
+
           <div id="topbar-navigation" className={`topbar-links ${menuOpen ? "topbar-links-open" : ""}`}>
             {isStaff ? (
               <Link to="/social-post-tracker" onClick={() => setMenuOpen(false)}>Social Post Tracker</Link>
