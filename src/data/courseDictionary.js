@@ -1,5 +1,6 @@
 export const courseDictionary = {
   A1: {
+    "A1-Tutorial": { assignment_id: "A1-Tutorial", chapter: "0", de: "Einführung und Orientierung", en: "Orientation and Tutorial" },
     "A1-0.1": { assignment_id: "A1-0.1", chapter: "0.1", de: "Begrüßungen und Wohlbefinden", en: "Greetings and Asking About Well-being" },
     "A1-0.2": { assignment_id: "A1-0.2", chapter: "0.2", de: "Alphabet", en: "German Alphabet" },
     "A1-1.1": { assignment_id: "A1-1.1", chapter: "1.1", de: "Personalpronomen und Verbkonjugation", en: "Personal Pronouns and Verb Conjugation" },
@@ -58,6 +59,10 @@ export const courseDictionary = {
     "A2-10.28": { assignment_id: "A2-10.28", chapter: "10.28", de: "Über die Zukunft sprechen", en: "Talking About the Future" },
   },
   B1: {
+    "B1-1.1": { assignment_id: "B1-1.1", chapter: "1.1", de: "Traumwelten", en: "Dream Worlds" },
+    "B1-1.2": { assignment_id: "B1-1.2", chapter: "1.2", de: "Freunde fürs Leben", en: "Friends for Life" },
+    "B1-1.3": { assignment_id: "B1-1.3", chapter: "1.3", de: "Erfolgsgeschichten", en: "Success Stories" },
+    "B1-2.4": { assignment_id: "B1-2.4", chapter: "2.4", de: "Wohnung suchen", en: "Looking for an Apartment" },
     "B1-2.5": { assignment_id: "B1-2.5", chapter: "2.5", de: "Der Besichtigungstermin", en: "Apartment Viewing Appointment" },
     "B1-2.6": { assignment_id: "B1-2.6", chapter: "2.6", de: "Leben in der Stadt oder auf dem Land", en: "Living in the City or Countryside" },
     "B1-3.7": { assignment_id: "B1-3.7", chapter: "3.7", de: "Fast Food vs Hausmannskost", en: "Fast Food vs Home Cooking" },

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { getClassSchedule } from "../data/classSchedules";
+import { findScheduleItemBySessionId } from "../data/classSchedules";
 import { QRCodeCanvas } from "qrcode.react";
 import { useToast } from "../context/ToastContext.jsx";
 import "./CheckinPage.css";

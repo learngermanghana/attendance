@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import dayjs from "dayjs";
-import { getClassSchedule } from "../data/classSchedules";
+import { findScheduleItemBySessionId, getClassSchedule, getScheduleSessionId } from "../data/classSchedules";
 import { QRCodeCanvas } from "qrcode.react";
 import { useAuth } from "../context/AuthContext";
 import { listStudentsByClass } from "../services/studentsService";
@@ -108,14 +108,13 @@ export default function AttendancePage() {
   const checkinStartTime = String(selectedSession.startTime || "").trim();
   const checkinEndTime = String(selectedSession.endTime || "").trim();
 
-  const schedule = useMemo(() => getClassSchedule(classId), [classId]);
   const sessionLabel = useMemo(() => {
     const selectedSessionNumber = Number(selectedSessionId);
     const zeroBasedIndex = selectedSessionNumber > 0 ? selectedSessionNumber - 1 : selectedSessionNumber;
     const scheduleItem = schedule[zeroBasedIndex] || schedule[selectedSessionNumber];
     if (scheduleItem) return `${scheduleItem.day} - ${scheduleItem.topic}`;
     return selectedSession.title || "";
-  }, [schedule, selectedSessionId, selectedSession.title]);
+  }, [classId, selectedSessionId, selectedSession.title]);
 
   const studentRows = useMemo(() => {
     return Object.entries(selectedSession.students || {})

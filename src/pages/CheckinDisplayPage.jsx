@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
-import { getClassSchedule } from "../data/classSchedules";
+import { findScheduleItemBySessionId } from "../data/classSchedules";
 import "./CheckinDisplayPage.css";
 
 function parseSessionDate(dateValue) {

@@ -91,6 +91,38 @@ export const classSchedules = {
 
 const KNOWN_SCHEDULE_KEYS = Object.keys(classSchedules);
 
+
+function parseDayNumber(dayLabel) {
+  const text = String(dayLabel || "").trim();
+  const match = text.match(/\bday\s*(-?\d+)\b/i);
+  if (!match) return null;
+
+  const parsed = Number.parseInt(match[1], 10);
+  return Number.isInteger(parsed) ? parsed : null;
+}
+
+export function getScheduleSessionId(item, index) {
+  const dayNumber = parseDayNumber(item?.day);
+  if (Number.isInteger(dayNumber) && dayNumber >= 0) return String(dayNumber);
+  return String(index + 1);
+}
+
+export function findScheduleItemBySessionId(classId, sessionId) {
+  const schedule = getClassSchedule(classId);
+  const normalizedSessionId = String(sessionId || "").trim();
+  if (!normalizedSessionId) return null;
+
+  const byDeclaredDay = schedule.find((item, index) => getScheduleSessionId(item, index) === normalizedSessionId);
+  if (byDeclaredDay) return byDeclaredDay;
+
+  const numericSessionId = Number.parseInt(normalizedSessionId, 10);
+  if (!Number.isInteger(numericSessionId)) return null;
+
+  const zeroBasedIndex = numericSessionId > 0 ? numericSessionId - 1 : numericSessionId;
+  return schedule[zeroBasedIndex] || schedule[numericSessionId] || null;
+}
+
+
 export function resolveScheduleKey(classId) {
   const normalized = String(classId || "").trim();
   if (!normalized) return "";

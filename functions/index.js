@@ -416,4 +416,102 @@ app.get("/checkinStatus", async (req, res) => {
   }
 });
 
+
+async function mergeSessionDocuments({ classId, sourceSessionId, targetSessionId, deleteSource = false }) {
+  const sourceRef = sessionDocRef(classId, sourceSessionId);
+  const targetRef = sessionDocRef(classId, targetSessionId);
+
+  const sourceSnap = await sourceRef.get();
+  if (!sourceSnap.exists) {
+    return { migrated: false, reason: "source_missing" };
+  }
+
+  const sourceData = sourceSnap.data() || {};
+  const sourceCheckins = await sourceRef.collection("checkins").get();
+
+  await targetRef.set(
+    {
+      ...sourceData,
+      classId,
+      sessionId: targetSessionId,
+      legacySessionIds: admin.firestore.FieldValue.arrayUnion(String(sourceSessionId)),
+      migratedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  for (const checkinDoc of sourceCheckins.docs) {
+    await targetRef.collection("checkins").doc(checkinDoc.id).set(checkinDoc.data() || {}, { merge: true });
+  }
+
+  if (deleteSource && String(sourceSessionId) !== String(targetSessionId)) {
+    for (const checkinDoc of sourceCheckins.docs) {
+      await sourceRef.collection("checkins").doc(checkinDoc.id).delete();
+    }
+    await sourceRef.set(
+      {
+        migratedToSessionId: String(targetSessionId),
+        migratedAt: admin.firestore.FieldValue.serverTimestamp(),
+        opened: false,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+  }
+
+  return {
+    migrated: true,
+    copiedCheckins: sourceCheckins.size,
+  };
+}
+
+app.post("/migrateSessionIds", async (req, res) => {
+  try {
+    await requireAuth(req);
+
+    const body = req.body || {};
+    const classId = normalizeClassId(body.classId || body.className);
+    const mapping = body.mapping && typeof body.mapping === "object" ? body.mapping : {};
+    const dryRun = Boolean(body.dryRun);
+    const deleteSource = Boolean(body.deleteSource);
+
+    if (!classId) return res.status(400).json({ error: "classId is required" });
+    const mapEntries = Object.entries(mapping)
+      .map(([from, to]) => [String(from || "").trim(), String(to || "").trim()])
+      .filter(([from, to]) => from && to && from !== to);
+
+    if (mapEntries.length === 0) {
+      return res.status(400).json({ error: "mapping must include at least one from->to sessionId pair" });
+    }
+
+    const result = [];
+    for (const [fromSessionId, toSessionId] of mapEntries) {
+      if (dryRun) {
+        const sourceSnap = await sessionDocRef(classId, fromSessionId).get();
+        const targetSnap = await sessionDocRef(classId, toSessionId).get();
+        result.push({
+          fromSessionId,
+          toSessionId,
+          sourceExists: sourceSnap.exists,
+          targetExists: targetSnap.exists,
+        });
+        continue;
+      }
+
+      const migrated = await mergeSessionDocuments({
+        classId,
+        sourceSessionId: fromSessionId,
+        targetSessionId: toSessionId,
+        deleteSource,
+      });
+      result.push({ fromSessionId, toSessionId, ...migrated });
+    }
+
+    return res.json({ ok: true, classId, dryRun, deleteSource, result });
+  } catch (e) {
+    return res.status(500).json({ error: e?.message || "Server error" });
+  }
+});
+
 exports.api = onRequest({ secrets: [attendancePinSaltSecret] }, app);
