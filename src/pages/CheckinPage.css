@@ -124,3 +124,28 @@
   padding: 10px;
   background: #fff;
 }
+
+
+.checkin-info-block {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #dbeafe;
+  background: #eff6ff;
+  color: #1e3a8a;
+  margin-bottom: 12px;
+  display: grid;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.checkin-info-title {
+  font-weight: 700;
+}
+
+.checkin-expected {
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}

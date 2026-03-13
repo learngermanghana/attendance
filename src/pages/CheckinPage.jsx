@@ -27,6 +27,19 @@ function formatDuration(ms) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
+function formatInterval(openFrom, openTo) {
+  if (!openFrom && !openTo) return "-";
+  return `${formatClock(openFrom)} to ${formatClock(openTo)}`;
+}
+
+function parseExpectedNames(raw) {
+  return String(raw || "")
+    .split(",")
+    .map((name) => name.trim())
+    .filter(Boolean)
+    .slice(0, 15);
+}
+
 export default function CheckinPage() {
   const { success, error } = useToast();
   const [sp] = useSearchParams();
@@ -35,6 +48,10 @@ export default function CheckinPage() {
   const date = sp.get("date") || "";
   const sessionLabel = sp.get("sessionLabel") || sp.get("lesson") || "";
   const assignmentId = sp.get("assignmentId") || sp.get("assignment_id") || "";
+  const expectedStudentsRaw = sp.get("expectedStudents") || "";
+  const expectedCount = Number(sp.get("expectedCount") || 0) || 0;
+  const startTime = sp.get("startTime") || "";
+  const endTime = sp.get("endTime") || "";
 
   const scheduleInfo = useMemo(() => {
     const sessionIndex = Number.parseInt(String(sessionId || ""), 10);
@@ -62,6 +79,8 @@ export default function CheckinPage() {
   const [statusError, setStatusError] = useState("");
   const [checkinStatus, setCheckinStatus] = useState(null);
   const [serverTimeMs, setServerTimeMs] = useState(null);
+
+  const expectedStudents = useMemo(() => parseExpectedNames(expectedStudentsRaw), [expectedStudentsRaw]);
 
   const normalizedPhonePreview = useMemo(() => {
     const digits = String(phoneNumber || "").replace(/\D+/g, "");
@@ -130,6 +149,15 @@ export default function CheckinPage() {
     return () => window.clearInterval(t);
   }, [serverTimeMs]);
 
+
+  const attendanceWindowLabel = useMemo(() => {
+    if (checkinStatus?.openFrom || checkinStatus?.openTo) {
+      return formatInterval(checkinStatus.openFrom, checkinStatus.openTo);
+    }
+    if (startTime || endTime) return `${startTime || "--:--"} to ${endTime || "--:--"}`;
+    return "-";
+  }, [checkinStatus, startTime, endTime]);
+
   const statusSummary = useMemo(() => {
     if (!checkinStatus) return null;
 
@@ -156,8 +184,8 @@ export default function CheckinPage() {
     if (status === "ended") {
       return {
         tone: "closed",
-        label: "Check-in ended",
-        detail: `Closed at ${formatClock(openTo)}`,
+        label: "Class has ended",
+        detail: `If you have not checked in yet, do it now. Closed at ${formatClock(openTo)}.`,
       };
     }
 
@@ -220,7 +248,7 @@ export default function CheckinPage() {
     <div className="checkin-page">
       <div className="checkin-card">
         <h2>Student Check-in</h2>
-        <p className="checkin-subtitle">Fill in your details to mark your attendance.</p>
+        <p className="checkin-subtitle">Welcome! Please check in before class starts.</p>
 
         {statusSummary && (
           <div className={`checkin-status checkin-status-${statusSummary.tone}`}>
@@ -230,6 +258,23 @@ export default function CheckinPage() {
         )}
         {statusBusy && <div className="checkin-help">Refreshing check-in status...</div>}
         {statusError && <div className="checkin-inline-error">{statusError}</div>}
+
+        <div className="checkin-info-block">
+          <div className="checkin-info-title">Today in class</div>
+          <div>Welcome to <b>{classId || "-"}</b>.</div>
+          <div>You will be working on <b>{sessionDisplayLabel || "today's lesson"}</b>.</div>
+          <div>Attendance window: <b>{attendanceWindowLabel}</b></div>
+          <div className="checkin-help">Please check in before class starts. If class has ended and you still have not checked in, submit now.</div>
+        </div>
+
+        {(expectedCount > 0 || expectedStudents.length > 0) && (
+          <div className="checkin-expected">
+            <div><b>Expected students:</b> {expectedCount || expectedStudents.length}</div>
+            {expectedStudents.length > 0 && (
+              <div className="checkin-help">{expectedStudents.join(", ")}</div>
+            )}
+          </div>
+        )}
 
         <div className="checkin-meta">
           <div><b>Class:</b> {classId || "-"}</div>

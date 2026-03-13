@@ -11,6 +11,10 @@ export default function CheckinDisplayPage() {
   const date = sp.get("date") || "";
   const sessionLabel = sp.get("sessionLabel") || sp.get("lesson") || "";
   const assignmentId = sp.get("assignmentId") || sp.get("assignment_id") || "";
+  const expectedStudents = sp.get("expectedStudents") || "";
+  const expectedCount = sp.get("expectedCount") || "";
+  const startTime = sp.get("startTime") || "";
+  const endTime = sp.get("endTime") || "";
 
   const scheduleInfo = useMemo(() => {
     const sessionIndex = Number.parseInt(String(sessionId || ""), 10);
@@ -37,9 +41,13 @@ export default function CheckinDisplayPage() {
       date: dateLabel,
       sessionLabel: sessionDisplayLabel,
       assignmentId: String(assignmentId || ""),
+      expectedStudents: String(expectedStudents || ""),
+      expectedCount: String(expectedCount || ""),
+      startTime: String(startTime || ""),
+      endTime: String(endTime || ""),
     }).toString();
     return `${base}/checkin?${qs}`;
-  }, [classId, sessionId, dateLabel, sessionDisplayLabel, assignmentId]);
+  }, [classId, sessionId, dateLabel, sessionDisplayLabel, assignmentId, expectedStudents, expectedCount, startTime, endTime]);
 
   const hasRequiredParams = Boolean(classId && String(sessionId || "").trim());
 
@@ -59,6 +67,8 @@ export default function CheckinDisplayPage() {
               <span><b>Date:</b> {dateLabel || "-"}</span>
               <span><b>Session:</b> {sessionDisplayLabel || "-"}</span>
               <span><b>Assignment:</b> {assignmentId || "-"}</span>
+              <span><b>Expected students:</b> {expectedCount || "-"}</span>
+              <span><b>Class time:</b> {startTime || "--:--"} to {endTime || "--:--"}</span>
             </div>
             <div className="checkin-display-link">{checkinUrl}</div>
           </>
