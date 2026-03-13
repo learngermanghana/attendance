@@ -123,6 +123,13 @@ export default function AttendancePage() {
     return { present, absent, late: 0, excused: 0 };
   }, [studentRows]);
 
+  const expectedStudentNames = useMemo(() => {
+    return studentRows
+      .map((row) => String(row.name || "").trim())
+      .filter(Boolean)
+      .slice(0, 15);
+  }, [studentRows]);
+
   const checkinUrl = useMemo(() => {
     const base = window.location.origin;
     const qs = new URLSearchParams({
@@ -131,9 +138,19 @@ export default function AttendancePage() {
       date: checkinSessionDate,
       sessionLabel,
       assignmentId: String(selectedSession.assignmentId || ""),
+      expectedStudents: expectedStudentNames.join(", "),
+      expectedCount: String(studentRows.length || 0),
     }).toString();
     return `${base}/checkin?${qs}`;
-  }, [classId, checkinSessionDate, checkinSessionId, sessionLabel, selectedSession.assignmentId]);
+  }, [
+    classId,
+    checkinSessionDate,
+    checkinSessionId,
+    expectedStudentNames,
+    selectedSession.assignmentId,
+    sessionLabel,
+    studentRows.length,
+  ]);
 
 
 
@@ -145,9 +162,19 @@ export default function AttendancePage() {
       date: checkinSessionDate,
       sessionLabel,
       assignmentId: String(selectedSession.assignmentId || ""),
+      expectedStudents: expectedStudentNames.join(", "),
+      expectedCount: String(studentRows.length || 0),
     }).toString();
     return `${base}/checkin/display?${qs}`;
-  }, [classId, checkinSessionDate, checkinSessionId, sessionLabel, selectedSession.assignmentId]);
+  }, [
+    classId,
+    checkinSessionDate,
+    checkinSessionId,
+    expectedStudentNames,
+    selectedSession.assignmentId,
+    sessionLabel,
+    studentRows.length,
+  ]);
   useEffect(() => {
     (async () => {
       setLoading(true);
