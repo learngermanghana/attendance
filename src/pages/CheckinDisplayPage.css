@@ -25,6 +25,39 @@
   color: #475569;
 }
 
+.checkin-display-alert {
+  margin: 0 auto 18px;
+  max-width: 720px;
+  border-radius: 12px;
+  padding: 12px 16px;
+  border: 1px solid transparent;
+  text-align: left;
+  font-size: 15px;
+}
+
+.checkin-display-alert-title {
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.checkin-display-alert-before {
+  background: #fff7ed;
+  border-color: #fdba74;
+  color: #9a3412;
+}
+
+.checkin-display-alert-active {
+  background: #ecfeff;
+  border-color: #67e8f9;
+  color: #155e75;
+}
+
+.checkin-display-alert-ended {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #991b1b;
+}
+
 .checkin-display-qr-wrap {
   display: inline-flex;
   border: 1px solid #e2e8f0;
