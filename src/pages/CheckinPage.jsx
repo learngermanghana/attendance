@@ -8,24 +8,7 @@ import "./CheckinPage.css";
 function resolveStatusApiUrl() {
   const checkinUrl = String(import.meta.env.VITE_CHECKIN_API_URL || "").trim();
   if (!checkinUrl) return "";
-
-  try {
-    const parsed = new URL(checkinUrl);
-    const basePath = parsed.pathname.replace(/\/+$/, "");
-    if (!basePath) {
-      parsed.pathname = "/checkinStatus";
-    } else if (/\/checkin$/i.test(basePath)) {
-      parsed.pathname = `${basePath.replace(/\/checkin$/i, "")}/checkinStatus`;
-    } else {
-      parsed.pathname = `${basePath}/checkinStatus`;
-    }
-    parsed.search = "";
-    parsed.hash = "";
-    return parsed.toString();
-  } catch {
-    if (/\/checkin\/?$/i.test(checkinUrl)) return checkinUrl.replace(/\/checkin\/?$/i, "/checkinStatus");
-    return "";
-  }
+  return checkinUrl.replace(/\/checkin\/?$/, "/checkinStatus");
 }
 
 function formatClock(timestamp) {
@@ -123,9 +106,9 @@ export default function CheckinPage() {
         if (canceled) return;
         setCheckinStatus(data);
         if (Number.isFinite(data?.serverTime)) setServerTimeMs(Number(data.serverTime));
-      } catch {
+      } catch (e) {
         if (canceled) return;
-        setStatusError("Check-in status is temporarily unavailable.");
+        setStatusError(e?.message || "Failed to load check-in status");
       } finally {
         if (!canceled) setStatusBusy(false);
       }
@@ -246,7 +229,7 @@ export default function CheckinPage() {
           </div>
         )}
         {statusBusy && <div className="checkin-help">Refreshing check-in status...</div>}
-        {statusError && <div className="checkin-help">{statusError}</div>}
+        {statusError && <div className="checkin-inline-error">{statusError}</div>}
 
         <div className="checkin-meta">
           <div><b>Class:</b> {classId || "-"}</div>
