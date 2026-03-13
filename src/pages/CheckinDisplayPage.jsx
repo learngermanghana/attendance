@@ -57,10 +57,11 @@ export default function CheckinDisplayPage() {
 
   const scheduleInfo = useMemo(() => {
     const sessionIndex = Number.parseInt(String(sessionId || ""), 10);
-    if (!Number.isInteger(sessionIndex) || sessionIndex < 0) return null;
+    if (!Number.isInteger(sessionIndex)) return null;
 
     const schedule = getClassSchedule(classId);
-    const item = schedule[sessionIndex];
+    const zeroBasedIndex = sessionIndex > 0 ? sessionIndex - 1 : sessionIndex;
+    const item = schedule[zeroBasedIndex] || schedule[sessionIndex];
     if (!item) return null;
 
     return {
