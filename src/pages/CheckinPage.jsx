@@ -50,8 +50,6 @@ export default function CheckinPage() {
   const assignmentId = sp.get("assignmentId") || sp.get("assignment_id") || "";
   const expectedStudentsRaw = sp.get("expectedStudents") || "";
   const expectedCount = Number(sp.get("expectedCount") || 0) || 0;
-  const startTime = sp.get("startTime") || "";
-  const endTime = sp.get("endTime") || "";
 
   const scheduleInfo = useMemo(() => {
     const sessionIndex = Number.parseInt(String(sessionId || ""), 10);
@@ -263,7 +261,7 @@ export default function CheckinPage() {
           <div className="checkin-info-title">Today in class</div>
           <div>Welcome to <b>{classId || "-"}</b>.</div>
           <div>You will be working on <b>{sessionDisplayLabel || "today's lesson"}</b>.</div>
-          <div>Attendance window: <b>{attendanceWindowLabel}</b></div>
+          <div>Attendance window: <b>{formatInterval(checkinStatus?.openFrom, checkinStatus?.openTo)}</b></div>
           <div className="checkin-help">Please check in before class starts. If class has ended and you still have not checked in, submit now.</div>
         </div>
 

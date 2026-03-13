@@ -142,16 +142,12 @@ export default function AttendancePage() {
       assignmentId: String(selectedSession.assignmentId || ""),
       expectedStudents: expectedStudentNames.join(", "),
       expectedCount: String(studentRows.length || 0),
-      startTime: checkinStartTime,
-      endTime: checkinEndTime,
     }).toString();
     return `${base}/checkin?${qs}`;
   }, [
     classId,
     checkinSessionDate,
     checkinSessionId,
-    checkinStartTime,
-    checkinEndTime,
     expectedStudentNames,
     selectedSession.assignmentId,
     sessionLabel,
@@ -170,16 +166,12 @@ export default function AttendancePage() {
       assignmentId: String(selectedSession.assignmentId || ""),
       expectedStudents: expectedStudentNames.join(", "),
       expectedCount: String(studentRows.length || 0),
-      startTime: checkinStartTime,
-      endTime: checkinEndTime,
     }).toString();
     return `${base}/checkin/display?${qs}`;
   }, [
     classId,
     checkinSessionDate,
     checkinSessionId,
-    checkinStartTime,
-    checkinEndTime,
     expectedStudentNames,
     selectedSession.assignmentId,
     sessionLabel,
