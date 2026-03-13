@@ -1,4 +1,4 @@
-# Attendance App (Firebase + React)
+# Falowen Dashboard (Firebase + React)
 
 Attendance management app for teachers with two capture modes:
 - Manual attendance marking in the dashboard.
