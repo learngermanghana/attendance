@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import { getClassSchedule } from "../data/classSchedules";
@@ -40,6 +40,12 @@ export default function CheckinDisplayPage() {
   const endTime = sp.get("endTime") || "";
   const expectedStudents = sp.get("expectedStudents") || "";
   const expectedCount = sp.get("expectedCount") || "";
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const scheduleInfo = useMemo(() => {
     const sessionIndex = Number.parseInt(String(sessionId || ""), 10);
@@ -119,7 +125,8 @@ export default function CheckinDisplayPage() {
             <div className="checkin-display-qr-wrap">
               <QRCodeCanvas value={checkinUrl} size={320} includeMargin />
             </div>
-            <div className="checkin-display-meta">
+            <div className="checkin-display-meta checkin-display-read-first">
+              <div className="checkin-display-read-first-title">Read before check-in</div>
               <span><b>Class:</b> {classId}</span>
               <span><b>Date:</b> {dateLabel || "-"}</span>
               <span><b>Session:</b> {sessionDisplayLabel || "-"}</span>

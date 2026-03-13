@@ -73,6 +73,24 @@
   font-size: 15px;
 }
 
+.checkin-display-read-first {
+  text-align: left;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.checkin-display-read-first-title {
+  font-weight: 800;
+  font-size: 16px;
+  color: #1e3a8a;
+  margin-bottom: 2px;
+}
+
 .checkin-display-link {
   margin-top: 16px;
   padding: 10px;
