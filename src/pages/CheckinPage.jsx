@@ -67,8 +67,12 @@ export default function CheckinPage() {
     };
   }, [classId, sessionId, date]);
 
-  const dateLabel = scheduleInfo?.dateLabel || date || "";
-  const sessionDisplayLabel = sessionLabel || scheduleInfo?.sessionDisplayLabel || "";
+  const hasDateFromUrl = Boolean(String(date || "").trim());
+  const hasSessionLabelFromUrl = Boolean(String(sessionLabel || "").trim());
+  const dateLabel = hasDateFromUrl ? String(date).trim() : (scheduleInfo?.dateLabel || "");
+  const sessionDisplayLabel = hasSessionLabelFromUrl
+    ? String(sessionLabel).trim()
+    : (scheduleInfo?.sessionDisplayLabel || "");
 
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");

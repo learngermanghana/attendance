@@ -61,8 +61,12 @@ export default function CheckinDisplayPage() {
     };
   }, [classId, sessionId, date]);
 
-  const dateLabel = scheduleInfo?.dateLabel || date || "";
-  const sessionDisplayLabel = sessionLabel || scheduleInfo?.sessionDisplayLabel || "";
+  const hasDateFromUrl = Boolean(String(date || "").trim());
+  const hasSessionLabelFromUrl = Boolean(String(sessionLabel || "").trim());
+  const dateLabel = hasDateFromUrl ? String(date).trim() : (scheduleInfo?.dateLabel || "");
+  const sessionDisplayLabel = hasSessionLabelFromUrl
+    ? String(sessionLabel).trim()
+    : (scheduleInfo?.sessionDisplayLabel || "");
 
   const checkinUrl = useMemo(() => {
     const base = window.location.origin;
@@ -81,7 +85,7 @@ export default function CheckinDisplayPage() {
   }, [classId, sessionId, dateLabel, sessionDisplayLabel, assignmentId, startTime, endTime, expectedStudents, expectedCount]);
 
   const statusInfo = useMemo(() => {
-    const now = new Date();
+    const now = new Date(nowMs);
     const startAt = parseDateTime(dateLabel, startTime);
     const endAt = parseDateTime(dateLabel, endTime);
 
@@ -106,7 +110,7 @@ export default function CheckinDisplayPage() {
       title: "Class is in progress.",
       detail: "Please check in now if you haven't submitted yet.",
     };
-  }, [dateLabel, startTime, endTime]);
+  }, [dateLabel, nowMs, startTime, endTime]);
 
   const hasRequiredParams = Boolean(classId && String(sessionId || "").trim());
 
@@ -122,17 +126,19 @@ export default function CheckinDisplayPage() {
 
         {hasRequiredParams ? (
           <>
-            <div className="checkin-display-qr-wrap">
-              <QRCodeCanvas value={checkinUrl} size={320} includeMargin />
-            </div>
-            <div className="checkin-display-meta checkin-display-read-first">
-              <div className="checkin-display-read-first-title">Read before check-in</div>
-              <span><b>Class:</b> {classId}</span>
-              <span><b>Date:</b> {dateLabel || "-"}</span>
-              <span><b>Session:</b> {sessionDisplayLabel || "-"}</span>
-              <span><b>Assignment:</b> {assignmentId || "-"}</span>
-              <span><b>Class time:</b> {startTime || "--:--"} to {endTime || "--:--"}</span>
-              <span><b>Expected students:</b> {expectedCount || "-"}</span>
+            <div className="checkin-display-content">
+              <div className="checkin-display-qr-wrap">
+                <QRCodeCanvas value={checkinUrl} size={240} includeMargin />
+              </div>
+              <div className="checkin-display-meta checkin-display-read-first">
+                <div className="checkin-display-read-first-title">Read before check-in</div>
+                <span><b>Class:</b> {classId}</span>
+                <span><b>Date:</b> {dateLabel || "-"}</span>
+                <span><b>Session:</b> {sessionDisplayLabel || "-"}</span>
+                <span><b>Assignment:</b> {assignmentId || "-"}</span>
+                <span><b>Class time:</b> {startTime || "--:--"} to {endTime || "--:--"}</span>
+                <span><b>Expected students:</b> {expectedCount || "-"}</span>
+              </div>
             </div>
             <div className="checkin-display-link">{checkinUrl}</div>
           </>

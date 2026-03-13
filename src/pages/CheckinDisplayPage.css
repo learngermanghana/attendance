@@ -1,18 +1,21 @@
 .checkin-display-page {
   min-height: 100vh;
+  box-sizing: border-box;
   background: radial-gradient(circle at top, #eef4ff 0%, #f8fafc 45%, #ffffff 100%);
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: 12px;
 }
 
 .checkin-display-card {
-  width: min(900px, 100%);
+  width: min(1100px, 100%);
+  max-height: calc(100vh - 24px);
+  overflow: auto;
   border: 1px solid #dbe4ff;
   border-radius: 18px;
   background: #ffffff;
   box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
-  padding: 28px;
+  padding: 18px;
   text-align: center;
 }
 
@@ -21,15 +24,15 @@
 }
 
 .checkin-display-card p {
-  margin: 10px 0 24px;
+  margin: 6px 0 12px;
   color: #475569;
 }
 
 .checkin-display-alert {
-  margin: 0 auto 18px;
-  max-width: 720px;
+  margin: 0 auto 10px;
+  max-width: 100%;
   border-radius: 12px;
-  padding: 12px 16px;
+  padding: 10px 12px;
   border: 1px solid transparent;
   text-align: left;
   font-size: 15px;
@@ -37,7 +40,7 @@
 
 .checkin-display-alert-title {
   font-weight: 800;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .checkin-display-alert-before {
@@ -58,30 +61,44 @@
   color: #991b1b;
 }
 
+
+.checkin-display-content {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .checkin-display-content {
+    grid-template-columns: 1fr;
+  }
+}
+
 .checkin-display-qr-wrap {
   display: inline-flex;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
-  padding: 16px;
+  padding: 10px;
   background: #ffffff;
 }
 
 .checkin-display-meta {
-  margin-top: 18px;
+  margin-top: 0;
   display: grid;
-  gap: 8px;
+  gap: 6px;
   font-size: 15px;
 }
 
 .checkin-display-read-first {
   text-align: left;
-  max-width: 720px;
+  max-width: 100%;
   margin-left: auto;
   margin-right: auto;
   border: 1px solid #bfdbfe;
   background: #eff6ff;
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 10px 12px;
 }
 
 .checkin-display-read-first-title {
@@ -92,7 +109,7 @@
 }
 
 .checkin-display-link {
-  margin-top: 16px;
+  margin-top: 10px;
   padding: 10px;
   border-radius: 10px;
   border: 1px solid #e2e8f0;
