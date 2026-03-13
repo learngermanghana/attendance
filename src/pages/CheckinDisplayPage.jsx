@@ -18,6 +18,14 @@ function parseSessionDate(dateValue) {
   return null;
 }
 
+function formatDisplayTimeLabel(timeText, fallbackDateTime) {
+  if (timeText) return timeText;
+  if (fallbackDateTime instanceof Date && !Number.isNaN(fallbackDateTime.getTime())) {
+    return fallbackDateTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+  return "soon";
+}
+
 function parseDateTime(dateValue, timeValue) {
   const date = parseSessionDate(dateValue);
   const time = String(timeValue || "").trim();
@@ -90,18 +98,20 @@ export default function CheckinDisplayPage() {
     const endAt = parseDateTime(dateLabel, endTime);
 
     if (endAt && now > endAt) {
+      const endLabel = formatDisplayTimeLabel(endTime, endAt);
       return {
         kind: "ended",
         title: "Class has ended.",
-        detail: "If you still haven't checked in, please do it now.",
+        detail: `Class ended at ${endLabel}. If you still haven't checked in, please do it now for late attendance recording.`,
       };
     }
 
     if (startAt && now < startAt) {
+      const startLabel = formatDisplayTimeLabel(startTime, startAt);
       return {
         kind: "before",
-        title: "Class starts at this time.",
-        detail: "Please check in before the meeting starts.",
+        title: `Hello! Class starts at ${startLabel}.`,
+        detail: "Kindly check in for your attendance to be recorded while you wait for the meeting to start.",
       };
     }
 

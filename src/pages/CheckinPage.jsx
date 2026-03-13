@@ -32,6 +32,18 @@ function formatInterval(openFrom, openTo) {
   return `${formatClock(openFrom)} to ${formatClock(openTo)}`;
 }
 
+function formatStartTimeLabel(startTime, checkinStatus) {
+  if (startTime) return startTime;
+  if (checkinStatus?.openFrom) return formatClock(checkinStatus.openFrom);
+  return "soon";
+}
+
+function formatEndTimeLabel(endTime, checkinStatus) {
+  if (endTime) return endTime;
+  if (checkinStatus?.openTo) return formatClock(checkinStatus.openTo);
+  return "just now";
+}
+
 function parseExpectedNames(raw) {
   return String(raw || "")
     .split(",")
@@ -162,6 +174,16 @@ export default function CheckinPage() {
     return "-";
   }, [checkinStatus, startTime, endTime]);
 
+  const personalizedStartMessage = useMemo(() => {
+    const startLabel = formatStartTimeLabel(startTime, checkinStatus);
+    return `Hello! Class starts at ${startLabel}. Kindly check in for your attendance to be recorded while you wait for the meeting to start.`;
+  }, [startTime, checkinStatus]);
+
+  const personalizedEndedMessage = useMemo(() => {
+    const endLabel = formatEndTimeLabel(endTime, checkinStatus);
+    return `Class ended at ${endLabel}. If you still have not checked in, submit now so your attendance can still be recorded.`;
+  }, [endTime, checkinStatus]);
+
   const statusSummary = useMemo(() => {
     if (!checkinStatus) return null;
 
@@ -172,9 +194,8 @@ export default function CheckinPage() {
     if (status === "open") {
       return {
         tone: "open",
-        label: "Class starts at this time.",
+        label: personalizedStartMessage,
         detail: [
-          "Please check in before the meeting starts.",
           openTo && serverTimeMs ? `Ends in ${formatDuration(openTo - serverTimeMs)}` : "",
         ].filter(Boolean).join(" "),
       };
@@ -183,9 +204,8 @@ export default function CheckinPage() {
     if (status === "scheduled") {
       return {
         tone: "scheduled",
-        label: "Class starts at this time.",
+        label: personalizedStartMessage,
         detail: [
-          "Please check in before the meeting starts.",
           openFrom && serverTimeMs ? `Starts in ${formatDuration(openFrom - serverTimeMs)}` : `Starts at ${formatClock(openFrom)}`,
         ].filter(Boolean).join(" "),
       };
@@ -195,7 +215,7 @@ export default function CheckinPage() {
       return {
         tone: "ended",
         label: "Class has ended",
-        detail: `If you still have not checked in, submit now. Closed at ${formatClock(openTo)}.`,
+        detail: personalizedEndedMessage,
       };
     }
 
@@ -212,7 +232,7 @@ export default function CheckinPage() {
       label: "Check-in closed",
       detail: "Ask your teacher to open check-in.",
     };
-  }, [checkinStatus, serverTimeMs]);
+  }, [checkinStatus, serverTimeMs, personalizedStartMessage, personalizedEndedMessage]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -258,7 +278,7 @@ export default function CheckinPage() {
     <div className="checkin-page">
       <div className="checkin-card">
         <h2>Student Check-in</h2>
-        <p className="checkin-subtitle">Class starts at this time. Please check in before the meeting starts.</p>
+        <p className="checkin-subtitle">{personalizedStartMessage}</p>
 
         {statusSummary && (
           <div className={`checkin-status checkin-status-${statusSummary.tone}`}>
@@ -274,7 +294,7 @@ export default function CheckinPage() {
           <div>Welcome to <b>{classId || "-"}</b>.</div>
           <div>You will be working on <b>{sessionDisplayLabel || "today's lesson"}</b>.</div>
           <div>Attendance window: <b>{attendanceWindowLabel || formatInterval(checkinStatus?.openFrom, checkinStatus?.openTo)}</b></div>
-          <div className="checkin-help">Please check in before the meeting starts. If class has ended and you still have not checked in, submit now.</div>
+          <div className="checkin-help">Kindly check in for your attendance to be recorded while you wait for the meeting to start. If class has ended, you can still submit for late attendance recording.</div>
         </div>
 
         {(expectedCount > 0 || expectedStudents.length > 0) && (
