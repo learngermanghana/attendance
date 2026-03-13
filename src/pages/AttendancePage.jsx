@@ -99,6 +99,8 @@ export default function AttendancePage() {
   const selectedSession = attendanceMap[selectedSessionId] || { title: "", date: "", assignmentId: "", students: {} };
   const checkinSessionDate = String(selectedSession.date || "").trim() || selectedSessionId;
   const checkinSessionId = String(selectedSessionId || "").trim();
+  const checkinStartTime = String(selectedSession.startTime || "").trim();
+  const checkinEndTime = String(selectedSession.endTime || "").trim();
 
   const schedule = useMemo(() => getClassSchedule(classId), [classId]);
   const sessionLabel = useMemo(() => {
@@ -217,6 +219,8 @@ export default function AttendancePage() {
             title: String(existingSession.title || "").trim() || scheduleSession.title || `Session ${Number(sessionId) + 1}`,
             date: String(existingSession.date || "").trim() || scheduleSession.date || dayjs().format("YYYY-MM-DD"),
             assignmentId: String(existingSession.assignmentId || existingSession.assignment_id || scheduleSession.assignmentId || ""),
+            startTime: String(existingSession.startTime || "").trim(),
+            endTime: String(existingSession.endTime || "").trim(),
             students: {
               ...studentTemplate,
               ...baseStudents,
@@ -409,6 +413,42 @@ export default function AttendancePage() {
           />
         </label>
 
+        <label>
+          Start time:{" "}
+          <input
+            type="time"
+            value={selectedSession.startTime || ""}
+            onChange={(e) => {
+              const nextStartTime = e.target.value;
+              setAttendanceMap((prev) => ({
+                ...prev,
+                [selectedSessionId]: {
+                  ...(prev[selectedSessionId] || {}),
+                  startTime: nextStartTime,
+                },
+              }));
+            }}
+          />
+        </label>
+
+        <label>
+          End time:{" "}
+          <input
+            type="time"
+            value={selectedSession.endTime || ""}
+            onChange={(e) => {
+              const nextEndTime = e.target.value;
+              setAttendanceMap((prev) => ({
+                ...prev,
+                [selectedSessionId]: {
+                  ...(prev[selectedSessionId] || {}),
+                  endTime: nextEndTime,
+                },
+              }));
+            }}
+          />
+        </label>
+
         <div style={{ marginLeft: "auto", fontSize: 12, opacity: 0.85 }}>
           Present: {summary.present} · Absent: {summary.absent} · Late: {summary.late} · Excused: {summary.excused}
         </div>
@@ -421,6 +461,9 @@ export default function AttendancePage() {
         </div>
         <div style={{ marginTop: 4, fontSize: 13, opacity: 0.85 }}>
           <b>Assignment ID:</b> {selectedSession.assignmentId || "-"}
+        </div>
+        <div style={{ marginTop: 4, fontSize: 13, opacity: 0.85 }}>
+          <b>Class time:</b> {checkinStartTime || "--:--"} to {checkinEndTime || "--:--"}
         </div>
       </div>
 

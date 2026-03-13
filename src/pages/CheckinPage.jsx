@@ -147,6 +147,15 @@ export default function CheckinPage() {
     return () => window.clearInterval(t);
   }, [serverTimeMs]);
 
+
+  const attendanceWindowLabel = useMemo(() => {
+    if (checkinStatus?.openFrom || checkinStatus?.openTo) {
+      return formatInterval(checkinStatus.openFrom, checkinStatus.openTo);
+    }
+    if (startTime || endTime) return `${startTime || "--:--"} to ${endTime || "--:--"}`;
+    return "-";
+  }, [checkinStatus, startTime, endTime]);
+
   const statusSummary = useMemo(() => {
     if (!checkinStatus) return null;
 
