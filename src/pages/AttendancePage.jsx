@@ -27,7 +27,7 @@ function buildScheduleMap(classId) {
   const scheduleLevel = resolveScheduleKey(classId);
 
   schedule.forEach((item, index) => {
-    const sessionId = getScheduleSessionId(item, index);
+    const sessionId = String(index + 1);
     const assignmentId = String(item.assignmentId || item.assignment_id || buildAssignmentId(scheduleLevel, item.topic, index + 1));
     const topicLabel = getUnifiedTopicLabel(assignmentId, item.topic);
     map[sessionId] = {
@@ -71,11 +71,7 @@ function mergeStoredAttendanceWithSchedule(scheduleAttendanceMap, storedAttendan
     const legacyOffsetSessionId = Number.isInteger(storedNumericId) && storedNumericId >= 0
       ? String(storedNumericId + 1)
       : "";
-    const preferredLegacyId = Number.isInteger(storedNumericId) && scheduleAttendanceMap[String(storedNumericId)]
-      ? String(storedNumericId)
-      : "";
     const targetSessionId = matchedSessionId
-      || preferredLegacyId
       || (legacyOffsetSessionId && scheduleAttendanceMap[legacyOffsetSessionId] ? legacyOffsetSessionId : storedId);
 
     merged[targetSessionId] = {
@@ -102,7 +98,7 @@ export default function AttendancePage() {
   const [sessionOpen, setSessionOpen] = useState(false);
   const [sessionBusy, setSessionBusy] = useState(false);
   const [attendanceMap, setAttendanceMap] = useState({});
-  const [selectedSessionId, setSelectedSessionId] = useState("0");
+  const [selectedSessionId, setSelectedSessionId] = useState("1");
 
   const sessionIds = useMemo(() => Object.keys(attendanceMap).sort((a, b) => Number(a) - Number(b)), [attendanceMap]);
 
@@ -113,7 +109,9 @@ export default function AttendancePage() {
   const checkinEndTime = String(selectedSession.endTime || "").trim();
 
   const sessionLabel = useMemo(() => {
-    const scheduleItem = findScheduleItemBySessionId(classId, selectedSessionId);
+    const selectedSessionNumber = Number(selectedSessionId);
+    const zeroBasedIndex = selectedSessionNumber > 0 ? selectedSessionNumber - 1 : selectedSessionNumber;
+    const scheduleItem = schedule[zeroBasedIndex] || schedule[selectedSessionNumber];
     if (scheduleItem) return `${scheduleItem.day} - ${scheduleItem.topic}`;
     return selectedSession.title || "";
   }, [classId, selectedSessionId, selectedSession.title]);
@@ -219,7 +217,7 @@ export default function AttendancePage() {
         const nextAttendanceMap = mergeStoredAttendanceWithSchedule(scheduleAttendanceMap, storedAttendance);
 
         if (Object.keys(nextAttendanceMap).length === 0) {
-          nextAttendanceMap["0"] = {
+          nextAttendanceMap["1"] = {
             title: "Session 1",
             date: dayjs().format("YYYY-MM-DD"),
             assignmentId: "",
@@ -246,7 +244,7 @@ export default function AttendancePage() {
         }
 
         const sortedIds = Object.keys(nextAttendanceMap).sort((a, b) => Number(a) - Number(b));
-        const firstSessionId = sortedIds[0] || "0";
+        const firstSessionId = sortedIds[0] || "1";
 
         setAttendanceMap(nextAttendanceMap);
         setSelectedSessionId((prev) => (nextAttendanceMap[prev] ? prev : firstSessionId));
