@@ -29,14 +29,6 @@ function parseDateTime(dateValue, timeValue) {
   return parsed;
 }
 
-function formatDuration(ms) {
-  if (!Number.isFinite(ms) || ms <= 0) return "00:00";
-  const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-}
-
 export default function CheckinDisplayPage() {
   const [sp] = useSearchParams();
   const classId = sp.get("classId") || sp.get("className") || "";
@@ -89,7 +81,7 @@ export default function CheckinDisplayPage() {
   }, [classId, sessionId, dateLabel, sessionDisplayLabel, assignmentId, startTime, endTime, expectedStudents, expectedCount]);
 
   const statusInfo = useMemo(() => {
-    const now = new Date(nowMs);
+    const now = new Date();
     const startAt = parseDateTime(dateLabel, startTime);
     const endAt = parseDateTime(dateLabel, endTime);
 
@@ -98,7 +90,6 @@ export default function CheckinDisplayPage() {
         kind: "ended",
         title: "Class has ended.",
         detail: "If you still haven't checked in, please do it now.",
-        countdown: "",
       };
     }
 
@@ -107,26 +98,15 @@ export default function CheckinDisplayPage() {
         kind: "before",
         title: "Class starts at this time.",
         detail: "Please check in before the meeting starts.",
-        countdown: `Starts in ${formatDuration(startAt.getTime() - nowMs)}`,
-      };
-    }
-
-    if (endAt && now <= endAt) {
-      return {
-        kind: "active",
-        title: "Class starts at this time.",
-        detail: "Please check in before the meeting starts.",
-        countdown: `Ends in ${formatDuration(endAt.getTime() - nowMs)}`,
       };
     }
 
     return {
       kind: "active",
-      title: "Class starts at this time.",
-      detail: "Please check in before the meeting starts.",
-      countdown: "",
+      title: "Class is in progress.",
+      detail: "Please check in now if you haven't submitted yet.",
     };
-  }, [dateLabel, startTime, endTime, nowMs]);
+  }, [dateLabel, startTime, endTime]);
 
   const hasRequiredParams = Boolean(classId && String(sessionId || "").trim());
 
@@ -138,7 +118,6 @@ export default function CheckinDisplayPage() {
         <div className={`checkin-display-alert checkin-display-alert-${statusInfo.kind}`}>
           <div className="checkin-display-alert-title">{statusInfo.title}</div>
           <div>{statusInfo.detail}</div>
-          {statusInfo.countdown && <div className="checkin-display-alert-countdown">{statusInfo.countdown}</div>}
         </div>
 
         {hasRequiredParams ? (
