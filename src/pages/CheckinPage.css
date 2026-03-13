@@ -69,6 +69,12 @@
   color: #9f1239;
 }
 
+.checkin-status-ended {
+  border-color: #fda4af;
+  background: #ffe4e6;
+  color: #9f1239;
+}
+
 .checkin-status-label {
   font-weight: 700;
 }
