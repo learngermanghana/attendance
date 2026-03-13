@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import dayjs from "dayjs";
-import { getClassSchedule } from "../data/classSchedules";
+import { findScheduleItemBySessionId, getClassSchedule, getScheduleSessionId } from "../data/classSchedules";
 import { QRCodeCanvas } from "qrcode.react";
 import { useAuth } from "../context/AuthContext";
 import { listStudentsByClass } from "../services/studentsService";
@@ -27,7 +27,7 @@ function buildScheduleMap(classId) {
   const scheduleLevel = resolveScheduleKey(classId);
 
   schedule.forEach((item, index) => {
-    const sessionId = String(index);
+    const sessionId = getScheduleSessionId(item, index);
     const assignmentId = String(item.assignmentId || item.assignment_id || buildAssignmentId(scheduleLevel, item.topic, index + 1));
     const topicLabel = getUnifiedTopicLabel(assignmentId, item.topic);
     map[sessionId] = {
@@ -67,7 +67,17 @@ function mergeStoredAttendanceWithSchedule(scheduleAttendanceMap, storedAttendan
       .map((candidate) => scheduleIdsByDate[candidate] || [])
       .find((matches) => matches.length === 1)?.[0];
 
-    const targetSessionId = matchedSessionId || storedId;
+    const storedNumericId = Number.parseInt(String(storedId || ""), 10);
+    const legacyOffsetSessionId = Number.isInteger(storedNumericId) && storedNumericId >= 0
+      ? String(storedNumericId + 1)
+      : "";
+    const preferredLegacyId = Number.isInteger(storedNumericId) && scheduleAttendanceMap[String(storedNumericId)]
+      ? String(storedNumericId)
+      : "";
+    const targetSessionId = matchedSessionId
+      || preferredLegacyId
+      || (legacyOffsetSessionId && scheduleAttendanceMap[legacyOffsetSessionId] ? legacyOffsetSessionId : storedId);
+
     merged[targetSessionId] = {
       ...(merged[targetSessionId] || {}),
       ...storedSession,
@@ -102,12 +112,11 @@ export default function AttendancePage() {
   const checkinStartTime = String(selectedSession.startTime || "").trim();
   const checkinEndTime = String(selectedSession.endTime || "").trim();
 
-  const schedule = useMemo(() => getClassSchedule(classId), [classId]);
   const sessionLabel = useMemo(() => {
-    const scheduleItem = schedule[Number(selectedSessionId)];
+    const scheduleItem = findScheduleItemBySessionId(classId, selectedSessionId);
     if (scheduleItem) return `${scheduleItem.day} - ${scheduleItem.topic}`;
     return selectedSession.title || "";
-  }, [schedule, selectedSessionId, selectedSession.title]);
+  }, [classId, selectedSessionId, selectedSession.title]);
 
   const studentRows = useMemo(() => {
     return Object.entries(selectedSession.students || {})
@@ -224,7 +233,7 @@ export default function AttendancePage() {
           const baseStudents = nextAttendanceMap[sessionId]?.students || {};
           nextAttendanceMap[sessionId] = {
             ...existingSession,
-            title: String(existingSession.title || "").trim() || scheduleSession.title || `Session ${Number(sessionId) + 1}`,
+            title: String(existingSession.title || "").trim() || scheduleSession.title || `Session ${Number(sessionId) || 1}`,
             date: String(existingSession.date || "").trim() || scheduleSession.date || dayjs().format("YYYY-MM-DD"),
             assignmentId: String(existingSession.assignmentId || existingSession.assignment_id || scheduleSession.assignmentId || ""),
             startTime: String(existingSession.startTime || "").trim(),

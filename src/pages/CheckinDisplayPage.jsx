@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
-import { getClassSchedule } from "../data/classSchedules";
+import { findScheduleItemBySessionId } from "../data/classSchedules";
 import "./CheckinDisplayPage.css";
 
 function parseSessionDate(dateValue) {
@@ -56,11 +56,7 @@ export default function CheckinDisplayPage() {
   }, []);
 
   const scheduleInfo = useMemo(() => {
-    const sessionIndex = Number.parseInt(String(sessionId || ""), 10);
-    if (!Number.isInteger(sessionIndex) || sessionIndex < 0) return null;
-
-    const schedule = getClassSchedule(classId);
-    const item = schedule[sessionIndex];
+    const item = findScheduleItemBySessionId(classId, sessionId);
     if (!item) return null;
 
     return {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { getClassSchedule } from "../data/classSchedules";
+import { findScheduleItemBySessionId } from "../data/classSchedules";
 import { QRCodeCanvas } from "qrcode.react";
 import { useToast } from "../context/ToastContext.jsx";
 import "./CheckinPage.css";
@@ -66,11 +66,7 @@ export default function CheckinPage() {
   const expectedCount = Number(sp.get("expectedCount") || 0) || 0;
 
   const scheduleInfo = useMemo(() => {
-    const sessionIndex = Number.parseInt(String(sessionId || ""), 10);
-    if (!Number.isInteger(sessionIndex) || sessionIndex < 0) return null;
-
-    const schedule = getClassSchedule(classId);
-    const item = schedule[sessionIndex];
+    const item = findScheduleItemBySessionId(classId, sessionId);
     if (!item) return null;
 
     return {

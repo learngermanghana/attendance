@@ -107,6 +107,25 @@ firebase functions:config:set attendance.teacher_emails="teacher1@example.com,te
 firebase deploy --only functions
 ```
 
+## Session ID migration helper
+
+For old attendance data created with different session numbering, use the secured function endpoint:
+
+- `POST /api/migrateSessionIds`
+- Requires teacher auth (`Authorization: Bearer <idToken>`).
+- Body:
+
+```json
+{
+  "classId": "B1 Hamburg Klasse",
+  "mapping": { "0": "1", "1": "2" },
+  "dryRun": true,
+  "deleteSource": false
+}
+```
+
+Run `dryRun: true` first, then rerun with `dryRun: false` to merge source sessions/check-ins into target session IDs.
+
 ## Operational Flow
 
 1. Teacher signs in and opens a class attendance page.

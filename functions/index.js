@@ -143,6 +143,44 @@ function sessionDocRef(classId, sessionId) {
   return db.doc(`attendance/${classId}/sessions/${sessionId}`);
 }
 
+function resolveSessionIdCandidates(sessionId) {
+  const normalized = String(sessionId || "").trim();
+  if (!normalized) return [];
+
+  const candidates = [normalized];
+  const numeric = Number.parseInt(normalized, 10);
+
+  if (Number.isInteger(numeric) && String(numeric) === normalized && numeric > 0) {
+    candidates.push(String(numeric - 1));
+  }
+
+  return candidates;
+}
+
+async function getExistingSessionRef(classId, sessionId) {
+  const candidates = resolveSessionIdCandidates(sessionId);
+
+  for (const candidateSessionId of candidates) {
+    const candidateRef = sessionDocRef(classId, candidateSessionId);
+    const candidateSnap = await candidateRef.get();
+    if (candidateSnap.exists) {
+      return {
+        requestedRef: sessionDocRef(classId, String(sessionId || "").trim()),
+        existingRef: candidateRef,
+        existingSnap: candidateSnap,
+        usedFallback: candidateSessionId !== String(sessionId || "").trim(),
+      };
+    }
+  }
+
+  return {
+    requestedRef: sessionDocRef(classId, String(sessionId || "").trim()),
+    existingRef: null,
+    existingSnap: null,
+    usedFallback: false,
+  };
+}
+
 app.post("/openSession", async (req, res) => {
   try {
     const user = await requireAuth(req);
@@ -214,9 +252,13 @@ app.post("/checkin", async (req, res) => {
       return res.status(400).json({ error: "classId, sessionId, email, phoneNumber are required" });
     }
 
-    const sessionRef = sessionDocRef(classId, sessionId);
-    const sessionSnap = await sessionRef.get();
-    if (!sessionSnap.exists) return res.status(400).json({ error: "Session not opened" });
+    const sessionLookup = await getExistingSessionRef(classId, sessionId);
+    if (!sessionLookup.existingSnap) {
+      return res.status(400).json({ error: "Session not opened" });
+    }
+
+    const sessionRef = sessionLookup.requestedRef;
+    const sessionSnap = sessionLookup.existingSnap;
 
     const session = sessionSnap.data();
     if (!session.opened) return res.status(400).json({ error: "Check-in is closed" });
@@ -227,6 +269,24 @@ app.post("/checkin", async (req, res) => {
 
     if (openFrom && now.toMillis() < openFrom.toMillis()) return res.status(400).json({ error: "Check-in not started" });
     if (openTo && now.toMillis() > openTo.toMillis()) return res.status(400).json({ error: "Check-in time ended" });
+
+    if (sessionLookup.usedFallback) {
+      await sessionRef.set(
+        {
+          classId,
+          sessionId,
+          date: String(date || session.date || "").trim(),
+          sessionLabel: String(sessionLabel || lesson || session.sessionLabel || session.lesson || "").trim(),
+          assignment_id: String(assignmentId || session.assignment_id || "").trim(),
+          opened: session.opened,
+          openFrom: session.openFrom || null,
+          openTo: session.openTo || null,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          migratedFromSessionId: sessionLookup.existingRef.id,
+        },
+        { merge: true }
+      );
+    }
 
     const rawEmail = String(email || "").trim();
     const normalizedEmail = normalizeText(rawEmail);
@@ -318,8 +378,9 @@ app.get("/checkinStatus", async (req, res) => {
       return res.status(400).json({ error: "classId and sessionId are required" });
     }
 
-    const sessionRef = sessionDocRef(classId, sessionId);
-    const sessionSnap = await sessionRef.get();
+    const sessionLookup = await getExistingSessionRef(classId, sessionId);
+    const sessionRef = sessionLookup.requestedRef;
+    const sessionSnap = sessionLookup.existingSnap || await sessionRef.get();
     if (!sessionSnap.exists) {
       return res.json({
         ok: true,
@@ -350,6 +411,104 @@ app.get("/checkinStatus", async (req, res) => {
       openTo,
       serverTime: now,
     });
+  } catch (e) {
+    return res.status(500).json({ error: e?.message || "Server error" });
+  }
+});
+
+
+async function mergeSessionDocuments({ classId, sourceSessionId, targetSessionId, deleteSource = false }) {
+  const sourceRef = sessionDocRef(classId, sourceSessionId);
+  const targetRef = sessionDocRef(classId, targetSessionId);
+
+  const sourceSnap = await sourceRef.get();
+  if (!sourceSnap.exists) {
+    return { migrated: false, reason: "source_missing" };
+  }
+
+  const sourceData = sourceSnap.data() || {};
+  const sourceCheckins = await sourceRef.collection("checkins").get();
+
+  await targetRef.set(
+    {
+      ...sourceData,
+      classId,
+      sessionId: targetSessionId,
+      legacySessionIds: admin.firestore.FieldValue.arrayUnion(String(sourceSessionId)),
+      migratedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  for (const checkinDoc of sourceCheckins.docs) {
+    await targetRef.collection("checkins").doc(checkinDoc.id).set(checkinDoc.data() || {}, { merge: true });
+  }
+
+  if (deleteSource && String(sourceSessionId) !== String(targetSessionId)) {
+    for (const checkinDoc of sourceCheckins.docs) {
+      await sourceRef.collection("checkins").doc(checkinDoc.id).delete();
+    }
+    await sourceRef.set(
+      {
+        migratedToSessionId: String(targetSessionId),
+        migratedAt: admin.firestore.FieldValue.serverTimestamp(),
+        opened: false,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+  }
+
+  return {
+    migrated: true,
+    copiedCheckins: sourceCheckins.size,
+  };
+}
+
+app.post("/migrateSessionIds", async (req, res) => {
+  try {
+    await requireAuth(req);
+
+    const body = req.body || {};
+    const classId = normalizeClassId(body.classId || body.className);
+    const mapping = body.mapping && typeof body.mapping === "object" ? body.mapping : {};
+    const dryRun = Boolean(body.dryRun);
+    const deleteSource = Boolean(body.deleteSource);
+
+    if (!classId) return res.status(400).json({ error: "classId is required" });
+    const mapEntries = Object.entries(mapping)
+      .map(([from, to]) => [String(from || "").trim(), String(to || "").trim()])
+      .filter(([from, to]) => from && to && from !== to);
+
+    if (mapEntries.length === 0) {
+      return res.status(400).json({ error: "mapping must include at least one from->to sessionId pair" });
+    }
+
+    const result = [];
+    for (const [fromSessionId, toSessionId] of mapEntries) {
+      if (dryRun) {
+        const sourceSnap = await sessionDocRef(classId, fromSessionId).get();
+        const targetSnap = await sessionDocRef(classId, toSessionId).get();
+        result.push({
+          fromSessionId,
+          toSessionId,
+          sourceExists: sourceSnap.exists,
+          targetExists: targetSnap.exists,
+        });
+        continue;
+      }
+
+      const migrated = await mergeSessionDocuments({
+        classId,
+        sourceSessionId: fromSessionId,
+        targetSessionId: toSessionId,
+        deleteSource,
+      });
+      result.push({ fromSessionId, toSessionId, ...migrated });
+    }
+
+    return res.json({ ok: true, classId, dryRun, deleteSource, result });
   } catch (e) {
     return res.status(500).json({ error: e?.message || "Server error" });
   }
