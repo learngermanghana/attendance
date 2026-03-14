@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import dayjs from "dayjs";
-import { findScheduleItemBySessionId, getClassSchedule, getScheduleSessionId } from "../data/classSchedules";
+import { getClassSchedule } from "../data/classSchedules";
 import { QRCodeCanvas } from "qrcode.react";
 import { useAuth } from "../context/AuthContext";
 import { listStudentsByClass } from "../services/studentsService";
@@ -99,6 +99,7 @@ export default function AttendancePage() {
   const [sessionBusy, setSessionBusy] = useState(false);
   const [attendanceMap, setAttendanceMap] = useState({});
   const [selectedSessionId, setSelectedSessionId] = useState("1");
+  const schedule = useMemo(() => getClassSchedule(classId), [classId]);
 
   const sessionIds = useMemo(() => Object.keys(attendanceMap).sort((a, b) => Number(a) - Number(b)), [attendanceMap]);
 
@@ -114,7 +115,7 @@ export default function AttendancePage() {
     const scheduleItem = schedule[zeroBasedIndex] || schedule[selectedSessionNumber];
     if (scheduleItem) return `${scheduleItem.day} - ${scheduleItem.topic}`;
     return selectedSession.title || "";
-  }, [classId, selectedSessionId, selectedSession.title]);
+  }, [schedule, selectedSessionId, selectedSession.title]);
 
   const studentRows = useMemo(() => {
     return Object.entries(selectedSession.students || {})
