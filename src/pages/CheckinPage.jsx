@@ -66,12 +66,7 @@ export default function CheckinPage() {
   const expectedCount = Number(sp.get("expectedCount") || 0) || 0;
 
   const scheduleInfo = useMemo(() => {
-    const sessionIndex = Number.parseInt(String(sessionId || ""), 10);
-    if (!Number.isInteger(sessionIndex)) return null;
-
-    const schedule = getClassSchedule(classId);
-    const zeroBasedIndex = sessionIndex > 0 ? sessionIndex - 1 : sessionIndex;
-    const item = schedule[zeroBasedIndex] || schedule[sessionIndex];
+    const item = findScheduleItemBySessionId(classId, sessionId);
     if (!item) return null;
 
     return {
