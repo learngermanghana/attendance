@@ -37,6 +37,11 @@ const QUICK_TEMPLATES = [
     announcement:
       "Hi everyone, today's course material has been updated. Please use the latest version here: {link}",
   },
+  {
+    label: "Tab bug fixed",
+    topic: "Bug Fix Notice",
+    announcement: "The tab bug has been fixed. You can now safely use it.",
+  },
 ];
 
 const fieldStyle = { display: "grid", gap: 6 };
