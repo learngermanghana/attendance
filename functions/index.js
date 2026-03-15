@@ -143,6 +143,28 @@ function sessionDocRef(classId, sessionId) {
   return db.doc(`attendance/${classId}/sessions/${sessionId}`);
 }
 
+function parseAssignmentChapter(assignmentId) {
+  const normalized = String(assignmentId || "").trim();
+  const parts = normalized.split("-");
+  return parts.length > 1 ? String(parts.slice(1).join("-")).trim() : "";
+}
+
+function resolveSessionMetadata({ assignmentId, sessionLabel, lesson, topic, chapter, existingSession = {} }) {
+  const canonicalAssignmentId = String(
+    assignmentId || existingSession.assignmentId || existingSession.assignment_id || ""
+  ).trim();
+  const resolvedTopic = String(topic || existingSession.topic || sessionLabel || lesson || existingSession.sessionLabel || "").trim();
+  const resolvedChapter = String(chapter || existingSession.chapter || parseAssignmentChapter(canonicalAssignmentId)).trim();
+  const resolvedSessionLabel = String(sessionLabel || lesson || existingSession.sessionLabel || resolvedTopic).trim();
+
+  return {
+    assignmentId: canonicalAssignmentId,
+    topic: resolvedTopic,
+    chapter: resolvedChapter,
+    sessionLabel: resolvedSessionLabel,
+  };
+}
+
 function resolveSessionIdCandidates(sessionId) {
   const normalized = String(sessionId || "").trim();
   if (!normalized) return [];
@@ -187,7 +209,17 @@ app.post("/openSession", async (req, res) => {
 
     const body = req.body || {};
     const classId = normalizeClassId(body.classId || body.className);
-    const { sessionId: rawSessionId, date, action, windowMinutes, sessionLabel, lesson, assignmentId } = body;
+    const {
+      sessionId: rawSessionId,
+      date,
+      action,
+      windowMinutes,
+      sessionLabel,
+      lesson,
+      assignmentId,
+      topic,
+      chapter,
+    } = body;
     const sessionId = String(rawSessionId || "").trim();
 
     if (!classId || !sessionId) {
@@ -216,12 +248,16 @@ app.post("/openSession", async (req, res) => {
 
     const existing = await ref.get();
     const existingSession = existing.exists ? existing.data() : {};
+    const metadata = resolveSessionMetadata({ assignmentId, sessionLabel, lesson, topic, chapter, existingSession });
     const payload = {
       classId,
       sessionId,
       date: String(date || existingSession.date || "").trim(),
-      sessionLabel: String(sessionLabel || lesson || "").trim(),
-      assignment_id: String(assignmentId || "").trim(),
+      sessionLabel: metadata.sessionLabel,
+      assignmentId: metadata.assignmentId,
+      topic: metadata.topic,
+      chapter: metadata.chapter,
+      assignment_id: admin.firestore.FieldValue.delete(),
       opened: true,
       openFrom: now,
       openTo,
@@ -245,7 +281,17 @@ app.post("/checkin", async (req, res) => {
   try {
     const body = req.body || {};
     const classId = normalizeClassId(body.classId || body.className);
-    const { sessionId: rawSessionId, date, email, phoneNumber, sessionLabel, lesson, assignmentId } = body;
+    const {
+      sessionId: rawSessionId,
+      date,
+      email,
+      phoneNumber,
+      sessionLabel,
+      lesson,
+      assignmentId,
+      topic,
+      chapter,
+    } = body;
     const sessionId = String(rawSessionId || "").trim();
 
     if (!classId || !sessionId || !email || !phoneNumber) {
@@ -261,6 +307,7 @@ app.post("/checkin", async (req, res) => {
     const sessionSnap = sessionLookup.existingSnap;
 
     const session = sessionSnap.data();
+    const metadata = resolveSessionMetadata({ assignmentId, sessionLabel, lesson, topic, chapter, existingSession: session });
     if (!session.opened) return res.status(400).json({ error: "Check-in is closed" });
 
     const now = admin.firestore.Timestamp.now();
@@ -276,8 +323,11 @@ app.post("/checkin", async (req, res) => {
           classId,
           sessionId,
           date: String(date || session.date || "").trim(),
-          sessionLabel: String(sessionLabel || lesson || session.sessionLabel || session.lesson || "").trim(),
-          assignment_id: String(assignmentId || session.assignment_id || "").trim(),
+          sessionLabel: metadata.sessionLabel,
+          assignmentId: metadata.assignmentId,
+          topic: metadata.topic,
+          chapter: metadata.chapter,
+          assignment_id: admin.firestore.FieldValue.delete(),
           opened: session.opened,
           openFrom: session.openFrom || null,
           openTo: session.openTo || null,
@@ -349,8 +399,11 @@ app.post("/checkin", async (req, res) => {
       classId,
       sessionId,
       date: String(date || session.date || "").trim(),
-      sessionLabel: String(sessionLabel || lesson || session.sessionLabel || session.lesson || "").trim(),
-      assignment_id: String(assignmentId || session.assignment_id || "").trim(),
+      sessionLabel: metadata.sessionLabel,
+      assignmentId: metadata.assignmentId,
+      topic: metadata.topic,
+      chapter: metadata.chapter,
+      assignment_id: admin.firestore.FieldValue.delete(),
       status: "present",
       method: "qr",
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),

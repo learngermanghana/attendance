@@ -49,6 +49,13 @@ function byStudentName(a, b) {
   return String(a?.name || "").localeCompare(String(b?.name || ""));
 }
 
+function resolveTopicFromTitle(title) {
+  const text = String(title || "").trim();
+  if (!text) return "";
+  const segments = text.split(":");
+  return String(segments[segments.length - 1] || text).trim();
+}
+
 function mergeStoredAttendanceWithSchedule(scheduleAttendanceMap, storedAttendance) {
   const merged = { ...scheduleAttendanceMap };
   const scheduleIdsByDate = {};
@@ -109,6 +116,20 @@ export default function AttendancePage() {
   const checkinStartTime = String(selectedSession.startTime || "").trim();
   const checkinEndTime = String(selectedSession.endTime || "").trim();
 
+  const assignmentOptions = useMemo(() => {
+    return sessionIds
+      .map((id) => {
+        const item = attendanceMap[id] || {};
+        const assignmentId = String(item.assignmentId || "").trim();
+        if (!assignmentId) return null;
+        return {
+          assignmentId,
+          label: `${assignmentId} - ${resolveTopicFromTitle(item.title) || "Lesson"}`,
+        };
+      })
+      .filter(Boolean);
+  }, [attendanceMap, sessionIds]);
+
   const sessionLabel = useMemo(() => {
     const selectedSessionNumber = Number(selectedSessionId);
     const zeroBasedIndex = selectedSessionNumber > 0 ? selectedSessionNumber - 1 : selectedSessionNumber;
@@ -116,6 +137,10 @@ export default function AttendancePage() {
     if (scheduleItem) return `${scheduleItem.day} - ${scheduleItem.topic}`;
     return selectedSession.title || "";
   }, [schedule, selectedSessionId, selectedSession.title]);
+
+  const selectedAssignmentOption = useMemo(() => {
+    return assignmentOptions.find((opt) => opt.assignmentId === String(selectedSession.assignmentId || "").trim()) || null;
+  }, [assignmentOptions, selectedSession.assignmentId]);
 
   const studentRows = useMemo(() => {
     return Object.entries(selectedSession.students || {})
@@ -326,6 +351,11 @@ export default function AttendancePage() {
   async function openCheckin() {
     setSessionBusy(true);
     try {
+      const selectedAssignmentId = String(selectedSession.assignmentId || "").trim();
+      if (!selectedAssignmentId) {
+        throw new Error("Select an assignment ID before opening check-in.");
+      }
+
       const token = await user.getIdToken();
       const res = await fetch(import.meta.env.VITE_OPEN_SESSION_API_URL, {
         method: "POST",
@@ -336,9 +366,11 @@ export default function AttendancePage() {
         body: JSON.stringify({
           classId,
           sessionId: checkinSessionId,
-      date: checkinSessionDate,
+          date: checkinSessionDate,
           sessionLabel,
-          assignmentId: String(selectedSession.assignmentId || ""),
+          assignmentId: selectedAssignmentId,
+          topic: resolveTopicFromTitle(selectedSession.title || sessionLabel),
+          chapter: selectedAssignmentId.split("-").slice(1).join("-"),
           windowMinutes: 180,
           action: "open",
         }),
@@ -369,7 +401,7 @@ export default function AttendancePage() {
         body: JSON.stringify({
           classId,
           sessionId: checkinSessionId,
-      date: checkinSessionDate,
+          date: checkinSessionDate,
           action: "close",
         }),
       });
@@ -406,6 +438,30 @@ export default function AttendancePage() {
             {sessionIds.map((sessionId) => (
               <option key={sessionId} value={sessionId}>
                 {sessionId}: {attendanceMap[sessionId]?.title || "Untitled"}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          Assignment ID:{" "}
+          <select
+            value={String(selectedSession.assignmentId || "")}
+            onChange={(e) => {
+              const nextAssignmentId = e.target.value;
+              setAttendanceMap((prev) => ({
+                ...prev,
+                [selectedSessionId]: {
+                  ...(prev[selectedSessionId] || {}),
+                  assignmentId: nextAssignmentId,
+                },
+              }));
+            }}
+          >
+            <option value="">Select assignment</option>
+            {assignmentOptions.map((option) => (
+              <option key={option.assignmentId} value={option.assignmentId}>
+                {option.label}
               </option>
             ))}
           </select>
@@ -487,7 +543,7 @@ export default function AttendancePage() {
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <div style={{ fontWeight: 700 }}>Student QR Check-in</div>
 
-          <button disabled={sessionBusy || sessionOpen} onClick={openCheckin}>
+          <button disabled={sessionBusy || sessionOpen || !selectedAssignmentOption} onClick={openCheckin}>
             {sessionBusy && !sessionOpen ? "Opening..." : "Open Check-in"}
           </button>
 

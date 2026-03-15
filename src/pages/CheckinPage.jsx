@@ -59,7 +59,7 @@ export default function CheckinPage() {
   const sessionId = sp.get("sessionId") || sp.get("session") || "";
   const date = sp.get("date") || "";
   const sessionLabel = sp.get("sessionLabel") || sp.get("lesson") || "";
-  const assignmentId = sp.get("assignmentId") || sp.get("assignment_id") || "";
+  const assignmentId = sp.get("assignmentId") || "";
   const startTime = sp.get("startTime") || "";
   const endTime = sp.get("endTime") || "";
   const expectedStudentsRaw = sp.get("expectedStudents") || "";
@@ -250,8 +250,8 @@ export default function CheckinPage() {
           date,
           email: trimmedEmail,
           phoneNumber: trimmedPhone,
-          sessionLabel: sessionDisplayLabel,
-          assignmentId: assignmentId.trim(),
+          sessionLabel: sessionLabel || sessionDisplayLabel,
+          assignmentId,
         }),
       });
       const data = await res.json().catch(() => ({}));
