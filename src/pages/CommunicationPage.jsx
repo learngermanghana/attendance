@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { listClasses } from "../services/classesService";
 import { saveAnnouncementRow } from "../services/communicationService";
+import { listStudentsByClass } from "../services/studentsService";
 import { useToast } from "../context/ToastContext";
 
 const QUICK_TEMPLATES = [
@@ -42,6 +43,12 @@ const QUICK_TEMPLATES = [
     topic: "Bug Fix Notice",
     announcement: "The tab bug has been fixed. You can now safely use it.",
   },
+  {
+    label: "Exam practice reminder",
+    topic: "Exam Preparation Reminder",
+    announcement:
+      "Hi {student_name}, great work so far. Your exam is still pending, so please keep practicing regularly to stay confident and ready.",
+  },
 ];
 
 const fieldStyle = { display: "grid", gap: 6 };
@@ -51,6 +58,8 @@ export default function CommunicationPage() {
   const toast = useToast();
   const [classes, setClasses] = useState([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
+  const [students, setStudents] = useState([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
 
   const [form, setForm] = useState({
     announcement: "",
@@ -61,6 +70,8 @@ export default function CommunicationPage() {
     email: "",
     attachCertificate: false,
     certLevel: "",
+    studentId: "",
+    studentName: "",
   });
 
   const [saving, setSaving] = useState(false);
@@ -79,12 +90,52 @@ export default function CommunicationPage() {
     })();
   }, []);
 
+  useEffect(() => {
+    const className = form.className.trim();
+    if (!className) {
+      setStudents([]);
+      return;
+    }
+
+    (async () => {
+      setLoadingStudents(true);
+      try {
+        const rows = await listStudentsByClass(className);
+        setStudents(rows);
+      } catch {
+        setStudents([]);
+      } finally {
+        setLoadingStudents(false);
+      }
+    })();
+  }, [form.className]);
+
   const canSubmit = useMemo(() => {
     return Boolean(form.announcement.trim() && form.className.trim() && form.date.trim() && !saving);
   }, [form.announcement, form.className, form.date, saving]);
 
   function updateField(field, value) {
-    setForm((current) => ({ ...current, [field]: value }));
+    setForm((current) => {
+      if (field === "className") {
+        return { ...current, className: value, studentId: "", studentName: "" };
+      }
+      return { ...current, [field]: value };
+    });
+  }
+
+  function onSelectStudent(studentId) {
+    const selectedStudent = students.find((student) => String(student.id || "") === studentId);
+
+    setForm((current) => ({
+      ...current,
+      studentId,
+      email: selectedStudent ? String(selectedStudent.email || selectedStudent.contactEmail || "") : current.email,
+      studentName: selectedStudent ? String(selectedStudent.name || "") : "",
+      announcement:
+        selectedStudent && current.announcement.includes("{student_name}")
+          ? current.announcement.replaceAll("{student_name}", String(selectedStudent.name || ""))
+          : current.announcement,
+    }));
   }
 
   function applyTemplate(template) {
@@ -117,6 +168,8 @@ export default function CommunicationPage() {
         email: "",
         attachCertificate: false,
         certLevel: "",
+        studentId: "",
+        studentName: "",
       }));
     } catch (error) {
       toast.error(error?.message || "Failed to save broadcast.");
@@ -170,6 +223,26 @@ export default function CommunicationPage() {
                 <option key={klass.classId} value={klass.name} />
               ))}
             </datalist>
+          </label>
+
+          <label style={fieldStyle}>
+            <span>Student</span>
+            <select
+              style={inputStyle}
+              value={form.studentId}
+              onChange={(event) => onSelectStudent(event.target.value)}
+              disabled={!form.className.trim() || loadingStudents}
+            >
+              <option value="">{loadingStudents ? "Loading students..." : "Select student (optional)"}</option>
+              {students.map((student) => {
+                const studentId = String(student.id || "");
+                return (
+                  <option key={studentId} value={studentId}>
+                    {student.name || "Unnamed student"}
+                  </option>
+                );
+              })}
+            </select>
           </label>
 
           <label style={fieldStyle}>
