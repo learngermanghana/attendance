@@ -54,6 +54,38 @@ function formatReferenceAssignmentLabel(entry = {}) {
   return `${assignment.replace("-", " ")} — ${topic}`;
 }
 
+function findReferenceEntryForSubmission(referenceEntries = [], submission = {}) {
+  const submissionAssignmentId = inferAssignmentId(
+    submission.assignmentId,
+    submission.assignment_id,
+    submission.assignmentKey,
+    submission.assignment_key,
+    submission.raw?.assignmentId,
+    submission.raw?.assignment_id,
+    submission.raw?.assignmentKey,
+    submission.raw?.assignment_key,
+    submission.assignment,
+  );
+
+  if (submissionAssignmentId) {
+    const matchedById = referenceEntries.find((entry) => {
+      const referenceAssignmentId = inferAssignmentId(
+        entry.assignmentId,
+        entry.assignment_id,
+        entry.assignment,
+        ...(entry.assignmentAliases || []),
+      );
+      return normalize(referenceAssignmentId) === normalize(submissionAssignmentId);
+    });
+
+    if (matchedById) {
+      return matchedById;
+    }
+  }
+
+  return referenceEntries.find((entry) => normalize(entry.assignment) === normalize(submission.assignment)) || null;
+}
+
 export default function MarkingPage() {
   const { success, error } = useToast();
   const [roster, setRoster] = useState([]);
@@ -328,13 +360,23 @@ export default function MarkingPage() {
     setQuery("");
     setActiveSubmissionTab("latest");
 
-    const matchingReference = referenceEntries.find((entry) => normalize(entry.assignment) === normalize(submission.assignment));
+    const matchingReference = findReferenceEntryForSubmission(referenceEntries, submission);
     if (matchingReference?.assignment) {
       setReferenceAssignment(matchingReference.assignment);
     }
 
     const nextAssignment = submission.assignment || matchingReference?.assignment || "";
-    const submissionAssignmentId = submission.assignmentId || submission.assignmentKey || "";
+    const submissionAssignmentId = inferAssignmentId(
+      submission.assignmentId,
+      submission.assignment_id,
+      submission.assignmentKey,
+      submission.assignment_key,
+      submission.raw?.assignmentId,
+      submission.raw?.assignment_id,
+      matchingReference?.assignmentId,
+      matchingReference?.assignment,
+      nextAssignment,
+    );
     const level = matchingStudent.level || matchingReference?.level || inferLevel(nextAssignment);
     setAssignmentValue(nextAssignment);
     setAssignmentIdValue(submissionAssignmentId || buildAssignmentId(level, nextAssignment));
@@ -555,6 +597,7 @@ export default function MarkingPage() {
                   </div>
                   <div style={{ fontSize: 13 }}>
                     <b>{row.assignment || "Unknown assignment"}</b> · {row.status || "submitted"} · {row.createdAt?.toLocaleString() || "Unknown time"}
+                    {row.assignmentId ? <> · ID: <code>{row.assignmentId}</code></> : null}
                   </div>
                   {row.improvementSummary ? (
                     <div style={{ fontSize: 12, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 6, padding: 6 }}>
