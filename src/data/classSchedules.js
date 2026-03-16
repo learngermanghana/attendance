@@ -89,6 +89,64 @@ export const classSchedules = {
   ],
 };
 
+function parseScheduleDate(value) {
+  const match = String(value || "").trim().match(/^(\w+),\s+(\d{2})\s+(\w+)\s+(\d{4})$/);
+  if (!match) return null;
+
+  const [, , day, monthName, year] = match;
+  const months = {
+    January: 0,
+    February: 1,
+    March: 2,
+    April: 3,
+    May: 4,
+    June: 5,
+    July: 6,
+    August: 7,
+    September: 8,
+    October: 9,
+    November: 10,
+    December: 11,
+  };
+
+  if (!(monthName in months)) return null;
+  const date = new Date(Date.UTC(Number.parseInt(year, 10), months[monthName], Number.parseInt(day, 10)));
+  if (Number.isNaN(date.getTime())) return null;
+  return date;
+}
+
+function formatScheduleDate(date) {
+  const weekday = date.toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" });
+  const day = date.toLocaleDateString("en-US", { day: "2-digit", timeZone: "UTC" });
+  const month = date.toLocaleDateString("en-US", { month: "long", timeZone: "UTC" });
+  const year = date.toLocaleDateString("en-US", { year: "numeric", timeZone: "UTC" });
+  return `${weekday}, ${day} ${month} ${year}`;
+}
+
+function buildShiftedSchedule(baseSchedule, orientationDateString) {
+  if (!Array.isArray(baseSchedule) || baseSchedule.length === 0) return [];
+
+  const baseOrientationDate = parseScheduleDate(baseSchedule[0]?.date);
+  const targetOrientationDate = parseScheduleDate(orientationDateString);
+  if (!baseOrientationDate || !targetOrientationDate) return [];
+
+  return baseSchedule.map((item) => {
+    const sessionDate = parseScheduleDate(item.date);
+    if (!sessionDate) return { ...item };
+
+    const diffInDays = Math.round((sessionDate.getTime() - baseOrientationDate.getTime()) / (1000 * 60 * 60 * 24));
+    const shiftedDate = new Date(targetOrientationDate.getTime() + diffInDays * 24 * 60 * 60 * 1000);
+
+    return {
+      ...item,
+      date: formatScheduleDate(shiftedDate),
+    };
+  });
+}
+
+classSchedules["A1 Köln klasse"] = buildShiftedSchedule(classSchedules.A1, "Tuesday, 28 April 2026");
+classSchedules["A1 Köln klasse 2"] = buildShiftedSchedule(classSchedules.A1, "Tuesday, 05 May 2026");
+
 const KNOWN_SCHEDULE_KEYS = Object.keys(classSchedules);
 
 
