@@ -99,6 +99,10 @@ async function fetchCsvWithFallback(sheetName, identifier) {
   throw new Error(`${sheetName} CSV request failed. Tried ${csvCandidates.length} URL(s): ${errors.join(" | ")}`);
 }
 
+function isLikelyNetworkError(error) {
+  return error instanceof TypeError || /networkerror|failed to fetch|cors/i.test(String(error?.message || ""));
+}
+
 function normalizeSheetName(value) {
   return String(value || "")
     .trim()
@@ -358,10 +362,6 @@ export async function saveSocialMediaEntry(entry) {
     },
   };
 
-  const isLikelyNetworkError = (error) => {
-    return error instanceof TypeError || /networkerror|failed to fetch|cors/i.test(String(error?.message || ""));
-  };
-
   const saveWithNoCorsFallback = async () => {
     await fetch(webhookUrl, {
       method: "POST",
@@ -418,8 +418,23 @@ export async function loadPostTrackerRows() {
     return toRows(csv);
   }
 
-  const csv = await fetchCsvWithFallback("Post_Tracker", DEFAULT_POST_TRACKER_GID);
-  return toRows(csv);
+  try {
+    const csv = await fetchCsvWithFallback("Post_Tracker", DEFAULT_POST_TRACKER_GID);
+    return toRows(csv);
+  } catch (error) {
+    if (!isLikelyNetworkError(error)) {
+      throw error;
+    }
+
+    const apiResponse = await fetchOrThrow("/api/social-metrics", "Social metrics API");
+    const payload = await apiResponse.json();
+
+    if (!payload?.ok || !Array.isArray(payload?.postTrackerRows)) {
+      throw new Error("Social metrics API response did not include postTrackerRows.");
+    }
+
+    return payload.postTrackerRows;
+  }
 }
 
 export async function loadSocialMediaData() {

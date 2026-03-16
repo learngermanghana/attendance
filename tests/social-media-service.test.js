@@ -219,6 +219,41 @@ test("loadPostTrackerRows retries with gviz csv endpoint when export endpoint fa
   }
 });
 
+test("loadPostTrackerRows falls back to /api/social-metrics when direct csv requests hit network errors", async () => {
+  const originalFetch = global.fetch;
+  const attemptedUrls = [];
+
+  global.fetch = async (url) => {
+    const requestUrl = String(url);
+    attemptedUrls.push(requestUrl);
+
+    if (requestUrl.includes("/export?format=csv") || requestUrl.includes("/gviz/tq?tqx=out:csv")) {
+      throw new TypeError("NetworkError when attempting to fetch resource");
+    }
+
+    if (requestUrl === "/api/social-metrics") {
+      return {
+        ok: true,
+        json: async () => ({
+          ok: true,
+          postTrackerRows: [{ date: "2026-03-09", brand: "Falowen", platform: "Instagram" }],
+        }),
+      };
+    }
+
+    throw new Error(`Unexpected URL: ${requestUrl}`);
+  };
+
+  try {
+    const rows = await loadPostTrackerRows();
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].brand, "Falowen");
+    assert.ok(attemptedUrls.some((url) => url === "/api/social-metrics"));
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
 test("saveSocialMediaEntry falls back to no-cors when CORS/network fetch fails", async () => {
   const originalFetch = global.fetch;
   const calls = [];
