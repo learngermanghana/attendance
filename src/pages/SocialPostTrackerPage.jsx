@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { loadSocialMediaData, saveSocialMediaEntry } from "../services/socialMediaService";
+import { useEffect, useMemo, useState } from "react";
+import { loadPostTrackerRows, saveSocialMediaEntry } from "../services/socialMediaService";
 
 const FORM_FIELDS = [
   { key: "date", label: "Date", type: "date", required: true },
@@ -61,27 +61,31 @@ export default function SocialPostTrackerPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [sheetLoading, setSheetLoading] = useState(true);
-  const [sheetError, setSheetError] = useState("");
-  const [sheetMetrics, setSheetMetrics] = useState(null);
+  const [rowsLoading, setRowsLoading] = useState(true);
+  const [rowsError, setRowsError] = useState("");
 
   const canSubmit = useMemo(() => {
     return Boolean(form.date && form.brand && form.platform && !saving);
   }, [form, saving]);
 
-  async function refreshMetrics() {
-    setSheetLoading(true);
-    setSheetError("");
+
+  async function refreshSavedRows() {
+    setRowsLoading(true);
+    setRowsError("");
 
     try {
-      const data = await loadSocialMediaData();
-      setSheetMetrics(data.metrics || null);
-    } catch (metricsError) {
-      setSheetError(metricsError?.message || "Failed to load sheet metrics.");
+      const rows = await loadPostTrackerRows();
+      setSavedRows(rows);
+    } catch (loadError) {
+      setRowsError(loadError?.message || "Failed to load Post_Tracker rows.");
     } finally {
-      setSheetLoading(false);
+      setRowsLoading(false);
     }
   }
+
+  useEffect(() => {
+    refreshSavedRows();
+  }, []);
 
   function updateField(key, value) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -119,9 +123,13 @@ export default function SocialPostTrackerPage() {
         followers: form.followers ? Number(form.followers) : "",
       };
 
-      await saveSocialMediaEntry(payload);
-      setSavedRows((current) => [payload, ...current]);
-      setMessage("Saved! The row was sent to Google Sheets webhook.");
+      const result = await saveSocialMediaEntry(payload);
+      await refreshSavedRows();
+      setMessage(
+        result?.unverified
+          ? "Save request sent, but browser could not verify delivery. Please check the sheet and enable CORS if needed."
+          : "Saved! Row was written to Google Sheet and reloaded.",
+      );
       resetForm();
     } catch (submissionError) {
       setError(submissionError?.message || "Failed to save row.");
@@ -280,9 +288,13 @@ export default function SocialPostTrackerPage() {
       {error && <p style={{ color: "#a00000", marginTop: 12 }}>❌ {error}</p>}
 
       <section style={{ marginTop: 18 }}>
-        <h2 style={{ marginBottom: 8 }}>Saved in this session</h2>
-        {savedRows.length === 0 ? (
-          <p style={{ color: "#666" }}>No rows saved yet.</p>
+        <h2 style={{ marginBottom: 8 }}>Saved rows from Post_Tracker sheet</h2>
+        {rowsLoading ? (
+          <p style={{ color: "#666" }}>Loading rows from Google Sheet...</p>
+        ) : rowsError ? (
+          <p style={{ color: "#a00000" }}>❌ {rowsError}</p>
+        ) : savedRows.length === 0 ? (
+          <p style={{ color: "#666" }}>No rows found in Post_Tracker.</p>
         ) : (
           <div style={{ overflowX: "auto", border: "1px solid #ddd", borderRadius: 8, background: "#fff" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 700 }}>
