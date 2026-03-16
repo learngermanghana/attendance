@@ -303,7 +303,7 @@ app.post("/checkin", async (req, res) => {
       return res.status(400).json({ error: "Session not opened" });
     }
 
-    const sessionRef = sessionLookup.requestedRef;
+    const sessionRef = sessionLookup.existingRef || sessionLookup.requestedRef;
     const sessionSnap = sessionLookup.existingSnap;
 
     const session = sessionSnap.data();
@@ -316,27 +316,6 @@ app.post("/checkin", async (req, res) => {
 
     if (openFrom && now.toMillis() < openFrom.toMillis()) return res.status(400).json({ error: "Check-in not started" });
     if (openTo && now.toMillis() > openTo.toMillis()) return res.status(400).json({ error: "Check-in time ended" });
-
-    if (sessionLookup.usedFallback) {
-      await sessionRef.set(
-        {
-          classId,
-          sessionId,
-          date: String(date || session.date || "").trim(),
-          sessionLabel: metadata.sessionLabel,
-          assignmentId: metadata.assignmentId,
-          topic: metadata.topic,
-          chapter: metadata.chapter,
-          assignment_id: admin.firestore.FieldValue.delete(),
-          opened: session.opened,
-          openFrom: session.openFrom || null,
-          openTo: session.openTo || null,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          migratedFromSessionId: sessionLookup.existingRef.id,
-        },
-        { merge: true }
-      );
-    }
 
     const rawEmail = String(email || "").trim();
     const normalizedEmail = normalizeText(rawEmail);
@@ -397,7 +376,7 @@ app.post("/checkin", async (req, res) => {
       phoneNumber: resolveStudentPhone(st),
       secretCode: buildSecretCode({ classId, date: sessionId, email: st.email || normalizedEmail, phone: storedPhone }),
       classId,
-      sessionId,
+      sessionId: sessionRef.id,
       date: String(date || session.date || "").trim(),
       sessionLabel: metadata.sessionLabel,
       assignmentId: metadata.assignmentId,
@@ -416,7 +395,12 @@ app.post("/checkin", async (req, res) => {
 
     await checkinRef.set(checkinPayload, { merge: true });
 
-    return res.json({ ok: true });
+    return res.json({
+      ok: true,
+      savedSessionId: sessionRef.id,
+      requestedSessionId: sessionId,
+      usedFallbackSession: sessionLookup.usedFallback,
+    });
   } catch (e) {
     return res.status(500).json({ error: e?.message || "Server error" });
   }

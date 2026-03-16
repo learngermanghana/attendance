@@ -86,6 +86,7 @@ export default function CheckinPage() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [busy, setBusy] = useState(false);
   const [submittedInfo, setSubmittedInfo] = useState(null);
+  const [savedSessionId, setSavedSessionId] = useState("");
 
   const [statusBusy, setStatusBusy] = useState(false);
   const [statusError, setStatusError] = useState("");
@@ -103,9 +104,9 @@ export default function CheckinPage() {
   const selfCheckinUrl = useMemo(() => window.location.href, []);
 
   const assignmentStoragePath = useMemo(() => {
-    if (!classId || !sessionId) return "-";
-    return `attendance/${classId}/sessions/${sessionId}/checkins`;
-  }, [classId, sessionId]);
+    if (!classId || !(savedSessionId || sessionId)) return "-";
+    return `attendance/${classId}/sessions/${savedSessionId || sessionId}/checkins`;
+  }, [classId, sessionId, savedSessionId]);
 
   const validationError = useMemo(() => {
     if (!email.trim()) return "Email is required.";
@@ -256,10 +257,14 @@ export default function CheckinPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || "Check-in failed");
+
+      const resolvedSavedSessionId = String(data?.savedSessionId || sessionId || "").trim();
+      setSavedSessionId(resolvedSavedSessionId);
       success("Check-in successful. You are marked present.");
       setSubmittedInfo({
         checkedInAt: Date.now(),
         maskedEmail: trimmedEmail.replace(/(^.).*(@.*$)/, "$1***$2"),
+        savedSessionId: resolvedSavedSessionId,
       });
       setEmail("");
       setPhoneNumber("");
@@ -316,6 +321,7 @@ export default function CheckinPage() {
             <div>Time: {new Date(submittedInfo.checkedInAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
             <div>Email: {submittedInfo.maskedEmail}</div>
             <div>Session: {sessionDisplayLabel || "-"}</div>
+            <div>Saved under session ID: {submittedInfo.savedSessionId || "-"}</div>
           </div>
         )}
 
