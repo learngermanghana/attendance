@@ -49,6 +49,12 @@ const QUICK_TEMPLATES = [
     announcement:
       "Hi {student_name}, great work so far. Your exam is still pending, so please keep practicing regularly to stay confident and ready.",
   },
+  {
+    label: "Power outage notice",
+    topic: "Light Out Notice",
+    announcement:
+      "Hi everyone, there is a light out right now, so please hold on. Once the light is back, you will be notified.",
+  },
 ];
 
 const fieldStyle = { display: "grid", gap: 6 };
