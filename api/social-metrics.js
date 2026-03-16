@@ -9,6 +9,12 @@ const DEFAULT_POST_TRACKER_GID = "184774716";
 const DEFAULT_POST_TRACKER_CSV_URL =
   "https://docs.google.com/spreadsheets/d/1BxKGkGCWynv7jr1oze0MjfkM2SuQmohAQZtoIfV6jDk/export?format=csv&gid=184774716";
 
+const SHEET_NAME_ALIASES = {
+  Post_Tracker: ["Post_Tracker", "Post Tracker"],
+  Followers_Growth: ["Followers_Growth", "Followers Growth"],
+  Content_Calendar: ["Content_Calendar", "Content Calendar"],
+};
+
 function normalizeSheetName(value) {
   return String(value || "")
     .trim()
@@ -103,6 +109,52 @@ function buildCsvUrl(publishedHtmlUrl, gid) {
 
   const base = String(publishedHtmlUrl || "").replace(/\/pubhtml(?:\?.*)?$/, "/pub");
   return `${base}?gid=${encodeURIComponent(gid)}&single=true&output=csv`;
+}
+
+function unique(values) {
+  return [...new Set(values.filter(Boolean))];
+}
+
+function buildCandidateCsvUrls({ sheetName, publishedUrl, preferredIdentifier }) {
+  if (sheetName === "Post_Tracker") {
+    return unique([
+      process.env.SOCIAL_POST_TRACKER_CSV_URL,
+      process.env.VITE_SOCIAL_POST_TRACKER_CSV_URL,
+      DEFAULT_POST_TRACKER_CSV_URL,
+      buildCsvUrl(publishedUrl, preferredIdentifier || sheetName),
+      ...SHEET_NAME_ALIASES[sheetName].map((alias) => buildCsvUrl(publishedUrl, alias)),
+    ]);
+  }
+
+  return unique([
+    buildCsvUrl(publishedUrl, preferredIdentifier || sheetName),
+    ...SHEET_NAME_ALIASES[sheetName].map((alias) => buildCsvUrl(publishedUrl, alias)),
+  ]);
+}
+
+async function loadCsvFromCandidateUrls({ sheetName, candidateCsvUrls }) {
+  let lastError = null;
+
+  for (const csvUrl of candidateCsvUrls) {
+    try {
+      const response = await fetch(csvUrl);
+      if (!response.ok) {
+        lastError = new Error(
+          `Failed to load ${sheetName} CSV data (status ${response.status})`,
+        );
+        continue;
+      }
+
+      return response.text();
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw (
+    lastError ||
+    new Error(`Failed to load ${sheetName} CSV data`)
+  );
 }
 
 function toRows(csvText) {
@@ -369,17 +421,13 @@ async function loadSocialSheetData() {
   try {
     const [postTrackerCsv, followerGrowthCsv, contentCalendarCsv] = await Promise.all(
       REQUIRED_SHEETS.map(async (sheetName) => {
-        const csvUrl =
-          sheetName === "Post_Tracker"
-            ? process.env.SOCIAL_POST_TRACKER_CSV_URL ||
-              process.env.VITE_SOCIAL_POST_TRACKER_CSV_URL ||
-              DEFAULT_POST_TRACKER_CSV_URL
-            : buildCsvUrl(publishedUrl, sheetIdentifiersByName[sheetName]);
-        const response = await fetch(csvUrl);
-        if (!response.ok) {
-          throw new Error(`Failed to load ${sheetName} CSV data`);
-        }
-        return response.text();
+        const candidateCsvUrls = buildCandidateCsvUrls({
+          sheetName,
+          publishedUrl,
+          preferredIdentifier: sheetIdentifiersByName[sheetName],
+        });
+
+        return loadCsvFromCandidateUrls({ sheetName, candidateCsvUrls });
       }),
     );
 
@@ -417,3 +465,5 @@ export default async function handler(req, res) {
     });
   }
 }
+
+export { buildCandidateCsvUrls, loadCsvFromCandidateUrls };
