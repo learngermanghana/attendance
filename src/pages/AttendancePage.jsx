@@ -165,26 +165,6 @@ export default function AttendancePage() {
       .filter(Boolean);
   }, [selectedStudentsForEmail]);
 
-  const checkinBackupMailto = useMemo(() => {
-    if (selectedEmails.length === 0) return "";
-    const subject = `Backup check-in link for ${classId} (${sessionLabel || `Session ${checkinSessionId}`})`;
-    const body = [
-      "Hi student,",
-      "",
-      "As a backup in case the QR code check-in was missed, please use this check-in link:",
-      checkinUrl,
-      "",
-      `Class: ${classId}`,
-      `Session: ${sessionLabel || checkinSessionId}`,
-      `Date: ${checkinSessionDate}`,
-      "",
-      "Thank you.",
-    ].join("\n");
-
-    const to = selectedEmails.join(",");
-    return `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  }, [selectedEmails, classId, sessionLabel, checkinSessionId, checkinUrl, checkinSessionDate]);
-
   const summary = useMemo(() => {
     const present = studentRows.filter((row) => row.present).length;
     const absent = studentRows.length - present;
@@ -223,6 +203,26 @@ export default function AttendancePage() {
     sessionLabel,
     studentRows.length,
   ]);
+
+  const checkinBackupMailto = useMemo(() => {
+    if (selectedEmails.length === 0) return "";
+    const subject = `Backup check-in link for ${classId} (${sessionLabel || `Session ${checkinSessionId}`})`;
+    const body = [
+      "Hi student,",
+      "",
+      "As a backup in case the QR code check-in was missed, please use this check-in link:",
+      checkinUrl,
+      "",
+      `Class: ${classId}`,
+      `Session: ${sessionLabel || checkinSessionId}`,
+      `Date: ${checkinSessionDate}`,
+      "",
+      "Thank you.",
+    ].join("\n");
+
+    const to = selectedEmails.join(",");
+    return `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  }, [selectedEmails, classId, sessionLabel, checkinSessionId, checkinUrl, checkinSessionDate]);
 
 
 
