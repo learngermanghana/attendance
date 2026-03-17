@@ -6,6 +6,7 @@ import {
   readPublishedLevel,
   readPublishedStatus,
   readPublishedStudentCode,
+  readPublishedStudentEmail,
   readPublishedStudentName,
 } from "./publishedSheetService.js";
 
@@ -30,6 +31,7 @@ function mapPublishedStudent(row) {
   return {
     id: String(readPublishedStudentCode(row) || readPublishedStudentName(row) || "").trim(),
     name: normalize(readPublishedStudentName(row)),
+    email: normalize(readPublishedStudentEmail(row)),
     studentCode: normalize(readPublishedStudentCode(row)),
     className: resolvePublishedClass(row),
     status: normalize(readPublishedStatus(row)).toLowerCase(),
