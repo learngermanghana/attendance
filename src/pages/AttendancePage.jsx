@@ -105,6 +105,7 @@ export default function AttendancePage() {
   const [sessionOpen, setSessionOpen] = useState(false);
   const [sessionBusy, setSessionBusy] = useState(false);
   const [attendanceMap, setAttendanceMap] = useState({});
+  const [selectedEmailStudentCodes, setSelectedEmailStudentCodes] = useState([]);
   const [selectedSessionId, setSelectedSessionId] = useState("1");
   const schedule = useMemo(() => getClassSchedule(classId), [classId]);
 
@@ -147,10 +148,42 @@ export default function AttendancePage() {
       .map(([studentCode, entry]) => ({
         studentCode,
         name: entry?.name || "",
+        email: String(entry?.email || "").trim(),
         present: Boolean(entry?.present),
       }))
       .sort(byStudentName);
   }, [selectedSession]);
+
+  const selectedStudentsForEmail = useMemo(() => {
+    const selectedCodes = new Set(selectedEmailStudentCodes);
+    return studentRows.filter((row) => selectedCodes.has(row.studentCode));
+  }, [selectedEmailStudentCodes, studentRows]);
+
+  const selectedEmails = useMemo(() => {
+    return selectedStudentsForEmail
+      .map((row) => row.email)
+      .filter(Boolean);
+  }, [selectedStudentsForEmail]);
+
+  const checkinBackupMailto = useMemo(() => {
+    if (selectedEmails.length === 0) return "";
+    const subject = `Backup check-in link for ${classId} (${sessionLabel || `Session ${checkinSessionId}`})`;
+    const body = [
+      "Hi student,",
+      "",
+      "As a backup in case the QR code check-in was missed, please use this check-in link:",
+      checkinUrl,
+      "",
+      `Class: ${classId}`,
+      `Session: ${sessionLabel || checkinSessionId}`,
+      `Date: ${checkinSessionDate}`,
+      "",
+      "Thank you.",
+    ].join("\n");
+
+    const to = selectedEmails.join(",");
+    return `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  }, [selectedEmails, classId, sessionLabel, checkinSessionId, checkinUrl, checkinSessionDate]);
 
   const summary = useMemo(() => {
     const present = studentRows.filter((row) => row.present).length;
@@ -235,6 +268,7 @@ export default function AttendancePage() {
           if (!code) continue;
           studentTemplate[code] = {
             name: String(student.name || "").trim(),
+            email: String(student.email || "").trim(),
             present: false,
           };
         }
@@ -300,6 +334,7 @@ export default function AttendancePage() {
             if (!code) continue;
             studentsCopy[code] = {
               name: String(c.name || studentsCopy[code]?.name || "").trim(),
+              email: String(studentsCopy[code]?.email || "").trim(),
               present: true,
             };
           }
@@ -312,6 +347,11 @@ export default function AttendancePage() {
       }
     })();
   }, [classId, selectedSessionId, checkinSessionDate, checkinSessionId]);
+
+  useEffect(() => {
+    const availableCodes = new Set(studentRows.map((row) => row.studentCode));
+    setSelectedEmailStudentCodes((prev) => prev.filter((code) => availableCodes.has(code)));
+  }, [studentRows]);
 
   const setStudentPresent = (studentCode, present) => {
     setAttendanceMap((prev) => ({
@@ -334,6 +374,26 @@ export default function AttendancePage() {
     } else {
       info(`${studentName} marked absent.`);
     }
+  };
+
+  const toggleStudentEmailSelection = (studentCode, checked) => {
+    setSelectedEmailStudentCodes((prev) => {
+      if (checked) {
+        return prev.includes(studentCode) ? prev : [...prev, studentCode];
+      }
+      return prev.filter((code) => code !== studentCode);
+    });
+  };
+
+  const selectEmailTargets = (mode) => {
+    const nextSelection = studentRows
+      .filter((row) => {
+        if (!row.email) return false;
+        if (mode === "absent") return !row.present;
+        return true;
+      })
+      .map((row) => row.studentCode);
+    setSelectedEmailStudentCodes(nextSelection);
   };
 
   const onSave = async () => {
@@ -568,6 +628,35 @@ export default function AttendancePage() {
         )}
       </div>
 
+      <div style={{ border: "1px solid #ddd", borderRadius: 10, padding: 12, marginBottom: 14 }}>
+        <div style={{ fontWeight: 700, marginBottom: 8 }}>Backup Email Check-in Link</div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+          <button type="button" onClick={() => selectEmailTargets("all")}>Select all with email</button>
+          <button type="button" onClick={() => selectEmailTargets("absent")}>Select absent with email</button>
+          <button type="button" onClick={() => setSelectedEmailStudentCodes([])}>Clear selection</button>
+          <a
+            href={checkinBackupMailto || undefined}
+            onClick={(e) => {
+              if (!checkinBackupMailto) e.preventDefault();
+            }}
+            style={{
+              pointerEvents: checkinBackupMailto ? "auto" : "none",
+              opacity: checkinBackupMailto ? 1 : 0.5,
+              border: "1px solid #c9d1e4",
+              borderRadius: 6,
+              padding: "6px 10px",
+              textDecoration: "none",
+              color: "inherit",
+            }}
+          >
+            Email selected students
+          </a>
+        </div>
+        <div style={{ fontSize: 12, opacity: 0.8 }}>
+          Selected recipients: {selectedEmails.length}
+        </div>
+      </div>
+
       {studentRows.length === 0 ? (
         <div>No students found for this class.</div>
       ) : (
@@ -587,10 +676,21 @@ export default function AttendancePage() {
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700 }}>{row.name || row.studentCode}</div>
                 <div style={{ fontSize: 12, opacity: 0.7 }}>{row.studentCode}</div>
+                {row.email && <div style={{ fontSize: 12, opacity: 0.7 }}>{row.email}</div>}
                 <div style={{ marginTop: 6, fontSize: 12, fontWeight: 600, color: row.present ? "#147848" : "#6b7280" }}>
                   {row.present ? "Present" : "Absent"}
                 </div>
               </div>
+
+              <label style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                <input
+                  type="checkbox"
+                  disabled={!row.email}
+                  checked={selectedEmailStudentCodes.includes(row.studentCode)}
+                  onChange={(e) => toggleStudentEmailSelection(row.studentCode, e.target.checked)}
+                />
+                Email
+              </label>
 
               <button onClick={() => setStudentPresent(row.studentCode, true)} style={{ minWidth: 90, background: row.present ? "#147848" : "white", color: row.present ? "white" : "black", borderColor: row.present ? "#147848" : "#c9d1e4" }}>
                 Present
