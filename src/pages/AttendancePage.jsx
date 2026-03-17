@@ -56,6 +56,20 @@ function resolveTopicFromTitle(title) {
   return String(segments[segments.length - 1] || text).trim();
 }
 
+function mergeStudentsWithTemplate(studentTemplate, baseStudents) {
+  const merged = { ...studentTemplate };
+
+  for (const [studentCode, baseStudent] of Object.entries(baseStudents || {})) {
+    merged[studentCode] = {
+      ...(studentTemplate[studentCode] || {}),
+      ...(baseStudent || {}),
+      email: String(baseStudent?.email || studentTemplate[studentCode]?.email || "").trim(),
+    };
+  }
+
+  return merged;
+}
+
 function mergeStoredAttendanceWithSchedule(scheduleAttendanceMap, storedAttendance) {
   const merged = { ...scheduleAttendanceMap };
   const scheduleIdsByDate = {};
@@ -296,10 +310,7 @@ export default function AttendancePage() {
             assignmentId: String(existingSession.assignmentId || existingSession.assignment_id || scheduleSession.assignmentId || ""),
             startTime: String(existingSession.startTime || "").trim(),
             endTime: String(existingSession.endTime || "").trim(),
-            students: {
-              ...studentTemplate,
-              ...baseStudents,
-            },
+            students: mergeStudentsWithTemplate(studentTemplate, baseStudents),
           };
         }
 
