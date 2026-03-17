@@ -46,3 +46,20 @@ test("includes all students for matching class without status filtering", async 
 
   assert.deepEqual(result.map((s) => s.name), ["Inactive Student", "Paid Student"]);
 });
+
+test("maps published student email for attendance email selection", async () => {
+  const rows = [
+    {
+      classname: "A2 Stuttgart Klasse",
+      level: "A2",
+      status: "Active",
+      studentcode: "S-005",
+      name: "Email Student",
+      email: "email.student@example.com",
+    },
+  ];
+
+  const [student] = await listPublishedStudentsByClassWithLoader("A2 Stuttgart Klasse", async () => rows);
+
+  assert.equal(student.email, "email.student@example.com");
+});

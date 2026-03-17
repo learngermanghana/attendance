@@ -91,3 +91,7 @@ export function readPublishedStatus(row) {
 export function readPublishedStudentCode(row) {
   return row.studentcode || row.uid || "";
 }
+
+export function readPublishedStudentEmail(row) {
+  return row.email || row["e-mail"] || row.emailaddress || "";
+}
