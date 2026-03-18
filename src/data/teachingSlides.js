@@ -1,207 +1,739 @@
-import { courseDictionary } from "./courseDictionary";
+import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { styles } from "../styles";
 
-const curatedSlides = [
+const pageWrap = {
+  ...styles.container,
+  display: "grid",
+  gap: 18,
+  paddingBottom: 32,
+};
+
+const cardStyle = {
+  ...styles.card,
+  display: "grid",
+  gap: 14,
+  padding: 16,
+};
+
+const boxBase = {
+  border: "1px solid #e5e7eb",
+  borderRadius: 14,
+  padding: 14,
+  display: "grid",
+  gap: 10,
+  background: "#fff",
+};
+
+const infoBoxStyle = {
+  ...boxBase,
+  border: "1px solid #bfdbfe",
+  background: "#eff6ff",
+};
+
+const warningBoxStyle = {
+  ...boxBase,
+  border: "1px solid #fde68a",
+  background: "#fffbeb",
+};
+
+const successBoxStyle = {
+  ...boxBase,
+  border: "1px solid #bbf7d0",
+  background: "#f0fdf4",
+};
+
+const inputStyle = {
+  width: "100%",
+  minHeight: 48,
+  padding: "12px 14px",
+  borderRadius: 12,
+  border: "1px solid #d1d5db",
+  fontSize: 16,
+  lineHeight: 1.4,
+  boxSizing: "border-box",
+};
+
+const textareaStyle = {
+  ...inputStyle,
+  minHeight: 140,
+  resize: "vertical",
+  fontFamily: "inherit",
+};
+
+const chipWrapStyle = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: 8,
+};
+
+const chipStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  padding: "8px 12px",
+  borderRadius: 999,
+  border: "1px solid #d1d5db",
+  background: "#f9fafb",
+  fontSize: 14,
+  lineHeight: 1.3,
+};
+
+const primaryActionStyle = {
+  ...styles.secondaryButton,
+  width: "100%",
+  minHeight: 48,
+  borderRadius: 12,
+  fontSize: 15,
+};
+
+const heroImage =
+  "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1400&q=80";
+
+const articleGenderQuestions = [
+  { noun: "Tisch", article: "der", gender: "Masculine (der)", english: "table" },
+  { noun: "Auto", article: "das", gender: "Neuter (das)", english: "car" },
+  { noun: "Lampe", article: "die", gender: "Feminine (die)", english: "lamp" },
+  { noun: "Apfel", article: "der", gender: "Masculine (der)", english: "apple" },
+  { noun: "Buch", article: "das", gender: "Neuter (das)", english: "book" },
+  { noun: "Katze", article: "die", gender: "Feminine (die)", english: "cat" },
+  { noun: "Stuhl", article: "der", gender: "Masculine (der)", english: "chair" },
+  { noun: "Haus", article: "das", gender: "Neuter (das)", english: "house" },
+  { noun: "Blume", article: "die", gender: "Feminine (die)", english: "flower" },
+  { noun: "Hund", article: "der", gender: "Masculine (der)", english: "dog" },
+];
+
+const adjectivePairs = [
+  ["groß", "klein"],
+  ["alt", "neu"],
+  ["lang", "kurz"],
+  ["schön", "hässlich"],
+  ["heiß", "kalt"],
+  ["schnell", "langsam"],
+  ["laut", "leise"],
+  ["teuer", "billig"],
+  ["glücklich", "traurig"],
+  ["sauber", "schmutzig"],
+];
+
+const wWordQuestions = [
   {
-    id: "a2-day-1-small-talk",
-    course: "A2",
-    day: "Day 1",
-    dayNumber: 1,
-    assignmentId: "A2-1.1",
-    title: "A2 Day 1 · Small Talk",
-    topic: "1.1 Small Talk",
-    objective: "Students confidently start, continue, and close short conversations in German.",
-    estimatedDuration: "45–60 minutes",
-    warmupQuestionsDe: ["Wie geht's dir heute?", "Was war heute Morgen dein erster Gedanke?", "Sprichst du lieber morgens oder abends mit Freunden? Warum?"],
-    keyPhrasesDe: ["Hallo! Wie geht's?", "Woher kommst du?", "Was machst du beruflich / Was studierst du?", "Was machst du gern in deiner Freizeit?", "War schön, mit dir zu sprechen!"],
-    studentQuestionsDe: ["Wie heißt du und woher kommst du?", "Was machst du beruflich oder was studierst du?", "Was machst du gern am Wochenende?", "Trinkst du lieber Kaffee oder Tee? Warum?", "Welche Musik hörst du zurzeit gern?"],
-    teacherNotesEn: ["Model the first dialogue with one volunteer before pair work.", "Push follow-up language: Warum?, Echt?, Und du?, Interessant!", "Focus on confidence and fluency over perfect grammar."],
-    interactionFlow: [
-      { phase: "Demo", detailEn: "5 min: teacher + volunteer conversation with opening, follow-up, and closing." },
-      { phase: "Pair Round A", detailEn: "8 min: students ask guided questions with one follow-up each." },
-      { phase: "Wrap-up", detailEn: "5 min: learners write one sentence on what they learned today." },
-    ],
-    wrapUpTaskDe: "Schreibe: 'Heute habe ich gelernt, wie man ein Gespräch beginnt und weiterführt.'",
+    stem: "1. ___ heißt du?",
+    options: ["Wer", "Wie", "Was", "Wo", "Woher"],
+    answer: "Wie",
+    explanation: "Use „Wie“ to ask about a name.",
   },
   {
-    id: "a2-day-2-personen-beschreiben",
-    course: "A2",
-    day: "Day 2",
-    dayNumber: 2,
-    assignmentId: "A2-1.2",
-    title: "A2 Day 2 · Personen beschreiben",
-    topic: "1.2 Personen beschreiben",
-    objective: "Students describe people using appearance, personality, and habits.",
-    estimatedDuration: "45–60 minutes",
-    warmupQuestionsDe: ["Welche drei Wörter beschreiben dich heute?", "Ist es wichtiger: freundlich oder pünktlich?", "Kennst du eine sehr humorvolle Person?"],
-    keyPhrasesDe: ["Er/Sie ist sehr ...", "Er/Sie hat ... Haare.", "Er/Sie wirkt ...", "Ich finde, dass ..."],
-    studentQuestionsDe: ["Wie sieht dein bester Freund / deine beste Freundin aus?", "Welche Eigenschaften sind dir wichtig?", "Bist du eher ruhig oder offen? Warum?"],
-    teacherNotesEn: ["Give one model with sentence frames before asking free production.", "Encourage adjectives with reasons, not single-word answers."],
-    interactionFlow: [
-      { phase: "Vocabulary activation", detailEn: "8 min: brainstorm adjectives (positive + neutral)." },
-      { phase: "Guided pairs", detailEn: "10 min: students ask first 3 questions with sentence frames." },
-      { phase: "Mini-presentations", detailEn: "10 min: each learner describes one person for 30-45 seconds." },
-    ],
-    wrapUpTaskDe: "Nenne 3 Adjektive über eine Person in deiner Klasse und begründe sie kurz.",
+    stem: "2. ___ ist das Buch?",
+    options: ["Wer", "Wie", "Was", "Wo", "Woher"],
+    answer: "Wo",
+    explanation: "Use „Wo“ to ask about a place.",
   },
   {
-    id: "a2-day-3-vergleichen",
-    course: "A2",
-    day: "Day 3",
-    dayNumber: 3,
-    assignmentId: "A2-1.3",
-    title: "A2 Day 3 · Dinge und Personen vergleichen",
-    topic: "1.3 Vergleichen",
-    objective: "Students compare people/things using Komparativ and simple opinions.",
-    estimatedDuration: "45–60 minutes",
-    warmupQuestionsDe: ["Ist Reisen mit dem Zug besser als mit dem Bus?", "Was ist interessanter: Filme oder Bücher?", "Wer ist sportlicher in deiner Familie?"],
-    keyPhrasesDe: ["... ist größer/schneller/interessanter als ...", "Im Vergleich zu ...", "Meiner Meinung nach ..."],
-    studentQuestionsDe: ["Was ist einfacher: online lernen oder im Kurs lernen?", "Welche Stadt ist teurer als deine Heimatstadt?", "Was ist gesünder: selbst kochen oder bestellen?"],
-    teacherNotesEn: ["Keep a visible board list of comparative forms learners produce.", "Ask for justification after each comparison: Warum?"],
-    interactionFlow: [
-      { phase: "Board race", detailEn: "7 min: teams create comparative sentences from prompts." },
-      { phase: "Pair interviews", detailEn: "12 min: students ask all guided questions and add one follow-up." },
-      { phase: "Wrap-up", detailEn: "6 min: class shares best comparative sentence heard today." },
-    ],
-    wrapUpTaskDe: "Schreibe 3 Sätze mit '... als ...' über dein Leben.",
+    stem: "3. ___ wohnt er?",
+    options: ["Wer", "Wie", "Was", "Wo", "Woher"],
+    answer: "Wo",
+    explanation: "Use „Wo“ for location.",
   },
   {
-    id: "a2-day-4-treffen",
-    course: "A2",
-    day: "Day 4",
-    dayNumber: 4,
-    assignmentId: "A2-2.4",
-    title: "A2 Day 4 · Wo möchten wir uns treffen?",
-    topic: "2.4 Treffen vereinbaren",
-    objective: "Students suggest meeting places/times and agree on a plan.",
-    estimatedDuration: "45–60 minutes",
-    warmupQuestionsDe: ["Wo triffst du normalerweise Freunde?", "Wann hast du diese Woche Zeit?", "Lieber Café oder Park?"],
-    keyPhrasesDe: ["Hast du am ... Zeit?", "Wollen wir uns um ... treffen?", "Passt dir das?", "Tut mir leid, da kann ich nicht."],
-    studentQuestionsDe: ["Wann hast du am Wochenende Zeit?", "Welcher Ort ist für dich am besten?", "Was können wir dort machen?"],
-    teacherNotesEn: ["Teach accepting and rejecting politely as equal skills.", "Use role-cards with constraints (busy schedule, low budget, distance)."],
-    interactionFlow: [
-      { phase: "Prompted dialogue", detailEn: "8 min: teacher models planning with one student." },
-      { phase: "Role-play", detailEn: "20 min: partners negotiate place/time and present final plan." },
-      { phase: "Wrap-up", detailEn: "5 min: learners say one phrase they will reuse in real life." },
-    ],
-    wrapUpTaskDe: "Schreibe eine kurze Nachricht: Ort, Uhrzeit und Aktivität für ein Treffen.",
+    stem: "4. ___ kommst du?",
+    options: ["Wer", "Wie", "Was", "Wo", "Woher"],
+    answer: "Woher",
+    explanation: "Use „Woher“ for origin.",
   },
   {
-    id: "a2-day-5-freizeit",
-    course: "A2",
-    day: "Day 5",
-    dayNumber: 5,
-    assignmentId: "A2-2.5",
-    title: "A2 Day 5 · Was machst du in deiner Freizeit?",
-    topic: "2.5 Freizeit",
-    objective: "Students discuss hobbies, frequency, and preferences in extended turns.",
-    estimatedDuration: "45–60 minutes",
-    warmupQuestionsDe: ["Was machst du am liebsten nach der Arbeit / nach dem Kurs?", "Wie oft machst du Sport?", "Was möchtest du neu ausprobieren?"],
-    keyPhrasesDe: ["In meiner Freizeit ...", "Ich mache das einmal/zweimal pro Woche.", "Am liebsten ...", "Ich würde gern ..."],
-    studentQuestionsDe: ["Welche Hobbys hast du?", "Wie oft machst du dieses Hobby?", "Warum gefällt dir dieses Hobby?"],
-    teacherNotesEn: ["Push adverbs of frequency (oft, manchmal, selten, nie).", "Require one follow-up question after each answer."],
-    interactionFlow: [
-      { phase: "Warm-up mingle", detailEn: "8 min: students ask warm-up questions to three classmates." },
-      { phase: "Pair interview", detailEn: "12 min: complete all guided questions in pairs." },
-      { phase: "Spotlight share", detailEn: "10 min: introduce partner's hobby profile to class." },
-    ],
-    wrapUpTaskDe: "Schreibe 4 Sätze über deine Freizeit mit Häufigkeit (z. B. zweimal pro Woche).",
+    stem: "5. ___ ist dein Lehrer?",
+    options: ["Wer", "Wie", "Was", "Wo", "Woher"],
+    answer: "Wer",
+    explanation: "Use „Wer“ for a person.",
+  },
+  {
+    stem: "6. ___ geht es dir?",
+    options: ["Wer", "Wie", "Was", "Wo", "Woher"],
+    answer: "Wie",
+    explanation: "Use „Wie“ for condition.",
+  },
+  {
+    stem: "7. ___ machst du am Wochenende?",
+    options: ["Wer", "Wie", "Was", "Wo", "Woher"],
+    answer: "Was",
+    explanation: "Use „Was“ for an action or thing.",
+  },
+  {
+    stem: "8. ___ ist das Auto?",
+    options: ["Wer", "Wie", "Was", "Wo", "Woher"],
+    answer: "Wo",
+    explanation: "Use „Wo“ for location.",
+  },
+  {
+    stem: "9. ___ bist du?",
+    options: ["Wer", "Wie", "Was", "Wo", "Woher"],
+    answer: "Wer",
+    explanation: "Use „Wer“ to ask who a person is.",
+  },
+  {
+    stem: "10. ___ kommt sie?",
+    options: ["Wer", "Wie", "Was", "Wo", "Woher"],
+    answer: "Woher",
+    explanation: "Use „Woher“ for origin.",
   },
 ];
 
-function compareChapter(a, b) {
-  const aParts = String(a).split(".").map((part) => Number(part));
-  const bParts = String(b).split(".").map((part) => Number(part));
-  const maxLength = Math.max(aParts.length, bParts.length);
+const personalInfoPrompts = [
+  { label: "Familienname", starter: "Mein Familienname ist ..." },
+  { label: "Vorname", starter: "Mein Vorname ist ..." },
+  { label: "Herkunft", starter: "Ich komme aus ..." },
+  { label: "Geburtsort", starter: "Ich bin in ... geboren." },
+  { label: "Adresse", starter: "Meine Adresse ist ..." },
+  { label: "Postleitzahl", starter: "Meine Postleitzahl ist ..." },
+  { label: "Familienstand", starter: "Ich bin ledig / verheiratet / geschieden / verwitwet." },
+  { label: "Kinder", starter: "Ich habe ... Kinder. / Ich habe keine Kinder." },
+  { label: "Alter", starter: "Ich bin ... Jahre alt." },
+];
 
-  for (let index = 0; index < maxLength; index += 1) {
-    const left = aParts[index] ?? 0;
-    const right = bParts[index] ?? 0;
-    if (left !== right) return left - right;
-  }
+const SectionCard = ({ title, subtitle, children }) => (
+  <section style={cardStyle}>
+    <div style={{ display: "grid", gap: 6 }}>
+      <h2 style={{ margin: 0, fontSize: 22 }}>{title}</h2>
+      {subtitle ? (
+        <p style={{ margin: 0, lineHeight: 1.7, color: "#4b5563" }}>{subtitle}</p>
+      ) : null}
+    </div>
+    {children}
+  </section>
+);
 
-  return 0;
-}
+const RevealAnswer = ({ children, buttonLabel = "Show answer" }) => {
+  const [open, setOpen] = useState(false);
 
-function createTemplateSlide(level, entry, lessonNumber) {
-  const levelLabel = level.toUpperCase();
+  return (
+    <div style={{ display: "grid", gap: 10 }}>
+      <button
+        type="button"
+        style={primaryActionStyle}
+        onClick={() => setOpen((prev) => !prev)}
+      >
+        {open ? "Hide answer" : buttonLabel}
+      </button>
+      {open ? <div style={successBoxStyle}>{children}</div> : null}
+    </div>
+  );
+};
 
-  return {
-    id: entry.assignment_id.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-    course: levelLabel,
-    day: `Lesson ${lessonNumber}`,
-    dayNumber: lessonNumber,
-    assignmentId: entry.assignment_id,
-    title: `${levelLabel} Lesson ${lessonNumber} · ${entry.de}`,
-    topic: `${entry.chapter} ${entry.de}`,
-    objective: `Students can communicate about ${entry.en.toLowerCase()} with clear ${levelLabel} sentence patterns.`,
-    estimatedDuration: "45–60 minutes",
-    warmupQuestionsDe: [
-      `Was weißt du schon über das Thema „${entry.de}“?`,
-      `Wann brauchst du ${entry.de.toLowerCase()} im Alltag?`,
-      "Welche Wörter kennst du schon dazu?",
-    ],
-    keyPhrasesDe: [
-      `${entry.de}: wichtige Redemittel`,
-      "Ich denke, dass ...",
-      "Kannst du das bitte wiederholen?",
-      "Ich brauche ein Beispiel.",
-    ],
-    studentQuestionsDe: [
-      `Was bedeutet „${entry.de}“ für dich in deinem Alltag?`,
-      `Wann brauchst oder benutzt du ${entry.de.toLowerCase()}? Beschreibe eine konkrete Situation.`,
-      `Welches Beispiel zu „${entry.de}“ findest du besonders wichtig oder interessant? Warum?`,
-      `Welche Frage kannst du deinem Partner zu „${entry.de}“ stellen, damit er mehr als einen Satz antwortet?`,
-      `Wie würdest du das Thema „${entry.de}“ einem neuen Kursteilnehmer einfach erklären?`,
-    ],
-    teacherNotesEn: [
-      `Keep the lesson focused on high-frequency ${levelLabel} language for ${entry.en}.`,
-      "Model one full exchange before pair speaking.",
-      "Use short correction slots after each speaking phase.",
-    ],
-    interactionFlow: [
-      { phase: "Input", detailEn: "8 min: activate vocabulary and useful sentence frames." },
-      { phase: "Guided pairs", detailEn: "12 min: students use prompts with controlled answers." },
-      { phase: "Free practice", detailEn: "12 min: switch partners and expand answers." },
-      { phase: "Reflection", detailEn: "8 min: class feedback + correction recap." },
-    ],
-    wrapUpTaskDe: `Schreibe 3 Sätze zum Thema „${entry.de}“ und nutze neue Wörter von heute.`,
+const MobileSectionLabel = ({ children }) => (
+  <div
+    style={{
+      fontSize: 13,
+      fontWeight: 700,
+      color: "#1d4ed8",
+      letterSpacing: 0.2,
+      textTransform: "uppercase",
+    }}
+  >
+    {children}
+  </div>
+);
+
+const A1Day5IntroducingYourselfArticlesWorkbookPage = () => {
+  const navigate = useNavigate();
+
+  const [genderSelections, setGenderSelections] = useState(() =>
+    articleGenderQuestions.reduce((acc, _, index) => {
+      acc[index] = "";
+      return acc;
+    }, {})
+  );
+
+  const [wWordSelections, setWWordSelections] = useState(() =>
+    wWordQuestions.reduce((acc, _, index) => {
+      acc[index] = "";
+      return acc;
+    }, {})
+  );
+
+  const [adjectiveSentences, setAdjectiveSentences] = useState({
+    one: "",
+    two: "",
+    three: "",
+  });
+
+  const [dialogueAnswers, setDialogueAnswers] = useState({
+    name: "",
+    country: "",
+    city: "",
+    age: "",
+  });
+
+  const [aboutMe, setAboutMe] = useState("");
+
+  const genderScore = useMemo(() => {
+    return articleGenderQuestions.filter(
+      (item, index) => genderSelections[index] === item.gender
+    ).length;
+  }, [genderSelections]);
+
+  const wWordScore = useMemo(() => {
+    return wWordQuestions.filter(
+      (question, index) => wWordSelections[index] === question.answer
+    ).length;
+  }, [wWordSelections]);
+
+  const completedSections = useMemo(() => {
+    let count = 0;
+    if (Object.values(genderSelections).some(Boolean)) count += 1;
+    if (Object.values(adjectiveSentences).some(Boolean)) count += 1;
+    if (Object.values(dialogueAnswers).some(Boolean)) count += 1;
+    if (Object.values(wWordSelections).some(Boolean)) count += 1;
+    if (aboutMe.trim()) count += 1;
+    return count;
+  }, [genderSelections, adjectiveSentences, dialogueAnswers, wWordSelections, aboutMe]);
+
+  const handleGenderChange = (index, value) => {
+    setGenderSelections((prev) => ({ ...prev, [index]: value }));
   };
-}
 
-function buildLevelSlides(level) {
-  const entries = Object.values(courseDictionary[level] || {}).sort((left, right) => compareChapter(left.chapter, right.chapter));
-  return entries.map((entry, index) => createTemplateSlide(level, entry, index + 1));
-}
-
-const curatedSlidesByAssignment = Object.fromEntries(curatedSlides.map((slide) => [slide.assignmentId, slide]));
-
-const a1Slides = buildLevelSlides("A1");
-const generatedA2Slides = buildLevelSlides("A2").map((slide) => curatedSlidesByAssignment[slide.assignmentId] || slide);
-const b1Slides = buildLevelSlides("B1");
-
-export const teachingSlides = [...a1Slides, ...generatedA2Slides, ...b1Slides];
-
-export function getTeachingSlideById(id) {
-  return teachingSlides.find((slide) => slide.id === id) || null;
-}
-
-export function getSlidesByCourse(courseId) {
-  const normalized = String(courseId || "").trim().toUpperCase();
-  return teachingSlides
-    .filter((slide) => slide.course.toUpperCase() === normalized)
-    .sort((a, b) => a.dayNumber - b.dayNumber);
-}
-
-export function getSlideNavigation(id, courseId) {
-  const courseSlides = courseId ? getSlidesByCourse(courseId) : teachingSlides;
-  const index = courseSlides.findIndex((slide) => slide.id === id);
-  if (index < 0) return { previous: null, next: null };
-  return {
-    previous: courseSlides[index - 1] || null,
-    next: courseSlides[index + 1] || null,
+  const handleWWordChange = (index, value) => {
+    setWWordSelections((prev) => ({ ...prev, [index]: value }));
   };
-}
 
-export function getAvailableSlideCourses() {
-  return [...new Set(teachingSlides.map((slide) => slide.course))].sort();
-}
+  return (
+    <div style={pageWrap}>
+      <div style={{ ...cardStyle, overflow: "hidden", padding: 0 }}>
+        <img
+          src={heroImage}
+          alt="Students learning German together"
+          style={{
+            width: "100%",
+            height: "clamp(180px, 30vw, 240px)",
+            objectFit: "cover",
+            display: "block",
+          }}
+        />
+
+        <div style={{ padding: 16, display: "grid", gap: 12 }}>
+          <button
+            type="button"
+            style={{ ...primaryActionStyle, width: "fit-content", minWidth: 140 }}
+            onClick={() => navigate("/campus/course")}
+          >
+            Back to Course
+          </button>
+
+          <MobileSectionLabel>A1 · Day 5</MobileSectionLabel>
+
+          <h1 style={{ ...styles.title, margin: 0, lineHeight: 1.25 }}>
+            Introducing Yourself and Articles
+          </h1>
+
+          <p style={{ ...styles.subtitle, margin: 0, lineHeight: 1.6 }}>
+            Chapter 1.2 · Interactive workbook
+          </p>
+
+          <div style={infoBoxStyle}>
+            <strong>Progress</strong>
+            <div style={{ lineHeight: 1.7 }}>
+              <div>Completed sections: {completedSections}/5</div>
+              <div>Noun gender: {genderScore}/{articleGenderQuestions.length}</div>
+              <div>W-words: {wWordScore}/{wWordQuestions.length}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <SectionCard
+        title="Teil 1 · Articles"
+        subtitle="First learn whether the noun is masculine, feminine, or neuter."
+      >
+        <div style={infoBoxStyle}>
+          <strong>Quick guide</strong>
+          <div style={{ lineHeight: 1.8 }}>
+            <div><strong>Masculine (der)</strong></div>
+            <div><strong>Feminine (die)</strong></div>
+            <div><strong>Neuter (das)</strong></div>
+          </div>
+        </div>
+
+        <div style={warningBoxStyle}>
+          <strong>Beginner tip</strong>
+          <p style={{ margin: 0, lineHeight: 1.7 }}>
+            Today, focus on the gender first. Later, you will learn the correct article more easily.
+          </p>
+        </div>
+
+        <div style={boxBase}>
+          <strong>Vocabulary bank</strong>
+          <div style={chipWrapStyle}>
+            {articleGenderQuestions.map((item) => (
+              <span key={item.noun} style={chipStyle}>
+                {item.noun} ({item.english})
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div style={boxBase}>
+          <strong>Practice: Is it masculine, feminine, or neuter?</strong>
+          <p style={{ margin: 0, lineHeight: 1.7, color: "#4b5563" }}>
+            Choose the gender first. Then check the full answer.
+          </p>
+
+          <div style={{ display: "grid", gap: 14 }}>
+            {articleGenderQuestions.map((item, index) => (
+              <div
+                key={item.noun}
+                style={{
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 12,
+                  padding: 12,
+                  display: "grid",
+                  gap: 10,
+                  background: "#fff",
+                }}
+              >
+                <strong style={{ fontSize: 16 }}>
+                  {item.noun}{" "}
+                  <span style={{ color: "#6b7280", fontWeight: 500 }}>
+                    ({item.english})
+                  </span>
+                </strong>
+
+                <div style={{ display: "grid", gap: 10 }}>
+                  {["Masculine (der)", "Feminine (die)", "Neuter (das)"].map((option) => {
+                    const selected = genderSelections[index] === option;
+
+                    return (
+                      <label
+                        key={option}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 12,
+                          border: "1px solid #e5e7eb",
+                          borderRadius: 12,
+                          padding: 12,
+                          background: selected ? "#f9fafb" : "#fff",
+                          minHeight: 52,
+                          cursor: "pointer",
+                        }}
+                      >
+                        <input
+                          type="radio"
+                          name={`gender-${index}`}
+                          value={option}
+                          checked={selected}
+                          onChange={() => handleGenderChange(index, option)}
+                          style={{ transform: "scale(1.2)" }}
+                        />
+                        <span style={{ fontSize: 15 }}>{option}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+
+                <RevealAnswer buttonLabel="Show answer">
+                  <div style={{ lineHeight: 1.8 }}>
+                    <div>
+                      <strong>Gender:</strong> {item.gender}
+                    </div>
+                    <div>
+                      <strong>Article:</strong> {item.article} {item.noun}
+                    </div>
+                  </div>
+                </RevealAnswer>
+              </div>
+            ))}
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Teil 2 · Adjectives"
+        subtitle="Use simple adjectives to describe people and things."
+      >
+        <div style={boxBase}>
+          <strong>Adjective pairs</strong>
+          <div style={{ display: "grid", gap: 8 }}>
+            {adjectivePairs.map(([left, right]) => (
+              <div key={`${left}-${right}`} style={{ padding: "6px 0" }}>
+                {left} – {right}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={boxBase}>
+          <strong>Examples</strong>
+          <div style={{ lineHeight: 1.8 }}>
+            <div>Der Baum ist groß.</div>
+            <div>Das Haus ist klein.</div>
+            <div>Die Blume ist schön.</div>
+          </div>
+        </div>
+
+        <div style={boxBase}>
+          <strong>Write your own sentences</strong>
+
+          <label style={{ display: "grid", gap: 6 }}>
+            <span>Sentence 1 with <strong>groß</strong></span>
+            <input
+              type="text"
+              value={adjectiveSentences.one}
+              onChange={(e) =>
+                setAdjectiveSentences((prev) => ({ ...prev, one: e.target.value }))
+              }
+              placeholder="Der Hund ist groß."
+              style={inputStyle}
+            />
+          </label>
+
+          <label style={{ display: "grid", gap: 6 }}>
+            <span>Sentence 2 with <strong>klein</strong></span>
+            <input
+              type="text"
+              value={adjectiveSentences.two}
+              onChange={(e) =>
+                setAdjectiveSentences((prev) => ({ ...prev, two: e.target.value }))
+              }
+              placeholder="Die Katze ist klein."
+              style={inputStyle}
+            />
+          </label>
+
+          <label style={{ display: "grid", gap: 6 }}>
+            <span>Sentence 3 with <strong>neu</strong> or <strong>schön</strong></span>
+            <input
+              type="text"
+              value={adjectiveSentences.three}
+              onChange={(e) =>
+                setAdjectiveSentences((prev) => ({ ...prev, three: e.target.value }))
+              }
+              placeholder="Das Buch ist neu."
+              style={inputStyle}
+            />
+          </label>
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Teil 3 · Personal Information"
+        subtitle="Complete the German sentence starters with your own details."
+      >
+        <div style={{ display: "grid", gap: 12 }}>
+          {personalInfoPrompts.map((item, index) => (
+            <div
+              key={item.label}
+              style={{
+                border: "1px solid #e5e7eb",
+                borderRadius: 12,
+                padding: 14,
+                display: "grid",
+                gap: 6,
+                background: "#fff",
+              }}
+            >
+              <strong>
+                {index + 1}. {item.label}
+              </strong>
+              <span style={{ lineHeight: 1.7 }}>{item.starter}</span>
+            </div>
+          ))}
+        </div>
+
+        <div style={warningBoxStyle}>
+          <strong>Common mistakes</strong>
+          <div style={{ lineHeight: 1.8 }}>
+            <div>✅ Ich bin 25 Jahre alt.</div>
+            <div>❌ Ich habe 25 Jahre.</div>
+            <div>✅ Ich komme aus Ghana.</div>
+            <div>❌ Ich komme von Ghana.</div>
+            <div>✅ Ich habe keine Kinder.</div>
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Teil 4 · Mini Dialogue"
+        subtitle="Complete the short conversation."
+      >
+        <div style={{ display: "grid", gap: 12 }}>
+          <div style={boxBase}>
+            <strong>A: Wie heißt du?</strong>
+            <input
+              type="text"
+              value={dialogueAnswers.name}
+              onChange={(e) =>
+                setDialogueAnswers((prev) => ({ ...prev, name: e.target.value }))
+              }
+              placeholder="Ich heiße ..."
+              style={inputStyle}
+            />
+          </div>
+
+          <div style={boxBase}>
+            <strong>A: Woher kommst du?</strong>
+            <input
+              type="text"
+              value={dialogueAnswers.country}
+              onChange={(e) =>
+                setDialogueAnswers((prev) => ({ ...prev, country: e.target.value }))
+              }
+              placeholder="Ich komme aus ..."
+              style={inputStyle}
+            />
+          </div>
+
+          <div style={boxBase}>
+            <strong>A: Wo wohnst du?</strong>
+            <input
+              type="text"
+              value={dialogueAnswers.city}
+              onChange={(e) =>
+                setDialogueAnswers((prev) => ({ ...prev, city: e.target.value }))
+              }
+              placeholder="Ich wohne in ..."
+              style={inputStyle}
+            />
+          </div>
+
+          <div style={boxBase}>
+            <strong>A: Wie alt bist du?</strong>
+            <input
+              type="text"
+              value={dialogueAnswers.age}
+              onChange={(e) =>
+                setDialogueAnswers((prev) => ({ ...prev, age: e.target.value }))
+              }
+              placeholder="Ich bin ... Jahre alt."
+              style={inputStyle}
+            />
+          </div>
+        </div>
+
+        <RevealAnswer buttonLabel="Show model dialogue">
+          <div style={{ lineHeight: 1.9 }}>
+            <div><strong>A:</strong> Wie heißt du?</div>
+            <div><strong>B:</strong> Ich heiße Ama.</div>
+            <div><strong>A:</strong> Woher kommst du?</div>
+            <div><strong>B:</strong> Ich komme aus Ghana.</div>
+            <div><strong>A:</strong> Wo wohnst du?</div>
+            <div><strong>B:</strong> Ich wohne in Accra.</div>
+            <div><strong>A:</strong> Wie alt bist du?</div>
+            <div><strong>B:</strong> Ich bin 24 Jahre alt.</div>
+          </div>
+        </RevealAnswer>
+      </SectionCard>
+
+      <SectionCard
+        title="Teil 5 · W-Words"
+        subtitle="Choose the correct question word."
+      >
+        <div style={infoBoxStyle}>
+          <strong>W-Words</strong>
+          <div style={{ lineHeight: 1.8 }}>
+            <div><strong>Wer</strong> – Who</div>
+            <div><strong>Wie</strong> – How</div>
+            <div><strong>Was</strong> – What</div>
+            <div><strong>Wo</strong> – Where</div>
+            <div><strong>Woher</strong> – From where</div>
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gap: 14 }}>
+          {wWordQuestions.map((question, index) => (
+            <div key={question.stem} style={boxBase}>
+              <strong style={{ fontSize: 16, lineHeight: 1.6 }}>{question.stem}</strong>
+
+              <div style={{ display: "grid", gap: 10 }}>
+                {question.options.map((option) => {
+                  const selected = wWordSelections[index] === option;
+
+                  return (
+                    <label
+                      key={option}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        border: "1px solid #e5e7eb",
+                        borderRadius: 12,
+                        padding: 12,
+                        background: selected ? "#f9fafb" : "#fff",
+                        minHeight: 52,
+                        cursor: "pointer",
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name={`wq-${index}`}
+                        value={option}
+                        checked={selected}
+                        onChange={() => handleWWordChange(index, option)}
+                        style={{ transform: "scale(1.2)" }}
+                      />
+                      <span style={{ fontSize: 15 }}>{option}</span>
+                    </label>
+                  );
+                })}
+              </div>
+
+              <RevealAnswer buttonLabel="Show answer">
+                <div style={{ lineHeight: 1.8 }}>
+                  <div><strong>Correct answer:</strong> {question.answer}</div>
+                  <div>{question.explanation}</div>
+                </div>
+              </RevealAnswer>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Final Task · Write About Yourself"
+        subtitle="Write 6 to 8 sentences in German."
+      >
+        <div style={boxBase}>
+          <strong>Use these ideas</strong>
+          <div style={{ lineHeight: 1.8 }}>
+            <div>• Name</div>
+            <div>• Country</div>
+            <div>• City</div>
+            <div>• Age</div>
+            <div>• Marital status</div>
+            <div>• Children</div>
+            <div>• Address</div>
+          </div>
+        </div>
+
+        <label style={{ display: "grid", gap: 8 }}>
+          <strong>My introduction</strong>
+          <textarea
+            value={aboutMe}
+            onChange={(e) => setAboutMe(e.target.value)}
+            placeholder="Ich heiße ... Ich komme aus ... Ich wohne in ..."
+            style={textareaStyle}
+          />
+        </label>
+
+        <RevealAnswer buttonLabel="Show sample paragraph">
+          <p style={{ margin: 0, lineHeight: 1.9 }}>
+            Ich heiße Kojo Mensah. Ich komme aus Ghana. Ich wohne in Accra.
+            Ich bin 28 Jahre alt. Ich bin ledig. Ich habe keine Kinder.
+            Meine Adresse ist 12 Mango Street.
+          </p>
+        </RevealAnswer>
+      </SectionCard>
+
+      <div style={{ ...successBoxStyle, gap: 12 }}>
+        <h2 style={{ margin: 0, fontSize: 22 }}>Self-check</h2>
+        <div style={{ lineHeight: 1.9 }}>
+          <div>□ I can identify masculine (der), feminine (die), and neuter (das) nouns.</div>
+          <div>□ I can describe things with simple adjectives.</div>
+          <div>□ I can answer basic personal questions in German.</div>
+          <div>□ I can use <strong>Wer, Wie, Was, Wo, Woher</strong>.</div>
+          <div>□ I can write a short self-introduction.</div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default A1Day5IntroducingYourselfArticlesWorkbookPage;
