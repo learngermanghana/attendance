@@ -147,10 +147,11 @@ function createTemplateSlide(level, entry, lessonNumber) {
       "Ich brauche ein Beispiel.",
     ],
     studentQuestionsDe: [
-      `Erkläre das Thema „${entry.de}“ mit einem einfachen Satz.`,
-      "Gib ein Beispiel aus deinem Alltag.",
-      "Stelle deinem Partner eine passende Frage.",
-      "Antworte mit mindestens zwei Sätzen.",
+      `Was bedeutet „${entry.de}“ für dich in deinem Alltag?`,
+      `Wann brauchst oder benutzt du ${entry.de.toLowerCase()}? Beschreibe eine konkrete Situation.`,
+      `Welches Beispiel zu „${entry.de}“ findest du besonders wichtig oder interessant? Warum?`,
+      `Welche Frage kannst du deinem Partner zu „${entry.de}“ stellen, damit er mehr als einen Satz antwortet?`,
+      `Wie würdest du das Thema „${entry.de}“ einem neuen Kursteilnehmer einfach erklären?`,
     ],
     teacherNotesEn: [
       `Keep the lesson focused on high-frequency ${levelLabel} language for ${entry.en}.`,
