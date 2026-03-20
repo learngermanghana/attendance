@@ -1,13 +1,13 @@
 import crypto from "node:crypto";
 
 const DEFAULT_SOCIAL_SHEET_PUBLISHED_HTML_URL =
-  "https://docs.google.com/spreadsheets/d/1BxKGkGCWynv7jr1oze0MjfkM2SuQmohAQZtoIfV6jDk/edit";
+  "https://docs.google.com/spreadsheets/d/1VXigrXH_LQVr9c2GpqfPu-7JFrjLxvwoT5VXMkDjFPI/edit";
 
 const REQUIRED_SHEETS = ["Post_Tracker", "Followers_Growth", "Content_Calendar"];
 
-const DEFAULT_POST_TRACKER_GID = "184774716";
+const DEFAULT_POST_TRACKER_GID = "0";
 const DEFAULT_POST_TRACKER_CSV_URL =
-  "https://docs.google.com/spreadsheets/d/1BxKGkGCWynv7jr1oze0MjfkM2SuQmohAQZtoIfV6jDk/export?format=csv&gid=184774716";
+  "https://docs.google.com/spreadsheets/d/1VXigrXH_LQVr9c2GpqfPu-7JFrjLxvwoT5VXMkDjFPI/export?format=csv&gid=0";
 
 const SHEET_NAME_ALIASES = {
   Post_Tracker: ["Post_Tracker", "Post Tracker"],
