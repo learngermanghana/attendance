@@ -71,13 +71,13 @@ test("buildCsvUrl converts pubhtml url into tab-specific csv export url", () => 
 
 test("buildCsvUrl builds sheet-name export urls for standard Google Sheets edit links", () => {
   const csvUrl = buildCsvUrl(
-    "https://docs.google.com/spreadsheets/d/1BxKGkGCWynv7jr1oze0MjfkM2SuQmohAQZtoIfV6jDk/edit",
+    "https://docs.google.com/spreadsheets/d/1VXigrXH_LQVr9c2GpqfPu-7JFrjLxvwoT5VXMkDjFPI/edit",
     "Post_Tracker",
   );
 
   assert.equal(
     csvUrl,
-    "https://docs.google.com/spreadsheets/d/1BxKGkGCWynv7jr1oze0MjfkM2SuQmohAQZtoIfV6jDk/export?format=csv&sheet=Post_Tracker",
+    "https://docs.google.com/spreadsheets/d/1VXigrXH_LQVr9c2GpqfPu-7JFrjLxvwoT5VXMkDjFPI/export?format=csv&sheet=Post_Tracker",
   );
 });
 
@@ -130,7 +130,7 @@ test("loadSocialMediaData falls back to direct sheet fetch when api route is una
     }
 
     const requestUrl = String(url);
-    if (requestUrl.includes("Post_Tracker") || requestUrl.includes("gid=184774716")) {
+    if (requestUrl.includes("Post_Tracker") || requestUrl.includes("gid=0")) {
       return { ok: true, text: async () => "Date,Topic\n2026-01-01,Welcome\n" };
     }
 
