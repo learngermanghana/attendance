@@ -95,11 +95,19 @@ function mergeStoredAttendanceWithSchedule(scheduleAttendanceMap, storedAttendan
     const targetSessionId = matchedSessionId
       || (legacyOffsetSessionId && scheduleAttendanceMap[legacyOffsetSessionId] ? legacyOffsetSessionId : storedId);
 
+    const existingSession = merged[targetSessionId] || {};
+    const storedTitle = String(storedSession?.title || "").trim();
+    const storedDateValue = String(storedSession?.date || "").trim();
+    const storedAssignmentId = String(storedSession?.assignmentId || storedSession?.assignment_id || "").trim();
+
     merged[targetSessionId] = {
-      ...(merged[targetSessionId] || {}),
+      ...existingSession,
       ...storedSession,
+      title: storedTitle || String(existingSession.title || "").trim(),
+      date: storedDateValue || String(existingSession.date || "").trim(),
+      assignmentId: storedAssignmentId || String(existingSession.assignmentId || existingSession.assignment_id || "").trim(),
       students: {
-        ...((merged[targetSessionId] || {}).students || {}),
+        ...(existingSession.students || {}),
         ...(storedSession?.students || {}),
       },
     };
