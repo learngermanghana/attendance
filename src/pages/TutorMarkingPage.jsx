@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useToast } from "../context/ToastContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
-import { loadPendingTutorReviews, saveTutorReviewResponse } from "../services/tutorReviewService.js";
+import { deleteTutorReview, loadPendingTutorReviews, saveTutorReviewResponse } from "../services/tutorReviewService.js";
 
 const AUTOSAVE_KEY = "tutorMarkingDrafts.v1";
 const FEEDBACK_SNIPPETS = [
@@ -144,6 +144,7 @@ export default function TutorMarkingPage() {
   const [pendingReviews, setPendingReviews] = useState([]);
   const [recentlyResponded, setRecentlyResponded] = useState([]);
   const [savingId, setSavingId] = useState("");
+  const [deletingId, setDeletingId] = useState("");
   const [saveStateById, setSaveStateById] = useState({});
   const [statusById, setStatusById] = useState({});
   const [feedbackById, setFeedbackById] = useState({});
@@ -326,6 +327,31 @@ export default function TutorMarkingPage() {
     }
   };
 
+  const handleDeleteReview = async (reviewId) => {
+    const confirmed = window.confirm("Delete this queue item? This cannot be undone.");
+    if (!confirmed) return;
+
+    try {
+      setDeletingId(reviewId);
+      await deleteTutorReview(reviewId);
+      setPendingReviews((prev) => prev.filter((review) => review.id !== reviewId));
+      setFeedbackById((prev) => {
+        const next = { ...prev };
+        delete next[reviewId];
+        return next;
+      });
+      success("Queue item deleted.");
+
+      const currentIndex = filteredReviews.findIndex((review) => review.id === reviewId);
+      const nextReview = filteredReviews[currentIndex + 1] || filteredReviews[currentIndex - 1] || null;
+      setActiveReviewId(nextReview?.id || "");
+    } catch (err) {
+      error(err?.message || "Failed to delete queue item.");
+    } finally {
+      setDeletingId("");
+    }
+  };
+
   const handleInsertSnippet = (reviewId, snippetText) => {
     setFeedbackById((prev) => {
       const current = prev[reviewId] || "";
@@ -433,9 +459,9 @@ export default function TutorMarkingPage() {
               </div>
 
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                <span>Queue item {activeIndex + 1} / {filteredReviews.length}</span>
+                <span style={{ fontWeight: 600, color: "#1e3a8a", background: "#dbeafe", border: "1px solid #93c5fd", borderRadius: 999, padding: "2px 8px" }}>Queue item {activeIndex + 1} / {filteredReviews.length}</span>
                 {unreadReplyCount > 0 && (
-                  <span style={{ background: "#fff7cc", border: "1px solid #ffe58f", borderRadius: 999, padding: "2px 8px", fontSize: 12 }}>
+                  <span style={{ background: "#fef3c7", border: "1px solid #f59e0b", color: "#92400e", borderRadius: 999, padding: "2px 8px", fontSize: 12, fontWeight: 600 }}>
                     awaiting tutor response · {unreadReplyCount} new reply{unreadReplyCount > 1 ? "ies" : ""}
                   </span>
                 )}
@@ -456,8 +482,22 @@ export default function TutorMarkingPage() {
                         onClick={() => setStatusById((prev) => ({ ...prev, [review.id]: option.value }))}
                         style={{
                           borderRadius: 999,
-                          border: selected ? "2px solid #2b6cb0" : "1px solid #bbb",
-                          background: selected ? "#ebf8ff" : "#fff",
+                          border: selected
+                            ? option.value === "approved"
+                              ? "2px solid #15803d"
+                              : "2px solid #b45309"
+                            : "1px solid #94a3b8",
+                          background: selected
+                            ? option.value === "approved"
+                              ? "#dcfce7"
+                              : "#fef3c7"
+                            : "#f8fafc",
+                          color: selected
+                            ? option.value === "approved"
+                              ? "#166534"
+                              : "#92400e"
+                            : "#0f172a",
+                          fontWeight: selected ? 700 : 500,
                           padding: "6px 12px",
                         }}
                       >
@@ -474,11 +514,26 @@ export default function TutorMarkingPage() {
                 )}
 
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-                  <button onClick={() => handleSubmit(review.id)} disabled={savingId === review.id}>
+                  <button
+                    onClick={() => handleSubmit(review.id)}
+                    disabled={savingId === review.id || deletingId === review.id}
+                    style={{ background: "#1d4ed8", color: "#fff", border: "1px solid #1e40af" }}
+                  >
                     {savingId === review.id ? "Saving..." : "Save tutor response"}
                   </button>
-                  <button onClick={() => handleSubmit(review.id, { moveNext: true })} disabled={savingId === review.id}>
+                  <button
+                    onClick={() => handleSubmit(review.id, { moveNext: true })}
+                    disabled={savingId === review.id || deletingId === review.id}
+                    style={{ background: "#4338ca", color: "#fff", border: "1px solid #3730a3" }}
+                  >
                     {savingId === review.id ? "Saving..." : "Save + Next"}
+                  </button>
+                  <button
+                    onClick={() => handleDeleteReview(review.id)}
+                    disabled={savingId === review.id || deletingId === review.id}
+                    style={{ background: "#dc2626", color: "#fff", border: "1px solid #991b1b" }}
+                  >
+                    {deletingId === review.id ? "Deleting..." : "Delete submission"}
                   </button>
                   <span style={{ fontSize: 12, opacity: 0.8 }}>
                     {saveStateById[review.id] === "saving" && "Saving..."}

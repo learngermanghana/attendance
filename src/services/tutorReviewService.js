@@ -6,6 +6,7 @@ import {
   serverTimestamp,
   updateDoc,
   doc,
+  deleteDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
 
@@ -118,4 +119,13 @@ export async function saveTutorReviewResponse({ reviewId, reviewStatus, tutorFee
     }),
     updatedAt: serverTimestamp(),
   });
+}
+
+export async function deleteTutorReview(reviewId) {
+  const safeReviewId = String(reviewId || "").trim();
+  if (!safeReviewId) {
+    throw new Error("Missing reviewId.");
+  }
+
+  await deleteDoc(doc(db, REVIEW_COLLECTION, safeReviewId));
 }
