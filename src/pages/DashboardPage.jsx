@@ -4,12 +4,14 @@ import { loadSubmissions } from "../services/markingService";
 import { loadPendingTutorReviews } from "../services/tutorReviewService";
 import { loadGrammarIssueReports } from "../services/grammarIssueService";
 import { loadWhatsappReminderDashboard } from "../services/whatsappRemindersService";
+import { loadSocialMediaData } from "../services/socialMediaService";
 
 export default function DashboardPage() {
   const [incomingAssignments, setIncomingAssignments] = useState([]);
   const [pendingTutorReviewsCount, setPendingTutorReviewsCount] = useState(0);
   const [grammarIssueReports, setGrammarIssueReports] = useState([]);
   const [contractEndingSoon, setContractEndingSoon] = useState([]);
+  const [socialMetrics, setSocialMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -18,17 +20,19 @@ export default function DashboardPage() {
       setLoading(true);
       setError("");
       try {
-        const [submissionRows, tutorReviewRows, grammarIssueRows, reminderData] = await Promise.all([
+        const [submissionRows, tutorReviewRows, grammarIssueRows, reminderData, socialData] = await Promise.all([
           loadSubmissions(),
           loadPendingTutorReviews(),
           loadGrammarIssueReports(),
           loadWhatsappReminderDashboard(),
+          loadSocialMediaData(),
         ]);
 
         setIncomingAssignments(submissionRows);
         setPendingTutorReviewsCount(tutorReviewRows.length);
         setGrammarIssueReports(grammarIssueRows);
         setContractEndingSoon(reminderData.contractEndingSoon);
+        setSocialMetrics(socialData.metrics || null);
       } catch (err) {
         setError(err?.message || "Failed to load dashboard metrics");
       } finally {
@@ -42,6 +46,12 @@ export default function DashboardPage() {
     [incomingAssignments],
   );
   const grammarIssuePreview = useMemo(() => grammarIssueReports.slice(0, 5), [grammarIssueReports]);
+  const contractEndingSoonPreview = useMemo(() => contractEndingSoon.slice(0, 6), [contractEndingSoon]);
+  const socialPostPreview = useMemo(() => socialMetrics?.recentPosts?.slice(0, 3) || [], [socialMetrics]);
+  const socialFollowerPreview = useMemo(
+    () => socialMetrics?.latestSnapshotByPlatform?.slice(0, 3) || [],
+    [socialMetrics],
+  );
 
   return (
     <div style={{ padding: 16 }}>
@@ -121,6 +131,16 @@ export default function DashboardPage() {
                   ? `${contractEndingSoon.length} contract reminder${contractEndingSoon.length === 1 ? "" : "s"} due in the next 10 days.`
                   : "No contract reminders due in the next 10 days."}
               </p>
+              {contractEndingSoonPreview.length > 0 && (
+                <ul style={{ margin: "10px 0 0", paddingLeft: 18 }}>
+                  {contractEndingSoonPreview.map((student) => (
+                    <li key={`${student.name}-${student.phone || student.contractEnd?.toISOString() || "reminder"}`} style={{ marginTop: 4 }}>
+                      <strong>{student.name}</strong>
+                      {student.daysUntilContractEnd != null ? ` — ${student.daysUntilContractEnd} day(s) left` : ""}
+                    </li>
+                  ))}
+                </ul>
+              )}
               <div style={{ marginTop: 8 }}>
                 <Link to="/whatsapp-reminders">Open WhatsApp reminders</Link>
               </div>
@@ -131,6 +151,37 @@ export default function DashboardPage() {
               <p style={{ margin: "8px 0 0" }}>
                 View live Post_Tracker data from your published content sheet.
               </p>
+              {socialMetrics && (
+                <ul style={{ margin: "10px 0 0", paddingLeft: 18 }}>
+                  <li>Total posts: <strong>{socialMetrics.totalPosts || 0}</strong></li>
+                  <li>Follower snapshots: <strong>{socialMetrics.totalFollowerSnapshots || 0}</strong></li>
+                  <li>Upcoming content items: <strong>{socialMetrics.totalCalendarItems || 0}</strong></li>
+                </ul>
+              )}
+              {socialFollowerPreview.length > 0 && (
+                <>
+                  <p style={{ margin: "10px 0 0", fontWeight: 600 }}>Latest followers by platform</p>
+                  <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+                    {socialFollowerPreview.map((snapshot) => (
+                      <li key={`${snapshot.platform}-${snapshot.date || "latest"}`} style={{ marginTop: 4 }}>
+                        <strong>{snapshot.platform || "Unknown"}</strong>: {snapshot.followers || 0} followers
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+              {socialPostPreview.length > 0 && (
+                <>
+                  <p style={{ margin: "10px 0 0", fontWeight: 600 }}>Recent post metrics</p>
+                  <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+                    {socialPostPreview.map((post, index) => (
+                      <li key={`${post.date || "post"}-${post.topic || index}`} style={{ marginTop: 4 }}>
+                        <strong>{post.topic || "Untitled post"}</strong>: 👍 {post.likes || 0} · 💬 {post.comments || 0} · 🔁 {post.shares || 0}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
               <div style={{ marginTop: 8 }}>
                 <Link to="/social-post-tracker">Open social post tracker</Link>
               </div>
