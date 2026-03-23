@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   getAvailableSlideCourses,
@@ -9,39 +9,6 @@ import {
 } from "../data/teachingSlides";
 import "./TeachingSlidesPage.css";
 import { getUnifiedTopicLabel } from "../data/courseDictionary.js";
-
-function buildEditableSlideDocument(slide) {
-  const lines = [
-    `# ${slide.title}`,
-    "",
-    `- Course: ${slide.course}`,
-    `- Day: ${slide.day}`,
-    `- Assignment: ${slide.assignmentId}`,
-    `- Topic: ${getUnifiedTopicLabel(slide.assignmentId, slide.topic)}`,
-    `- Goal: ${slide.objective}`,
-    `- Duration: ${slide.estimatedDuration}`,
-    "",
-    "## Warm-up questions (DE)",
-    ...slide.warmupQuestionsDe.map((item) => `- ${item}`),
-    "",
-    "## Key phrases (DE)",
-    ...slide.keyPhrasesDe.map((item) => `- ${item}`),
-    "",
-    "## Student questions (DE)",
-    ...slide.studentQuestionsDe.map((item, index) => `${index + 1}. ${item}`),
-    "",
-    "## Teacher notes (EN)",
-    ...slide.teacherNotesEn.map((item) => `- ${item}`),
-    "",
-    "## Interaction flow (EN)",
-    ...slide.interactionFlow.map((item) => `- ${item.phase}: ${item.detailEn}`),
-    "",
-    "## Wrap-up task (DE)",
-    slide.wrapUpTaskDe,
-  ];
-
-  return lines.join("\n");
-}
 
 function SlideBlocks({ slide, handoutMode = false }) {
   return (
@@ -118,29 +85,6 @@ function SlideHeader({ slide }) {
   );
 }
 
-function SlideStatusBanners({ course }) {
-  const normalizedCourse = String(course || "").toUpperCase();
-  const conversationImage = normalizedCourse === "A2"
-    ? "/Conversation A2.png"
-    : normalizedCourse === "B1"
-      ? "/conversation_time_B1_safe.png"
-      : null;
-
-  return (
-    <div className="slide-status-banners">
-      <img src="/zom.png" alt="Class about to start" className="slide-status-image" />
-      {conversationImage && (
-        <img
-          src={conversationImage}
-          alt={`${normalizedCourse} conversation time`}
-          className="slide-status-image"
-        />
-      )}
-      <img src="/class_has_ended_banner.png" alt="Class has ended" className="slide-status-image" />
-    </div>
-  );
-}
-
 function SlideCoursesIndex() {
   const courses = useMemo(() => getAvailableSlideCourses(), []);
 
@@ -170,24 +114,6 @@ function SlideCoursesIndex() {
 
 function CourseSlidesIndex({ courseId }) {
   const slides = useMemo(() => getSlidesByCourse(courseId), [courseId]);
-  const [search, setSearch] = useState("");
-  const normalizedSearch = search.trim().toLowerCase();
-  const filteredSlides = useMemo(() => {
-    if (!normalizedSearch) return slides;
-
-    return slides.filter((slide) => {
-      const searchHaystack = [
-        slide.day,
-        String(slide.dayNumber),
-        slide.title,
-        slide.assignmentId,
-        slide.topic,
-        getUnifiedTopicLabel(slide.assignmentId, slide.topic),
-      ].join(" ").toLowerCase();
-
-      return searchHaystack.includes(normalizedSearch);
-    });
-  }, [normalizedSearch, slides]);
 
   if (!slides.length) {
     return (
@@ -202,35 +128,15 @@ function CourseSlidesIndex({ courseId }) {
   return (
     <section className="slides-index">
       <h1>{courseId.toUpperCase()} Teaching Slides</h1>
-      <p>Search by day, topic, or assignment so missing days are easier to find.</p>
 
       <div className="slide-toolbar no-print">
-        <label className="slide-search-field" htmlFor={`slide-search-${courseId}`}>
-          <span>Find a lesson</span>
-          <input
-            id={`slide-search-${courseId}`}
-            type="search"
-            placeholder="Search Day 4, 2.5, Freizeit…"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </label>
-
         <div className="slide-actions">
-          <Link to={`/teaching-slides/course/${courseId}/print`}>Open printable pack ({courseId.toUpperCase()})</Link>
+          <Link to="/teaching-slides">Back to all courses</Link>
         </div>
       </div>
 
-      <div className="slide-day-jump no-print" aria-label="Jump to lesson day">
-        {slides.map((slide) => (
-          <a key={slide.id} href={`#${slide.id}`} className="slide-day-chip">
-            {slide.day}
-          </a>
-        ))}
-      </div>
-
       <div className="slide-card-grid">
-        {filteredSlides.map((slide) => (
+        {slides.map((slide) => (
           <article key={slide.id} id={slide.id} className="slide-card slide-card-lesson">
             <div className="slide-card-topline">
               <p className="slide-meta">{slide.course} · {slide.day}</p>
@@ -243,52 +149,6 @@ function CourseSlidesIndex({ courseId }) {
           </article>
         ))}
       </div>
-
-      {filteredSlides.length === 0 && (
-        <p className="slide-empty-state">No lessons match “{search}”. Try a day number, assignment, or topic keyword.</p>
-      )}
-
-      <div className="slide-actions no-print">
-        <Link to="/teaching-slides">Back to all courses</Link>
-      </div>
-    </section>
-  );
-}
-
-function SlideDocumentEditor({ slide }) {
-  const textareaId = useId();
-  const documentText = useMemo(() => buildEditableSlideDocument(slide), [slide]);
-  const [copyState, setCopyState] = useState("idle");
-
-  async function handleCopy() {
-    if (typeof navigator === "undefined" || !navigator.clipboard) {
-      setCopyState("unavailable");
-      return;
-    }
-
-    await navigator.clipboard.writeText(documentText);
-    setCopyState("copied");
-    window.setTimeout(() => setCopyState("idle"), 2000);
-  }
-
-  return (
-    <section className="slide-editor-panel no-print">
-      <div className="slide-editor-header">
-        <div>
-          <h2>Editable lesson document</h2>
-          <p>Copy this outline to quickly improve the questions or edit the lesson outside the slide view.</p>
-        </div>
-        <button type="button" onClick={handleCopy}>Copy lesson doc</button>
-      </div>
-      <p className="slide-editor-note">
-        Source file: <code>src/data/teachingSlides.js</code>. Search for <code>{slide.assignmentId}</code> to edit this lesson in code.
-      </p>
-      <label className="slide-editor-field" htmlFor={textareaId}>
-        <span>Lesson outline</span>
-        <textarea id={textareaId} value={documentText} readOnly rows={18} />
-      </label>
-      {copyState === "copied" && <p className="slide-editor-feedback">Copied to clipboard.</p>}
-      {copyState === "unavailable" && <p className="slide-editor-feedback">Clipboard is unavailable in this browser.</p>}
     </section>
   );
 }
@@ -299,14 +159,11 @@ function SlideDetail({ slide, courseId }) {
 
   return (
     <article className={`teaching-slide ${handoutMode ? "handout-mode" : ""}`}>
-      <SlideStatusBanners course={slide.course} />
       <SlideHeader slide={slide} />
 
       <div className="slide-grid">
         <SlideBlocks slide={slide} handoutMode={handoutMode} />
       </div>
-
-      <SlideDocumentEditor slide={slide} />
 
       <footer className="slide-actions no-print">
         <button type="button" onClick={() => window.print()}>Print this slide / Download PDF</button>
@@ -365,7 +222,6 @@ function SlidePrintPack({ courseId }) {
 
       {slides.map((slide) => (
         <article key={slide.id} id={`print-${slide.id}`} className="teaching-slide print-pack-slide">
-          <SlideStatusBanners course={slide.course} />
           <SlideHeader slide={slide} />
           <div className="slide-grid">
             <SlideBlocks slide={slide} handoutMode />
