@@ -5,12 +5,14 @@ import { loadPendingTutorReviews } from "../services/tutorReviewService";
 import { loadGrammarIssueReports } from "../services/grammarIssueService";
 import { loadWhatsappReminderDashboard } from "../services/whatsappRemindersService";
 import { loadSocialMediaData } from "../services/socialMediaService";
+import { listUpcomingHolidayReminders } from "../services/holidayService";
 
 export default function DashboardPage() {
   const [incomingAssignments, setIncomingAssignments] = useState([]);
   const [pendingTutorReviewsCount, setPendingTutorReviewsCount] = useState(0);
   const [grammarIssueReports, setGrammarIssueReports] = useState([]);
   const [contractEndingSoon, setContractEndingSoon] = useState([]);
+  const [upcomingHolidays, setUpcomingHolidays] = useState([]);
   const [socialMetrics, setSocialMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -32,6 +34,7 @@ export default function DashboardPage() {
         setPendingTutorReviewsCount(tutorReviewRows.length);
         setGrammarIssueReports(grammarIssueRows);
         setContractEndingSoon(reminderData.contractEndingSoon);
+        setUpcomingHolidays(listUpcomingHolidayReminders({ daysAhead: 30 }));
         setSocialMetrics(socialData.metrics || null);
       } catch (err) {
         setError(err?.message || "Failed to load dashboard metrics");
@@ -47,6 +50,7 @@ export default function DashboardPage() {
   );
   const grammarIssuePreview = useMemo(() => grammarIssueReports.slice(0, 5), [grammarIssueReports]);
   const contractEndingSoonPreview = useMemo(() => contractEndingSoon.slice(0, 6), [contractEndingSoon]);
+  const upcomingHolidayPreview = useMemo(() => upcomingHolidays.slice(0, 8), [upcomingHolidays]);
   const socialPostPreview = useMemo(() => socialMetrics?.recentPosts?.slice(0, 3) || [], [socialMetrics]);
   const socialFollowerPreview = useMemo(
     () => socialMetrics?.latestSnapshotByPlatform?.slice(0, 3) || [],
@@ -143,6 +147,27 @@ export default function DashboardPage() {
               )}
               <div style={{ marginTop: 8 }}>
                 <Link to="/whatsapp-reminders">Open WhatsApp reminders</Link>
+              </div>
+            </div>
+
+            <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 14, background: "#fff" }}>
+              <div style={{ fontWeight: 700 }}>Upcoming holiday reminders</div>
+              <p style={{ margin: "8px 0 0" }}>
+                {upcomingHolidays.length > 0
+                  ? `${upcomingHolidays.length} holiday reminder${upcomingHolidays.length === 1 ? "" : "s"} in the next 30 days.`
+                  : "No holiday reminders in the next 30 days."}
+              </p>
+              {upcomingHolidayPreview.length > 0 && (
+                <ul style={{ margin: "10px 0 0", paddingLeft: 18 }}>
+                  {upcomingHolidayPreview.map((holiday) => (
+                    <li key={holiday.isoDate} style={{ marginTop: 4 }}>
+                      <strong>{holiday.displayDate}</strong> — {holiday.daysUntil === 0 ? "Today" : `in ${holiday.daysUntil} day(s)`}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <div style={{ marginTop: 8 }}>
+                <Link to="/course-schedule">Manage course holidays</Link>
               </div>
             </div>
 
