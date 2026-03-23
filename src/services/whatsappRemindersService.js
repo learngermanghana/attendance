@@ -112,7 +112,7 @@ function buildWhatsAppMessage(student) {
         ? `${student.daysUntilPaymentDue} day(s)`
         : `${Math.abs(student.daysUntilPaymentDue)} day(s) overdue`;
 
-  return `Hi ${student.name}, this is a reminder that your outstanding balance is ${student.balance}. Payment is due within 30 days from contract start (${daysLeftText} remaining). Please complete payment as soon as possible. Thank you.`;
+  return `Hi ${student.name}, this is a reminder that your outstanding balance is ${student.balance}. Payment is due within 30 days from contract start (${daysLeftText} remaining). When convenient, please arrange payment at your earliest opportunity. Thank you.`;
 }
 
 export async function loadWhatsappReminderDashboard() {
