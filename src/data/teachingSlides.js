@@ -1,4 +1,5 @@
 import { courseDictionary } from "./courseDictionary";
+import { getSlideQuestionSet } from "./teachingSlideQuestionDictionary";
 
 const curatedSlides = [
   {
@@ -124,6 +125,13 @@ function compareChapter(a, b) {
 
 function createTemplateSlide(level, entry, lessonNumber) {
   const levelLabel = level.toUpperCase();
+  const topicContext = {
+    topicDe: entry.de,
+    topicEn: entry.en,
+    level: levelLabel,
+    assignmentId: entry.assignment_id,
+  };
+  const questionSet = getSlideQuestionSet(entry.assignment_id, topicContext);
 
   return {
     id: entry.assignment_id.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
@@ -135,23 +143,14 @@ function createTemplateSlide(level, entry, lessonNumber) {
     topic: `${entry.chapter} ${entry.de}`,
     objective: `Students can communicate about ${entry.en.toLowerCase()} with clear ${levelLabel} sentence patterns.`,
     estimatedDuration: "45–60 minutes",
-    warmupQuestionsDe: [
-      `Was weißt du schon über das Thema „${entry.de}“?`,
-      `Wann brauchst du ${entry.de.toLowerCase()} im Alltag?`,
-      "Welche Wörter kennst du schon dazu?",
-    ],
+    warmupQuestionsDe: questionSet.warmupQuestionsDe,
     keyPhrasesDe: [
       `${entry.de}: wichtige Redemittel`,
       "Ich denke, dass ...",
       "Kannst du das bitte wiederholen?",
       "Ich brauche ein Beispiel.",
     ],
-    studentQuestionsDe: [
-      `Erkläre das Thema „${entry.de}“ mit einem einfachen Satz.`,
-      "Gib ein Beispiel aus deinem Alltag.",
-      "Stelle deinem Partner eine passende Frage.",
-      "Antworte mit mindestens zwei Sätzen.",
-    ],
+    studentQuestionsDe: questionSet.studentQuestionsDe,
     teacherNotesEn: [
       `Keep the lesson focused on high-frequency ${levelLabel} language for ${entry.en}.`,
       "Model one full exchange before pair speaking.",
