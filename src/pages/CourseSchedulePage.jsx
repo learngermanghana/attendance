@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import dayjs from "dayjs";
 import {
@@ -8,6 +8,7 @@ import {
   getHolidayWindow,
 } from "../utils/courseScheduleGenerator.js";
 import { WEEKDAY_OPTIONS, courseLevels } from "../data/courseTemplates.js";
+import { loadSavedHolidayDates, saveHolidayDates } from "../services/holidayService.js";
 
 function downloadFile(filename, content, type) {
   const blob = new Blob([content], { type });
@@ -27,7 +28,7 @@ function toggleOption(list, value) {
 export default function CourseSchedulePage() {
   const [level, setLevel] = useState("A1");
   const [startDate, setStartDate] = useState(dayjs().format("YYYY-MM-DD"));
-  const [holidayDates, setHolidayDates] = useState([]);
+  const [holidayDates, setHolidayDates] = useState(() => loadSavedHolidayDates());
   const [holidayCandidate, setHolidayCandidate] = useState(dayjs().format("YYYY-MM-DD"));
   const [useAdvancedWeekdays, setUseAdvancedWeekdays] = useState(false);
   const [defaultWeekdays, setDefaultWeekdays] = useState([...DEFAULT_TEACHING_DAYS]);
@@ -35,6 +36,10 @@ export default function CourseSchedulePage() {
 
   const holidayWindow = useMemo(() => getHolidayWindow(startDate, 120), [startDate]);
   const weeklyTemplate = courseLevels[level] || [];
+
+  useEffect(() => {
+    saveHolidayDates(holidayDates);
+  }, [holidayDates]);
 
   const scheduleRows = useMemo(
     () =>
@@ -83,6 +88,9 @@ export default function CourseSchedulePage() {
 
       <section style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12 }}>
         <h3>Step 2: Start date + holidays</h3>
+        <p style={{ marginTop: 0, opacity: 0.8 }}>
+          Any date you add here is treated as a no-class holiday and is skipped when generating the schedule.
+        </p>
         <label>
           Start Date{" "}
           <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
