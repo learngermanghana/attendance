@@ -8,6 +8,28 @@ import { useToast } from "../context/ToastContext.jsx";
 const DEFAULT_REFERENCE_LINK =
   "https://docs.google.com/spreadsheets/d/1bENY4-5AG9hrgaDKqyNpTwKT02i58wGva6tVRn-hhbE/gviz/tq?tqx=out:html&sheet=Key";
 const REFERENCE_ASSIGNMENT_STORAGE_KEY = "marking.referenceAssignment";
+const FEEDBACK_TEMPLATES = [
+  {
+    id: "grammar-clarity",
+    label: "Grammar & clarity",
+    text: "Good effort. Please improve your sentence structure and grammar. Keep each sentence short and clear, and check verb forms before submitting.",
+  },
+  {
+    id: "letter-structure-basics",
+    label: "Letter basics",
+    text: "Your writing currently depends too much on translators, which suggests the basics of letter writing are not yet clear. This may slow your progress for exams and the move to A2. Please practice writing your own letter with a simple introduction and conclusion, and use short, clear lines of about 5 to 6 words.",
+  },
+  {
+    id: "vocabulary-range",
+    label: "Vocabulary range",
+    text: "Try to use a wider range of simple vocabulary from class. Avoid repeating the same words and add a few relevant connectors such as 'and', 'but', and 'because'.",
+  },
+  {
+    id: "wrong-or-incomplete-submission",
+    label: "Wrong/incomplete task",
+    text: "This submission does not fully match the assigned task. Please check the assignment instructions carefully and resubmit the correct task. Make sure all required parts are completed before submitting.",
+  },
+];
 
 function normalize(value) {
   return String(value || "").trim().toLowerCase();
@@ -106,6 +128,7 @@ export default function MarkingPage() {
   const [assignmentValue, setAssignmentValue] = useState("");
   const [assignmentIdValue, setAssignmentIdValue] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [selectedFeedbackTemplateId, setSelectedFeedbackTemplateId] = useState(FEEDBACK_TEMPLATES[0].id);
   const [saveReceipt, setSaveReceipt] = useState(null);
   const [savingScore, setSavingScore] = useState(false);
   const [autoMarking, setAutoMarking] = useState(false);
@@ -417,6 +440,17 @@ export default function MarkingPage() {
     }
   };
 
+  const handleInsertTemplate = () => {
+    const template = FEEDBACK_TEMPLATES.find((item) => item.id === selectedFeedbackTemplateId);
+    if (!template) return;
+
+    setFeedback((current) => {
+      const trimmedCurrent = current.trim();
+      if (!trimmedCurrent) return template.text;
+      return `${trimmedCurrent}\n\n${template.text}`;
+    });
+  };
+
   const handleSave = async () => {
     if (!selectedStudent) {
       error("Pick a student before saving.");
@@ -666,6 +700,22 @@ export default function MarkingPage() {
               placeholder="Write clear, actionable feedback for the student..."
             />
           </label>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            <label style={{ display: "grid", gap: 4 }}>
+              Comment template
+              <select
+                value={selectedFeedbackTemplateId}
+                onChange={(e) => setSelectedFeedbackTemplateId(e.target.value)}
+              >
+                {FEEDBACK_TEMPLATES.map((template) => (
+                  <option key={template.id} value={template.id}>
+                    {template.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button type="button" onClick={handleInsertTemplate}>Insert template</button>
+          </div>
           <label>
             Assignment
             <input value={assignmentValue} onChange={(e) => setAssignmentValue(e.target.value)} />
