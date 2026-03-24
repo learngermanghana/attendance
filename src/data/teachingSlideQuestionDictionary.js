@@ -390,6 +390,370 @@ export const teachingSlideQuestionDictionary = {
       "Welche Unterstützung brauchst du für deine Zukunftsideen?",
     ],
   },
+  "B1-1.1": {
+    warmupQuestionsDe: [
+      "An welchen Traum aus deiner Kindheit erinnerst du dich noch?",
+      "Tagträumst du eher morgens oder abends?",
+      "Welche Traumwelt aus einem Film findest du spannend?",
+    ],
+    studentQuestionsDe: [
+      "Beschreibe eine ideale Traumwelt mit Regeln und Alltag.",
+      "Erzähl von einem Traum, der dich lange beschäftigt hat.",
+      "Welche Wünsche aus deiner Traumwelt könntest du real umsetzen?",
+      "Wie verändert Fantasie deine Stimmung in stressigen Zeiten?",
+    ],
+  },
+  "B1-1.2": {
+    warmupQuestionsDe: [
+      "Was macht für dich eine echte Freundschaft aus?",
+      "Wie oft hast du Kontakt mit deinen engsten Freunden?",
+      "Kann man online genauso gut Freundschaften pflegen?",
+    ],
+    studentQuestionsDe: [
+      "Erzähl, wie du deinen besten Freund oder deine beste Freundin kennengelernt hast.",
+      "Welche Konflikte gibt es in Freundschaften und wie löst man sie?",
+      "Was würdest du für einen guten Freund sofort tun?",
+      "Wie haben sich deine Freundschaften in den letzten Jahren verändert?",
+    ],
+  },
+  "B1-1.3": {
+    warmupQuestionsDe: [
+      "Welche persönliche Erfolgsgeschichte inspiriert dich?",
+      "Feierst du lieber kleine oder große Erfolge?",
+      "Welche Rolle spielt Glück beim Erfolg?",
+    ],
+    studentQuestionsDe: [
+      "Berichte von einem Ziel, das du mit viel Mühe erreicht hast.",
+      "Welche Gewohnheiten helfen dir, erfolgreich zu sein?",
+      "Erzähl die Erfolgsgeschichte einer Person aus deinem Umfeld.",
+      "Was bedeutet Erfolg für dich heute im Vergleich zu früher?",
+    ],
+  },
+  "B1-2.4": {
+    warmupQuestionsDe: [
+      "Wie sieht deine ideale Wohnung aus?",
+      "Worauf achtest du zuerst in einer Wohnungsanzeige?",
+      "Welche Lage ist für dich perfekt und warum?",
+    ],
+    studentQuestionsDe: [
+      "Erkläre deine Strategie bei der Wohnungssuche Schritt für Schritt.",
+      "Welche Kompromisse würdest du bei Größe oder Preis machen?",
+      "Vergleiche zwei Wohnungen, die du interessant findest.",
+      "Erzähl von einer schwierigen oder lustigen Erfahrung bei der Suche.",
+    ],
+  },
+  "B1-2.5": {
+    warmupQuestionsDe: [
+      "Bist du bei Besichtigungen eher ruhig oder neugierig?",
+      "Welche Fragen darf man beim Termin nicht vergessen?",
+      "Wie wichtig ist der erste Eindruck vom Haus?",
+    ],
+    studentQuestionsDe: [
+      "Spiele einen Besichtigungstermin mit Vermieter und Interessent.",
+      "Welche Details prüfst du in Küche, Bad und Keller?",
+      "Wie überzeugst du den Vermieter, dass du gut passt?",
+      "Erzähl von einem Termin, der besser oder schlechter war als erwartet.",
+    ],
+  },
+  "B1-2.6": {
+    warmupQuestionsDe: [
+      "Wo lebst du lieber: mitten in der Stadt oder im Dorf?",
+      "Was fehlt dir auf dem Land am meisten?",
+      "Welche Vorteile hat das Stadtleben für junge Leute?",
+    ],
+    studentQuestionsDe: [
+      "Vergleiche deinen Alltag in der Stadt und auf dem Land.",
+      "Für wen ist das Landleben besser geeignet und warum?",
+      "Welche Probleme in Großstädten sollten zuerst gelöst werden?",
+      "Erzähl von einem Umzug, der deinen Blick auf Wohnen verändert hat.",
+    ],
+  },
+  "B1-3.7": {
+    warmupQuestionsDe: [
+      "Isst du eher schnell unterwegs oder in Ruhe zu Hause?",
+      "Welches Fast-Food-Gericht magst du trotzdem gern?",
+      "Wer kocht bei dir häufiger: du oder jemand anderes?",
+    ],
+    studentQuestionsDe: [
+      "Vergleiche eine typische Fast-Food-Mahlzeit mit Hausmannskost.",
+      "Wie beeinflusst Essen deine Konzentration bei Arbeit oder Lernen?",
+      "Erzähl von einem Familienrezept, das dir wichtig ist.",
+      "Was müsste passieren, damit du seltener Fast Food isst?",
+    ],
+  },
+  "B1-3.8": {
+    warmupQuestionsDe: [
+      "Welche gesunde Gewohnheit klappt bei dir gut?",
+      "Wie oft denkst du bewusst an deine Gesundheit?",
+      "Was tust du, wenn du dich schlapp fühlst?",
+    ],
+    studentQuestionsDe: [
+      "Erzähl, wie du in einer normalen Woche fit bleibst.",
+      "Welche Rolle spielen Schlaf, Bewegung und Ernährung für dich?",
+      "Welche Gesundheits-Tipps aus dem Internet findest du sinnvoll?",
+      "Beschreibe eine Veränderung, die deiner Gesundheit geholfen hat.",
+    ],
+  },
+  "B1-3.9": {
+    warmupQuestionsDe: [
+      "Wann schaltest du nach der Arbeit wirklich ab?",
+      "Wie viel Freizeit brauchst du, um dich gut zu fühlen?",
+      "Nimmst du Arbeit manchmal mit nach Hause?",
+    ],
+    studentQuestionsDe: [
+      "Beschreibe deinen Alltag zwischen Job, Familie und Erholung.",
+      "Welche Grenzen setzt du, damit Arbeit nicht alles bestimmt?",
+      "Erzähl von einer Phase, in der deine Balance nicht gut war.",
+      "Welche Ideen könnten Firmen für bessere Work-Life-Balance umsetzen?",
+    ],
+  },
+  "B1-4.10": {
+    warmupQuestionsDe: [
+      "Wie lange bist du täglich am Handy?",
+      "Fällt dir eine digitale Pause leicht oder schwer?",
+      "Welche offline Aktivität tut dir besonders gut?",
+    ],
+    studentQuestionsDe: [
+      "Plane eine Woche mit festen Zeiten ohne Bildschirm.",
+      "Wie merkst du, dass dir eine digitale Auszeit guttut?",
+      "Welche Apps kosten dich zu viel Zeit und warum?",
+      "Erzähl von einem Tag, an dem du bewusst offline warst.",
+    ],
+  },
+  "B1-4.11": {
+    warmupQuestionsDe: [
+      "Welche Teamspiele machen dir Spaß?",
+      "Bist du im Team eher Organisator oder Unterstützer?",
+      "Was nervt dich manchmal bei Gruppenaktivitäten?",
+    ],
+    studentQuestionsDe: [
+      "Erzähl von einem Teamprojekt, das gut funktioniert hat.",
+      "Welche Regeln helfen, damit Kooperation fair bleibt?",
+      "Wie löst ihr Konflikte, wenn zwei Ideen konkurrieren?",
+      "Welche kooperative Aktivität würdest du für den Kurs planen?",
+    ],
+  },
+  "B1-4.12": {
+    warmupQuestionsDe: [
+      "Welche Naturorte besuchst du gern am Wochenende?",
+      "Was war dein letztes kleines Abenteuer draußen?",
+      "Lieber wandern, klettern oder paddeln?",
+    ],
+    studentQuestionsDe: [
+      "Beschreibe ein Naturabenteuer von der Planung bis zur Rückkehr.",
+      "Welche Ausrüstung ist für einen sicheren Ausflug wichtig?",
+      "Wie reagierst du, wenn beim Outdoor-Trip etwas schiefgeht?",
+      "Warum sind Naturerlebnisse für viele Menschen so motivierend?",
+    ],
+  },
+  "B1-4.13": {
+    warmupQuestionsDe: [
+      "Liest du lieber Filmkritiken oder schaust du direkt den Film?",
+      "Welche Filmart gefällt dir am meisten?",
+      "Worauf achtest du zuerst: Handlung, Musik oder Schauspiel?",
+    ],
+    studentQuestionsDe: [
+      "Stell einen Film vor und gib eine begründete Bewertung.",
+      "Welche Elemente gehören für dich in eine gute Filmkritik?",
+      "Vergleiche zwei Filme mit ähnlichem Thema.",
+      "Erzähl, bei welchem Film du deine Meinung später geändert hast.",
+    ],
+  },
+  "B1-5.14": {
+    warmupQuestionsDe: [
+      "Lernst du lieber mit Buch oder mit App?",
+      "Welche Lernform motiviert dich länger?",
+      "Was stört dich am digitalen Lernen manchmal?",
+    ],
+    studentQuestionsDe: [
+      "Vergleiche einen klassischen Kurs mit einem Onlinekurs.",
+      "Welche Lernziele erreichst du offline besser und welche online?",
+      "Erzähl von einer Lernmethode, die bei dir überraschend gut war.",
+      "Wie könnte man beide Lernformen sinnvoll kombinieren?",
+    ],
+  },
+  "B1-5.15": {
+    warmupQuestionsDe: [
+      "Welche Medien nutzt du im Homeoffice am meisten?",
+      "Arbeitest du zu Hause konzentrierter als im Büro?",
+      "Was hilft dir gegen Ablenkung daheim?",
+    ],
+    studentQuestionsDe: [
+      "Beschreibe deinen idealen Arbeitsplatz im Homeoffice.",
+      "Welche Kommunikationsregeln sind im Remote-Team wichtig?",
+      "Erzähl von einem Problem im Homeoffice und deiner Lösung.",
+      "Welche Medienkanäle passen für kurze Infos und welche für Details?",
+    ],
+  },
+  "B1-5.16": {
+    warmupQuestionsDe: [
+      "Wie fühlst du dich kurz vor einer Prüfung?",
+      "Welche Stresszeichen merkst du zuerst bei dir?",
+      "Hast du ein kleines Ritual gegen Nervosität?",
+    ],
+    studentQuestionsDe: [
+      "Erzähl von einer Prüfungssituation, die dich stark belastet hat.",
+      "Welche Strategien helfen dir in den letzten Tagen vor der Prüfung?",
+      "Wie unterstützt du Freunde, die Prüfungsangst haben?",
+      "Was sollten Schulen oder Kurse tun, um Prüfungsstress zu senken?",
+    ],
+  },
+  "B1-5.17": {
+    warmupQuestionsDe: [
+      "Zu welcher Tageszeit lernst du am effektivsten?",
+      "Lernst du lieber allein oder in einer Gruppe?",
+      "Welche Technik hilft dir beim Vokabellernen?",
+    ],
+    studentQuestionsDe: [
+      "Beschreibe eine Lernroutine, die bei dir zuverlässig funktioniert.",
+      "Wie gehst du mit schwierigen Themen um, wenn du feststeckst?",
+      "Welche Rolle spielen Wiederholung und Pausen beim Lernen?",
+      "Erzähl, wie du dich für ein langfristiges Lernziel motivierst.",
+    ],
+  },
+  "B1-6.18": {
+    warmupQuestionsDe: [
+      "Welcher Wunschberuf begleitet dich schon lange?",
+      "Was ist wichtiger: Talent oder Ausbildung?",
+      "Wer hat dich bei deiner Berufswahl beeinflusst?",
+    ],
+    studentQuestionsDe: [
+      "Erkläre deinen Weg vom Interesse zum konkreten Berufsziel.",
+      "Welche Stationen sind nötig, um deinen Wunschberuf zu erreichen?",
+      "Erzähl von einer Person mit einem ungewöhnlichen Karriereweg.",
+      "Welche Hindernisse erwartest du und wie willst du damit umgehen?",
+    ],
+  },
+  "B1-6.19": {
+    warmupQuestionsDe: [
+      "Welche Interviewfrage findest du am schwierigsten?",
+      "Wie bereitest du dich auf ein Gespräch vor?",
+      "Was macht bei Bewerbungen einen professionellen Eindruck?",
+    ],
+    studentQuestionsDe: [
+      "Spiele ein Vorstellungsgespräch mit Rückfragen und Antworten.",
+      "Wie präsentierst du deine Stärken ohne zu übertreiben?",
+      "Erzähl von einer Bewerbung, die dich etwas gelehrt hat.",
+      "Welche Fragen stellst du, um die Firma besser kennenzulernen?",
+    ],
+  },
+  "B1-6.20": {
+    warmupQuestionsDe: [
+      "Welchen Beruf würdest du gern einmal ausprobieren?",
+      "Welche Qualifikation ist heute besonders gefragt?",
+      "Wie wichtig sind Praktika für den Berufseinstieg?",
+    ],
+    studentQuestionsDe: [
+      "Erkläre, welche Ausbildung man für einen konkreten Beruf braucht.",
+      "Vergleiche zwei Wege: Studium und berufliche Ausbildung.",
+      "Welche Zusatzqualifikationen machen Bewerber attraktiver?",
+      "Erzähl, welche Weiterbildung du in den nächsten Jahren planst.",
+    ],
+  },
+  "B1-7.21": {
+    warmupQuestionsDe: [
+      "Welche Wohnform passt gerade zu deinem Leben?",
+      "Was ist in einer WG besonders praktisch?",
+      "Wie wichtig ist dir Privatsphäre zu Hause?",
+    ],
+    studentQuestionsDe: [
+      "Vergleiche Familienleben und Wohngemeinschaft im Alltag.",
+      "Welche Regeln braucht eine WG, damit das Zusammenleben klappt?",
+      "Erzähl von einer positiven oder schwierigen Wohnsituation.",
+      "Welche Lebensform ist für ältere Menschen sinnvoll und warum?",
+    ],
+  },
+  "B1-7.22": {
+    warmupQuestionsDe: [
+      "Welche Eigenschaften sind dir in einer Beziehung wichtig?",
+      "Wie zeigt man im Alltag Wertschätzung?",
+      "Kann eine Beziehung ohne gemeinsame Hobbys funktionieren?",
+    ],
+    studentQuestionsDe: [
+      "Beschreibe, was Vertrauen in einer Beziehung für dich bedeutet.",
+      "Wie löst man Streit respektvoll, wenn Meinungen verschieden sind?",
+      "Erzähl von einem Rat, der dir in Beziehungen geholfen hat.",
+      "Welche Erwartungen an Partnerschaft haben sich bei dir verändert?",
+    ],
+  },
+  "B1-7.23": {
+    warmupQuestionsDe: [
+      "Was macht ein erstes Date angenehm?",
+      "Welcher Ort passt gut für ein lockeres Kennenlernen?",
+      "Über welche Themen sprichst du beim ersten Treffen gern?",
+    ],
+    studentQuestionsDe: [
+      "Erzähl von einem ersten Date, das dir in Erinnerung geblieben ist.",
+      "Wie reagierst du, wenn beim Date peinliche Stille entsteht?",
+      "Welche Grenzen sollte man beim ersten Treffen respektieren?",
+      "Plant gemeinsam ein erstes Date mit Zeit, Ort und Aktivität.",
+    ],
+  },
+  "B1-8.24": {
+    warmupQuestionsDe: [
+      "Kaufst du eher spontan oder geplant ein?",
+      "Wie oft achtest du auf nachhaltige Produkte?",
+      "Was bedeutet bewusster Konsum für dich persönlich?",
+    ],
+    studentQuestionsDe: [
+      "Beschreibe deine Einkaufsentscheidungen bei Kleidung oder Technik.",
+      "Welche nachhaltigen Alternativen nutzt du schon im Alltag?",
+      "Erzähl von einem Kauf, den du später bereut hast.",
+      "Wie könnte man Konsum in Städten umweltfreundlicher gestalten?",
+    ],
+  },
+  "B1-8.25": {
+    warmupQuestionsDe: [
+      "Was bestellst du am häufigsten online?",
+      "Liest du Bewertungen vor dem Kauf genau?",
+      "Welche Risiken siehst du beim Onlineeinkauf?",
+    ],
+    studentQuestionsDe: [
+      "Erkläre deine wichtigsten Rechte bei Rückgabe und Garantie.",
+      "Wie erkennst du, ob ein Onlineshop seriös ist?",
+      "Erzähl von einer guten oder schlechten Erfahrung beim Bestellen.",
+      "Welche Schritte machst du, wenn eine Lieferung nicht ankommt?",
+    ],
+  },
+  "B1-9.26": {
+    warmupQuestionsDe: [
+      "Welches Reiseproblem ist dir schon passiert?",
+      "Bleibst du in Stressmomenten auf Reisen ruhig?",
+      "Was hast du immer im Gepäck für Notfälle?",
+    ],
+    studentQuestionsDe: [
+      "Erzähl von einer Reise, bei der etwas unerwartet schiefging.",
+      "Wie löst du Probleme wie Zugausfall oder verlorenes Gepäck?",
+      "Welche Sätze helfen dir, im Ausland schnell Unterstützung zu bekommen?",
+      "Plane einen Notfallplan für eine mehrtägige Reise.",
+    ],
+  },
+  "B1-10.27": {
+    warmupQuestionsDe: [
+      "Welche umweltfreundliche Gewohnheit hast du schon fest?",
+      "Wo verschwendest du im Alltag manchmal Energie?",
+      "Wie leicht ist nachhaltiges Handeln in deiner Stadt?",
+    ],
+    studentQuestionsDe: [
+      "Beschreibe drei konkrete Schritte für einen grüneren Alltag.",
+      "Wie kannst du beim Einkaufen Verpackung reduzieren?",
+      "Erzähl, welche Umweltidee du mit Freunden umgesetzt hast.",
+      "Welche Unterstützung brauchst du, um dauernd umweltfreundlich zu leben?",
+    ],
+  },
+  "B1-10.28": {
+    warmupQuestionsDe: [
+      "Welche klimafreundliche Entscheidung fällt dir am leichtesten?",
+      "Worauf könntest du fürs Klima eher verzichten?",
+      "Sprechen Menschen in deinem Umfeld oft über Klimaschutz?",
+    ],
+    studentQuestionsDe: [
+      "Erzähl von einem Plan, wie du deinen CO2-Ausstoß senken willst.",
+      "Welche Veränderungen wären für deine Nachbarschaft besonders wirksam?",
+      "Wie kann man andere motivieren, klimafreundlicher zu leben?",
+      "Welche Kompromisse zwischen Komfort und Klimaschutz findest du realistisch?",
+    ],
+  },
 };
 
 function resolveQuestionList(templateList, context) {
