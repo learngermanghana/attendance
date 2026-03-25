@@ -20,6 +20,16 @@ const FEEDBACK_TEMPLATES = [
     text: "Your writing currently depends too much on translators, which suggests the basics of letter writing are not yet clear. This may slow your progress for exams and the move to A2. Please practice writing your own letter with a simple introduction and conclusion, and use short, clear lines of about 5 to 6 words.",
   },
   {
+    id: "missing-introduction-formal-informal",
+    label: "Missing introduction (formal/informal)",
+    text: "You missed the introduction line. Start your letter with a clear opening: Informal: \"Ich schreibe dir, weil ...\" Formal: \"Ich schreibe Ihnen, weil ...\".",
+  },
+  {
+    id: "enquiry-ask-price",
+    label: "Enquiry: ask about price",
+    text: "In an enquiry, you should ask about price/payment. Useful questions: \"Wie viel kostet ...?\" \"Was kostet der Kurs?\" \"Kann ich bar oder mit Karte zahlen?\"",
+  },
+  {
     id: "vocabulary-range",
     label: "Vocabulary range",
     text: "Try to use a wider range of simple vocabulary from class. Avoid repeating the same words and add a few relevant connectors such as 'and', 'but', and 'because'.",
