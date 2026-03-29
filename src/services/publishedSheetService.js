@@ -43,10 +43,44 @@ function parseCsvLine(line) {
 }
 
 function parseCsv(text) {
-  return text
-    .split(/\r?\n/)
-    .filter((line) => line.trim().length > 0)
-    .map(parseCsvLine);
+  const rows = [];
+  let currentLine = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i];
+
+    if (char === '"') {
+      if (inQuotes && text[i + 1] === '"') {
+        currentLine += '""';
+        i += 1;
+      } else {
+        inQuotes = !inQuotes;
+        currentLine += char;
+      }
+      continue;
+    }
+
+    if (!inQuotes && (char === "\n" || char === "\r")) {
+      if (char === "\r" && text[i + 1] === "\n") {
+        i += 1;
+      }
+
+      if (currentLine.trim().length > 0) {
+        rows.push(parseCsvLine(currentLine));
+      }
+      currentLine = "";
+      continue;
+    }
+
+    currentLine += char;
+  }
+
+  if (currentLine.trim().length > 0) {
+    rows.push(parseCsvLine(currentLine));
+  }
+
+  return rows;
 }
 
 export async function loadPublishedStudentRows() {
