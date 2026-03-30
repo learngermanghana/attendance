@@ -7,6 +7,15 @@ function normalizeClassId(value) {
   return String(value || "").trim();
 }
 
+const INACTIVE_CLASS_IDS = new Set([
+  "A1 Bonn Klasse",
+  "A1 Munich Klasse",
+]);
+
+function isInactiveClassId(classId) {
+  return INACTIVE_CLASS_IDS.has(normalizeClassId(classId));
+}
+
 function resolveClassKey(data = {}) {
   return normalizeClassId(data.classId || data.className || data.group || data.groupId || data.groupName || data.name || data.id);
 }
@@ -23,7 +32,7 @@ export async function listClassesFromPublishedSheetWithLoader(loadRows = loadPub
 
   rows.forEach((row) => {
     const classIdentifier = resolvePublishedClassIdentifier(row);
-    if (!classIdentifier) return;
+    if (!classIdentifier || isInactiveClassId(classIdentifier)) return;
 
     if (!classesMap.has(classIdentifier)) {
       classesMap.set(classIdentifier, {
@@ -59,7 +68,7 @@ export async function listClassesWithDeps(
             classId: resolveClassKey(c),
             name: c.name || c.className || c.classId || c.id,
           }))
-          .filter((c) => c.classId);
+          .filter((c) => c.classId && !isInactiveClassId(c.classId));
       }
 
       const studentsSnap = await getDocsFn(collectionFn(dbInstance, "students"));
@@ -68,7 +77,7 @@ export async function listClassesWithDeps(
       studentsSnap.forEach((docSnap) => {
         const data = docSnap.data();
         const classId = resolveClassKey(data);
-        if (!classId) return;
+        if (!classId || isInactiveClassId(classId)) return;
         if (!classesMap.has(classId)) {
           classesMap.set(classId, {
             classId,
