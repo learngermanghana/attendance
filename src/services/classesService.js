@@ -7,23 +7,54 @@ function normalizeClassId(value) {
   return String(value || "").trim();
 }
 
-const INACTIVE_CLASS_IDS = new Set([
-  "A1 Bonn Klasse",
-  "A1 Munich Klasse",
+function normalizeClassLookupKey(value) {
+  return normalizeClassId(value)
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+const CLASS_ID_ALIASES = new Map([
+  ["a1 dortmund", "A1 Dortmund Klasse"],
+  ["a1 dortmund klasse", "A1 Dortmund Klasse"],
+  ["a1 berlin", "A1 Berlin Klasse"],
+  ["a1 berlin klasse", "A1 Berlin Klasse"],
+  ["a1 hamburg", "A1 Hamburg Klasse"],
+  ["a1 hamburg klasse", "A1 Hamburg Klasse"],
+  ["a1 leipzig", "A1 Leipzig Klasse"],
+  ["a1 leipzig klasse", "A1 Leipzig Klasse"],
+  ["a1 leipzip", "A1 Leipzig Klasse"],
+  ["a1 leipzip klasse", "A1 Leipzig Klasse"],
+  ["a2 stuttgart", "A2 Stuttgart Klasse"],
+  ["a2 stuttgart klasse", "A2 Stuttgart Klasse"],
 ]);
 
-function isInactiveClassId(classId) {
-  return INACTIVE_CLASS_IDS.has(normalizeClassId(classId));
+const ACTIVE_CLASS_IDS = new Set([
+  "A1 Dortmund Klasse",
+  "A1 Berlin Klasse",
+  "A1 Hamburg Klasse",
+  "A1 Leipzig Klasse",
+  "A2 Stuttgart Klasse",
+]);
+
+function normalizeToCanonicalClassId(value) {
+  const normalized = normalizeClassId(value);
+  if (!normalized) return "";
+
+  return CLASS_ID_ALIASES.get(normalizeClassLookupKey(normalized)) || normalized;
+}
+
+function isActiveClassId(classId) {
+  return ACTIVE_CLASS_IDS.has(normalizeToCanonicalClassId(classId));
 }
 
 function resolveClassKey(data = {}) {
-  return normalizeClassId(data.classId || data.className || data.group || data.groupId || data.groupName || data.name || data.id);
+  return normalizeToCanonicalClassId(data.classId || data.className || data.group || data.groupId || data.groupName || data.name || data.id);
 }
 
 function resolvePublishedClassIdentifier(row) {
-  const className = normalizeClassId(readPublishedClassName(row));
+  const className = normalizeToCanonicalClassId(readPublishedClassName(row));
   if (className) return className;
-  return normalizeClassId(readPublishedLevel(row));
+  return normalizeToCanonicalClassId(readPublishedLevel(row));
 }
 
 export async function listClassesFromPublishedSheetWithLoader(loadRows = loadPublishedStudentRows) {
@@ -32,7 +63,7 @@ export async function listClassesFromPublishedSheetWithLoader(loadRows = loadPub
 
   rows.forEach((row) => {
     const classIdentifier = resolvePublishedClassIdentifier(row);
-    if (!classIdentifier || isInactiveClassId(classIdentifier)) return;
+    if (!classIdentifier || !isActiveClassId(classIdentifier)) return;
 
     if (!classesMap.has(classIdentifier)) {
       classesMap.set(classIdentifier, {
@@ -66,9 +97,9 @@ export async function listClassesWithDeps(
           .map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }))
           .map((c) => ({
             classId: resolveClassKey(c),
-            name: c.name || c.className || c.classId || c.id,
+            name: normalizeToCanonicalClassId(c.name || c.className || c.classId || c.id),
           }))
-          .filter((c) => c.classId && !isInactiveClassId(c.classId));
+          .filter((c) => c.classId && isActiveClassId(c.classId));
       }
 
       const studentsSnap = await getDocsFn(collectionFn(dbInstance, "students"));
@@ -77,11 +108,11 @@ export async function listClassesWithDeps(
       studentsSnap.forEach((docSnap) => {
         const data = docSnap.data();
         const classId = resolveClassKey(data);
-        if (!classId || isInactiveClassId(classId)) return;
+        if (!classId || !isActiveClassId(classId)) return;
         if (!classesMap.has(classId)) {
           classesMap.set(classId, {
             classId,
-            name: data.className || data.groupName || data.group || classId,
+            name: normalizeToCanonicalClassId(data.className || data.groupName || data.group || classId),
           });
         }
       });
