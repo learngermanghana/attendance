@@ -4,24 +4,53 @@ import { QRCodeCanvas } from "qrcode.react";
 import { getClassSchedule } from "../data/classSchedules";
 import "./CheckinDisplayPage.css";
 
+const ATTENDANCE_UTC_OFFSET_HOURS = 1;
+const ATTENDANCE_TIME_ZONE = "Africa/Lagos";
+const ATTENDANCE_TIME_ZONE_LABEL = "WAT (UTC+01:00)";
+
 function parseSessionDate(dateValue) {
   const raw = String(dateValue || "").trim();
   if (!raw) return null;
 
+  const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    return {
+      year: Number.parseInt(isoMatch[1], 10),
+      month: Number.parseInt(isoMatch[2], 10),
+      day: Number.parseInt(isoMatch[3], 10),
+    };
+  }
+
   const direct = new Date(raw);
-  if (!Number.isNaN(direct.getTime())) return direct;
+  if (!Number.isNaN(direct.getTime())) {
+    return {
+      year: direct.getFullYear(),
+      month: direct.getMonth() + 1,
+      day: direct.getDate(),
+    };
+  }
 
   const withoutWeekday = raw.replace(/^[A-Za-z]+,\s*/, "");
   const fallback = new Date(withoutWeekday);
-  if (!Number.isNaN(fallback.getTime())) return fallback;
+  if (!Number.isNaN(fallback.getTime())) {
+    return {
+      year: fallback.getFullYear(),
+      month: fallback.getMonth() + 1,
+      day: fallback.getDate(),
+    };
+  }
 
   return null;
 }
 
-function formatDisplayTimeLabel(timeText, fallbackDateTime) {
+function formatDisplayTimeLabel(timeText, fallbackDateTimeMs) {
   if (timeText) return timeText;
-  if (fallbackDateTime instanceof Date && !Number.isNaN(fallbackDateTime.getTime())) {
-    return fallbackDateTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  if (Number.isFinite(fallbackDateTimeMs)) {
+    return new Date(fallbackDateTimeMs).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: ATTENDANCE_TIME_ZONE,
+    });
   }
   return "soon";
 }
@@ -32,9 +61,15 @@ function parseDateTime(dateValue, timeValue) {
   if (!date || !/^\d{2}:\d{2}$/.test(time)) return null;
 
   const [hours, minutes] = time.split(":").map((value) => Number.parseInt(value, 10));
-  const parsed = new Date(date);
-  parsed.setHours(hours, minutes, 0, 0);
-  return parsed;
+  return Date.UTC(
+    date.year,
+    date.month - 1,
+    date.day,
+    hours - ATTENDANCE_UTC_OFFSET_HOURS,
+    minutes,
+    0,
+    0
+  );
 }
 
 export default function CheckinDisplayPage() {
@@ -94,24 +129,23 @@ export default function CheckinDisplayPage() {
   }, [classId, sessionId, dateLabel, sessionDisplayLabel, assignmentId, startTime, endTime, expectedStudents, expectedCount]);
 
   const statusInfo = useMemo(() => {
-    const now = new Date(nowMs);
     const startAt = parseDateTime(dateLabel, startTime);
     const endAt = parseDateTime(dateLabel, endTime);
 
-    if (endAt && now > endAt) {
+    if (endAt && nowMs > endAt) {
       const endLabel = formatDisplayTimeLabel(endTime, endAt);
       return {
         kind: "ended",
         title: "Class has ended.",
-        detail: `Class ended at ${endLabel}. If you still haven't checked in, please do it now for late attendance recording.`,
+        detail: `Class ended at ${endLabel} ${ATTENDANCE_TIME_ZONE_LABEL}. If you still haven't checked in, please do it now for late attendance recording.`,
       };
     }
 
-    if (startAt && now < startAt) {
+    if (startAt && nowMs < startAt) {
       const startLabel = formatDisplayTimeLabel(startTime, startAt);
       return {
         kind: "before",
-        title: `Hello! Class starts at ${startLabel}.`,
+        title: `Hello! Class starts at ${startLabel} ${ATTENDANCE_TIME_ZONE_LABEL}.`,
         detail: "Kindly check in for your attendance to be recorded while you wait for the meeting to start.",
       };
     }
@@ -147,7 +181,7 @@ export default function CheckinDisplayPage() {
                 <span><b>Date:</b> {dateLabel || "-"}</span>
                 <span><b>Session:</b> {sessionDisplayLabel || "-"}</span>
                 <span><b>Assignment:</b> {assignmentId || "-"}</span>
-                <span><b>Class time:</b> {startTime || "--:--"} to {endTime || "--:--"}</span>
+                <span><b>Class time:</b> {startTime || "--:--"} to {endTime || "--:--"} {ATTENDANCE_TIME_ZONE_LABEL}</span>
                 <span><b>Expected students:</b> {expectedCount || "-"}</span>
               </div>
             </div>

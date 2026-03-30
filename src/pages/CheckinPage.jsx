@@ -5,6 +5,9 @@ import { QRCodeCanvas } from "qrcode.react";
 import { useToast } from "../context/ToastContext.jsx";
 import "./CheckinPage.css";
 
+const ATTENDANCE_TIME_ZONE = "Africa/Lagos";
+const ATTENDANCE_TIME_ZONE_LABEL = "WAT (UTC+01:00)";
+
 function resolveStatusApiUrl() {
   const checkinUrl = String(import.meta.env.VITE_CHECKIN_API_URL || "").trim();
   if (!checkinUrl) return "";
@@ -15,7 +18,7 @@ function formatClock(timestamp) {
   if (!timestamp) return "-";
   const d = new Date(Number(timestamp));
   if (Number.isNaN(d.getTime())) return "-";
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", timeZone: ATTENDANCE_TIME_ZONE });
 }
 
 function formatDuration(ms) {
@@ -29,7 +32,7 @@ function formatDuration(ms) {
 
 function formatInterval(openFrom, openTo) {
   if (!openFrom && !openTo) return "-";
-  return `${formatClock(openFrom)} to ${formatClock(openTo)}`;
+  return `${formatClock(openFrom)} to ${formatClock(openTo)} ${ATTENDANCE_TIME_ZONE_LABEL}`;
 }
 
 function formatStartTimeLabel(startTime, checkinStatus) {
@@ -167,7 +170,7 @@ export default function CheckinPage() {
     if (checkinStatus?.openFrom || checkinStatus?.openTo) {
       return formatInterval(checkinStatus.openFrom, checkinStatus.openTo);
     }
-    if (startTime || endTime) return `${startTime || "--:--"} to ${endTime || "--:--"}`;
+    if (startTime || endTime) return `${startTime || "--:--"} to ${endTime || "--:--"} ${ATTENDANCE_TIME_ZONE_LABEL}`;
     return "-";
   }, [checkinStatus, startTime, endTime]);
 
@@ -318,7 +321,7 @@ export default function CheckinPage() {
         {submittedInfo && (
           <div className="checkin-success-card" role="status" aria-live="polite">
             <div><b>✅ You are checked in.</b></div>
-            <div>Time: {new Date(submittedInfo.checkedInAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
+            <div>Time: {new Date(submittedInfo.checkedInAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", timeZone: ATTENDANCE_TIME_ZONE })} {ATTENDANCE_TIME_ZONE_LABEL}</div>
             <div>Email: {submittedInfo.maskedEmail}</div>
             <div>Session: {sessionDisplayLabel || "-"}</div>
             <div>Saved under session ID: {submittedInfo.savedSessionId || "-"}</div>
