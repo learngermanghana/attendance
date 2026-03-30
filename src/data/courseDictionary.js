@@ -40,7 +40,7 @@ export const courseDictionary = {
     "A2-4.9": { assignment_id: "A2-4.9", chapter: "4.9", de: "Urlaub", en: "Vacation" },
     "A2-4.10": { assignment_id: "A2-4.10", chapter: "4.10", de: "Tourismus und traditionelle Feste", en: "Tourism and Traditional Festivals" },
     "A2-4.11": { assignment_id: "A2-4.11", chapter: "4.11", de: "Verkehrsmittel vergleichen", en: "Comparing Transportation" },
-    "A2-5.12": { assignment_id: "A2-5.12", chapter: "5.12", de: "Ein Tag im Leben", en: "A Day in Life" },
+    "A2-5.12": { assignment_id: "A2-5.12", chapter: "5.12", de: "Mein Traumberuf", en: "My Dream Job" },
     "A2-5.13": { assignment_id: "A2-5.13", chapter: "5.13", de: "Ein Vorstellungsgespräch", en: "A Job Interview" },
     "A2-5.14": { assignment_id: "A2-5.14", chapter: "5.14", de: "Beruf und Karriere", en: "Career and Profession" },
     "A2-6.15": { assignment_id: "A2-6.15", chapter: "6.15", de: "Mein Lieblingssport", en: "My Favorite Sport" },
