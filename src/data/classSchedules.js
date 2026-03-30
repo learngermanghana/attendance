@@ -39,7 +39,7 @@ export const classSchedules = {
     { week: 'Woche 4', day: 'Day 9', date: 'Monday, 02 March 2026', topic: '4.9. Urlaub' },
     { week: 'Woche 4', day: 'Day 10', date: 'Tuesday, 03 March 2026', topic: '4.10. Tourismus und Traditionelle Feste' },
     { week: 'Woche 4', day: 'Day 11', date: 'Wednesday, 04 March 2026', topic: '4.11. Unterwegs: Verkehrsmittel vergleichen' },
-    { week: 'Woche 5', day: 'Day 12', date: 'Monday, 09 March 2026', topic: '5.12. Ein Tag im Leben (Übung)' },
+    { week: 'Woche 5', day: 'Day 12', date: 'Monday, 09 March 2026', topic: '5.12. Mein Traumberuf (Exercise)' },
     { week: 'Woche 5', day: 'Day 13', date: 'Tuesday, 10 March 2026', topic: '5.13. Ein Vorstellungsgesprach (Exercise)' },
     { week: 'Woche 5', day: 'Day 14', date: 'Wednesday, 11 March 2026', topic: '5.14. Beruf und Karriere (Exercise)' },
     { week: 'Woche 6', day: 'Day 15', date: 'Monday, 16 March 2026', topic: '6.15. Mein Lieblingssport' },
