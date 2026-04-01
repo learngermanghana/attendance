@@ -346,6 +346,8 @@ function SlidePrintPack({ courseId }) {
     return `mailto:${recipientEmails.join(",")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }, [courseId, recipientEmails, selectedClassId]);
 
+function SlidePrintPack({ courseId, publicView = false }) {
+  const slides = getSlidesByCourse(courseId);
   if (!slides.length) {
     return (
       <section className="slides-index">
@@ -360,10 +362,14 @@ function SlidePrintPack({ courseId }) {
     <section className="print-pack">
       <header className="print-pack-header no-print">
         <h1>{courseId.toUpperCase()} Printable Teaching Pack</h1>
-        <p>Use print to save all slides as one PDF for students/teachers.</p>
+        <p>
+          {publicView
+            ? "Public student view. Use print to save all slides as one PDF."
+            : "Use print to save all slides as one PDF for students/teachers."}
+        </p>
         <div className="slide-actions">
           <button type="button" onClick={() => window.print()}>Print all {courseId.toUpperCase()} slides</button>
-          <Link to={`/teaching-slides/course/${courseId}`}>Back to course slide index</Link>
+          {!publicView && <Link to={`/teaching-slides/course/${courseId}`}>Back to course slide index</Link>}
         </div>
         <div className="slide-email-share">
           <label>
@@ -413,8 +419,21 @@ function SlidePrintPack({ courseId }) {
   );
 }
 
-export default function TeachingSlidesPage() {
+export default function TeachingSlidesPage({ publicView = false }) {
   const { slideId, courseId, legacySlideId } = useParams();
+  if (publicView && courseId && slideId === "print") {
+    return <SlidePrintPack courseId={courseId} publicView />;
+  }
+
+  if (publicView) {
+    return (
+      <section className="slides-index">
+        <h1>Public slide pack not found</h1>
+        <p>This public teaching-slide URL is invalid.</p>
+      </section>
+    );
+  }
+
   if (!courseId && !slideId && !legacySlideId) {
     return <SlideCoursesIndex />;
   }
