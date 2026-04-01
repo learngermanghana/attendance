@@ -178,6 +178,9 @@ function SlideDetail({ slide, courseId }) {
           Student handout mode
         </label>
       </footer>
+      <div className="no-print">
+        <SlideEmailShare courseId={courseId} />
+      </div>
 
       <nav className="slide-nav no-print" aria-label="Slide navigation">
         {previous ? <Link to={`/teaching-slides/course/${courseId}/${previous.id}`}>← Previous</Link> : <span />}
@@ -185,6 +188,97 @@ function SlideDetail({ slide, courseId }) {
         {next ? <Link to={`/teaching-slides/course/${courseId}/${next.id}`}>Next →</Link> : <span />}
       </nav>
     </article>
+  );
+}
+
+function SlideEmailShare({ courseId }) {
+  const [classOptions, setClassOptions] = useState([]);
+  const [selectedClassId, setSelectedClassId] = useState("");
+  const [recipientEmails, setRecipientEmails] = useState([]);
+  const [loadingRecipients, setLoadingRecipients] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const classes = await listClasses();
+        const normalized = classes
+          .map((entry) => String(entry?.classId || entry?.name || "").trim())
+          .filter(Boolean);
+        setClassOptions(normalized);
+      } catch {
+        setClassOptions([]);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedClassId) {
+      setRecipientEmails([]);
+      return;
+    }
+
+    (async () => {
+      setLoadingRecipients(true);
+      try {
+        const students = await listStudentsByClass(selectedClassId);
+        const emails = [...new Set(
+          students
+            .map((student) => String(student?.email || "").trim())
+            .filter(Boolean),
+        )];
+        setRecipientEmails(emails);
+      } catch {
+        setRecipientEmails([]);
+      } finally {
+        setLoadingRecipients(false);
+      }
+    })();
+  }, [selectedClassId]);
+
+  const shareMailtoLink = useMemo(() => {
+    if (recipientEmails.length === 0 || !selectedClassId) return "";
+
+    const subject = `${courseId.toUpperCase()} teaching slides PDF`;
+    const body = [
+      "Hi class,",
+      "",
+      `Please find attached the ${courseId.toUpperCase()} teaching slides PDF.`,
+      "",
+      `Class: ${selectedClassId}`,
+      `Printable slide pack: ${window.location.href}`,
+      "",
+      "Best regards,",
+      "Teacher",
+    ].join("\n");
+
+    return `mailto:${recipientEmails.join(",")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  }, [courseId, recipientEmails, selectedClassId]);
+
+  return (
+    <div className="slide-email-share">
+      <label>
+        Share PDF with class:
+        <select value={selectedClassId} onChange={(event) => setSelectedClassId(event.target.value)}>
+          <option value="">Select class</option>
+          {classOptions.map((classId) => <option key={classId} value={classId}>{classId}</option>)}
+        </select>
+      </label>
+      <a
+        href={shareMailtoLink || undefined}
+        onClick={(event) => {
+          if (!shareMailtoLink) event.preventDefault();
+        }}
+        className="slide-mailto-link"
+        aria-disabled={!shareMailtoLink}
+      >
+        Email PDF link to selected class
+      </a>
+      <p className="slide-email-help">
+        {loadingRecipients
+          ? "Loading student emails..."
+          : `Recipients with email: ${recipientEmails.length}`}
+      </p>
+    </div>
   );
 }
 
