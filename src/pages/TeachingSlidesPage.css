@@ -222,6 +222,48 @@
   padding: 1rem;
 }
 
+.slide-email-share {
+  margin-top: 0.85rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.slide-email-share label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  font-weight: 600;
+}
+
+.slide-email-share select {
+  border: 1px solid #cfd7ea;
+  border-radius: 10px;
+  padding: 0.4rem 0.55rem;
+  font: inherit;
+}
+
+.slide-mailto-link {
+  display: inline-flex;
+  width: fit-content;
+  border: 1px solid #c9d1e4;
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.slide-mailto-link[aria-disabled="true"] {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.slide-email-help {
+  margin: 0;
+  color: #5f6b85;
+  font-size: 0.92rem;
+}
+
 .slide-pack-toc {
   margin-top: 1rem;
 }
