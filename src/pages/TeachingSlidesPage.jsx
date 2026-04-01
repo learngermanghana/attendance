@@ -282,7 +282,7 @@ function SlideEmailShare({ courseId }) {
   );
 }
 
-function SlidePrintPack({ courseId }) {
+function SlidePrintPack({ courseId, publicView = false }) {
   const slides = getSlidesByCourse(courseId);
   const [classOptions, setClassOptions] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState("");
@@ -346,8 +346,6 @@ function SlidePrintPack({ courseId }) {
     return `mailto:${recipientEmails.join(",")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }, [courseId, recipientEmails, selectedClassId]);
 
-function SlidePrintPack({ courseId, publicView = false }) {
-  const slides = getSlidesByCourse(courseId);
   if (!slides.length) {
     return (
       <section className="slides-index">

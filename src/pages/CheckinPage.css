@@ -155,3 +155,19 @@
   border-radius: 10px;
   margin-bottom: 12px;
 }
+
+.checkin-slide-download {
+  padding: 12px;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.checkin-slide-download a {
+  color: #1d4ed8;
+  font-weight: 600;
+  text-decoration: underline;
+}

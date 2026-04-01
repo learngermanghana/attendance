@@ -183,6 +183,12 @@ export function getTeachingSlideById(id) {
   return teachingSlides.find((slide) => slide.id === id) || null;
 }
 
+export function getTeachingSlideByAssignmentId(assignmentId) {
+  const normalized = String(assignmentId || "").trim().toUpperCase();
+  if (!normalized) return null;
+  return teachingSlides.find((slide) => String(slide.assignmentId || "").trim().toUpperCase() === normalized) || null;
+}
+
 export function getSlidesByCourse(courseId) {
   const normalized = String(courseId || "").trim().toUpperCase();
   return teachingSlides
