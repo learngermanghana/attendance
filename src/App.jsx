@@ -224,6 +224,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/teaching-slides/public/:courseId/print" element={<TeachingSlidesPage publicView />} />
           <Route
             path="/teaching-slides/:legacySlideId"
             element={
