@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { findScheduleItemBySessionId } from "../data/classSchedules";
+import { getTeachingSlideByAssignmentId } from "../data/teachingSlides";
 import { QRCodeCanvas } from "qrcode.react";
 import { useToast } from "../context/ToastContext.jsx";
 import "./CheckinPage.css";
@@ -105,6 +106,11 @@ export default function CheckinPage() {
   }, [phoneNumber]);
 
   const selfCheckinUrl = useMemo(() => window.location.href, []);
+  const matchingSlide = useMemo(() => getTeachingSlideByAssignmentId(assignmentId), [assignmentId]);
+  const slideDownloadUrl = useMemo(() => {
+    if (!matchingSlide?.course || !matchingSlide?.id) return "";
+    return `/teaching-slides/public/${matchingSlide.course}/print#print-${matchingSlide.id}`;
+  }, [matchingSlide]);
 
   const assignmentStoragePath = useMemo(() => {
     if (!classId || !(savedSessionId || sessionId)) return "-";
@@ -317,6 +323,15 @@ export default function CheckinPage() {
           <div><b>Assignment ID:</b> {assignmentId || "-"}</div>
           <div><b>Saved to:</b> <code>{assignmentStoragePath}</code></div>
         </div>
+
+        {matchingSlide && (
+          <div className="checkin-slide-download">
+            <div><b>Lesson slide ready:</b> {matchingSlide.title}</div>
+            <a href={slideDownloadUrl} target="_blank" rel="noreferrer">
+              Download this teaching slide (PDF)
+            </a>
+          </div>
+        )}
 
         {submittedInfo && (
           <div className="checkin-success-card" role="status" aria-live="polite">
