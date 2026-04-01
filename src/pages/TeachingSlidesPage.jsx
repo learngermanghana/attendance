@@ -284,6 +284,68 @@ function SlideEmailShare({ courseId }) {
 
 function SlidePrintPack({ courseId }) {
   const slides = getSlidesByCourse(courseId);
+  const [classOptions, setClassOptions] = useState([]);
+  const [selectedClassId, setSelectedClassId] = useState("");
+  const [recipientEmails, setRecipientEmails] = useState([]);
+  const [loadingRecipients, setLoadingRecipients] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const classes = await listClasses();
+        const normalized = classes
+          .map((entry) => String(entry?.classId || entry?.name || "").trim())
+          .filter(Boolean);
+        setClassOptions(normalized);
+      } catch {
+        setClassOptions([]);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedClassId) {
+      setRecipientEmails([]);
+      return;
+    }
+
+    (async () => {
+      setLoadingRecipients(true);
+      try {
+        const students = await listStudentsByClass(selectedClassId);
+        const emails = [...new Set(
+          students
+            .map((student) => String(student?.email || "").trim())
+            .filter(Boolean),
+        )];
+        setRecipientEmails(emails);
+      } catch {
+        setRecipientEmails([]);
+      } finally {
+        setLoadingRecipients(false);
+      }
+    })();
+  }, [selectedClassId]);
+
+  const shareMailtoLink = useMemo(() => {
+    if (recipientEmails.length === 0 || !selectedClassId) return "";
+
+    const subject = `${courseId.toUpperCase()} teaching slides PDF`;
+    const body = [
+      "Hi class,",
+      "",
+      `Please find attached the ${courseId.toUpperCase()} teaching slides PDF.`,
+      "",
+      `Class: ${selectedClassId}`,
+      `Printable slide pack: ${window.location.href}`,
+      "",
+      "Best regards,",
+      "Teacher",
+    ].join("\n");
+
+    return `mailto:${recipientEmails.join(",")}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  }, [courseId, recipientEmails, selectedClassId]);
+
   if (!slides.length) {
     return (
       <section className="slides-index">
@@ -303,7 +365,30 @@ function SlidePrintPack({ courseId }) {
           <button type="button" onClick={() => window.print()}>Print all {courseId.toUpperCase()} slides</button>
           <Link to={`/teaching-slides/course/${courseId}`}>Back to course slide index</Link>
         </div>
-        <SlideEmailShare courseId={courseId} />
+        <div className="slide-email-share">
+          <label>
+            Share PDF with class:
+            <select value={selectedClassId} onChange={(event) => setSelectedClassId(event.target.value)}>
+              <option value="">Select class</option>
+              {classOptions.map((classId) => <option key={classId} value={classId}>{classId}</option>)}
+            </select>
+          </label>
+          <a
+            href={shareMailtoLink || undefined}
+            onClick={(event) => {
+              if (!shareMailtoLink) event.preventDefault();
+            }}
+            className="slide-mailto-link"
+            aria-disabled={!shareMailtoLink}
+          >
+            Email PDF link to selected class
+          </a>
+          <p className="slide-email-help">
+            {loadingRecipients
+              ? "Loading student emails..."
+              : `Recipients with email: ${recipientEmails.length}`}
+          </p>
+        </div>
         <div className="slide-pack-toc">
           <strong>Jump to a day:</strong>
           <div className="slide-day-jump">
