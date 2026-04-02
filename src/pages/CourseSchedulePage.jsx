@@ -35,6 +35,7 @@ export default function CourseSchedulePage() {
   const [weekDaysMap, setWeekDaysMap] = useState({});
 
   const holidayWindow = useMemo(() => getHolidayWindow(startDate, 120), [startDate]);
+  const holidayInWindow = holidayWindow.includes(holidayCandidate);
   const weeklyTemplate = courseLevels[level] || [];
 
   useEffect(() => {
@@ -98,14 +99,8 @@ export default function CourseSchedulePage() {
 
         <div style={{ marginTop: 8 }}>
           <label>
-            Holiday in 120-day window{" "}
-            <select value={holidayCandidate} onChange={(e) => setHolidayCandidate(e.target.value)}>
-              {holidayWindow.map((day) => (
-                <option key={day} value={day}>
-                  {day}
-                </option>
-              ))}
-            </select>
+            Holiday date{" "}
+            <input type="date" value={holidayCandidate} onChange={(e) => setHolidayCandidate(e.target.value)} />
           </label>
           <button
             style={{ marginLeft: 8 }}
@@ -119,6 +114,12 @@ export default function CourseSchedulePage() {
             Add Holiday
           </button>
         </div>
+
+        {!holidayInWindow && (
+          <p style={{ marginTop: 8, marginBottom: 0, opacity: 0.75 }}>
+            This holiday is outside the 120-day scheduling window, but it will still be saved for reminders.
+          </p>
+        )}
 
         <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
           {holidayDates.map((holiday) => (

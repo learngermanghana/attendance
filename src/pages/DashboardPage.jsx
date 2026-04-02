@@ -157,6 +157,9 @@ export default function DashboardPage() {
                   ? `${upcomingHolidays.length} holiday reminder${upcomingHolidays.length === 1 ? "" : "s"} in the next 30 days.`
                   : "No holiday reminders in the next 30 days."}
               </p>
+              <p style={{ margin: "6px 0 0", opacity: 0.75 }}>
+                Reminders are based on dates added in Manage course holidays.
+              </p>
               {upcomingHolidayPreview.length > 0 && (
                 <ul style={{ margin: "10px 0 0", paddingLeft: 18 }}>
                   {upcomingHolidayPreview.map((holiday) => (
