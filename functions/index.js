@@ -47,8 +47,27 @@ function normalizeClassId(value) {
   return String(value || "").trim();
 }
 
+function normalizeClassLookupKey(value) {
+  return normalizeClassId(value)
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+const CLASS_ID_ALIASES = new Map([
+  ["a1 leipzig", "A1 Leipzig Klasse"],
+  ["a1 leipzig klasse", "A1 Leipzig Klasse"],
+  ["a1 leipzip", "A1 Leipzig Klasse"],
+  ["a1 leipzip klasse", "A1 Leipzig Klasse"],
+]);
+
+function normalizeClassComparable(value) {
+  const normalized = normalizeClassId(value);
+  if (!normalized) return "";
+  return CLASS_ID_ALIASES.get(normalizeClassLookupKey(normalized)) || normalized;
+}
+
 function resolveStudentClassId(student = {}) {
-  return normalizeClassId(student.classId || student.className || student.group || student.groupId || student.groupName);
+  return normalizeClassComparable(student.classId || student.className || student.group || student.groupId || student.groupName);
 }
 
 function normalizeText(value) {
@@ -208,7 +227,7 @@ app.post("/openSession", async (req, res) => {
     const user = await requireAuth(req);
 
     const body = req.body || {};
-    const classId = normalizeClassId(body.classId || body.className);
+    const classId = normalizeClassComparable(body.classId || body.className);
     const {
       sessionId: rawSessionId,
       date,
@@ -280,7 +299,7 @@ app.post("/openSession", async (req, res) => {
 app.post("/checkin", async (req, res) => {
   try {
     const body = req.body || {};
-    const classId = normalizeClassId(body.classId || body.className);
+    const classId = normalizeClassComparable(body.classId || body.className);
     const {
       sessionId: rawSessionId,
       date,
@@ -360,7 +379,7 @@ app.post("/checkin", async (req, res) => {
     if (!isStudentStatusAllowed(st)) return res.status(400).json({ error: "Student not active" });
 
     const studentClassId = resolveStudentClassId(st);
-    if (studentClassId !== classId) return res.status(400).json({ error: "Student not in this class" });
+    if (normalizeClassComparable(studentClassId) !== normalizeClassComparable(classId)) return res.status(400).json({ error: "Student not in this class" });
 
     const uid = st.uid || studentDoc.id;
 
@@ -408,7 +427,7 @@ app.post("/checkin", async (req, res) => {
 
 app.get("/checkinStatus", async (req, res) => {
   try {
-    const classId = normalizeClassId(req.query.classId || req.query.className);
+    const classId = normalizeClassComparable(req.query.classId || req.query.className);
     const sessionId = String(req.query.sessionId || req.query.session || "").trim();
 
     if (!classId || !sessionId) {
