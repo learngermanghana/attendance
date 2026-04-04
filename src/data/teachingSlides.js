@@ -1,7 +1,30 @@
 import { courseDictionary } from "./courseDictionary";
 import { getSlideQuestionSet } from "./teachingSlideQuestionDictionary";
 
+const curatedA1Slides = buildLevelSlides("A1").map((slide) => ({
+  ...slide,
+  objective: `Students can use clear and simple A1 German to talk about ${slide.topic.toLowerCase()}.`,
+  keyPhrasesDe: [
+    `${slide.topic}: wichtige A1-Sätze`,
+    "Kannst du langsam sprechen?",
+    "Ich verstehe. / Ich verstehe nicht.",
+    "Kannst du das bitte wiederholen?",
+  ],
+  teacherNotesEn: [
+    "Use short model sentences and frequent repetition for beginner confidence.",
+    "Allow extra think time before pair speaking.",
+    "Prioritize understandable communication over grammar perfection.",
+  ],
+  interactionFlow: [
+    { phase: "Input", detailEn: "8 min: teach core words + one short sentence pattern." },
+    { phase: "Guided pairs", detailEn: "12 min: learners practice prompts with support cards." },
+    { phase: "Mini speaking", detailEn: "10 min: each student produces 2-3 simple full sentences." },
+    { phase: "Review", detailEn: "6 min: class repeats key phrases and one correction point." },
+  ],
+}));
+
 const curatedSlides = [
+  ...curatedA1Slides,
   {
     id: "a2-day-1-small-talk",
     course: "A2",
@@ -173,7 +196,7 @@ function buildLevelSlides(level) {
 
 const curatedSlidesByAssignment = Object.fromEntries(curatedSlides.map((slide) => [slide.assignmentId, slide]));
 
-const a1Slides = buildLevelSlides("A1");
+const a1Slides = buildLevelSlides("A1").map((slide) => curatedSlidesByAssignment[slide.assignmentId] || slide);
 const generatedA2Slides = buildLevelSlides("A2").map((slide) => curatedSlidesByAssignment[slide.assignmentId] || slide);
 const b1Slides = buildLevelSlides("B1");
 
