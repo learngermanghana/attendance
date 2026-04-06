@@ -45,6 +45,10 @@ function normalize(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+function normalizeStudentCode(value) {
+  return normalize(value).replace(/[^a-z0-9]/g, "");
+}
+
 function flattenAnswers(value, prefix = "") {
   if (typeof value === "string") {
     return [`${prefix}${value}`];
@@ -116,6 +120,40 @@ function findReferenceEntryForSubmission(referenceEntries = [], submission = {})
   }
 
   return referenceEntries.find((entry) => normalize(entry.assignment) === normalize(submission.assignment)) || null;
+}
+
+function findRosterMatchForSubmission(roster = [], submission = {}) {
+  const submissionCode = normalizeStudentCode(submission.studentCode);
+  const submissionName = normalize(submission.studentName || submission.name);
+  const submissionLevel = normalize(submission.level || inferLevel(submission.assignment));
+
+  const hasCode = Boolean(submissionCode);
+  const hasName = Boolean(submissionName);
+  const hasLevel = Boolean(submissionLevel);
+
+  if (hasCode && hasLevel) {
+    const exactMatch = roster.find((row) => {
+      return normalizeStudentCode(row.studentCode) === submissionCode && normalize(row.level) === submissionLevel;
+    });
+    if (exactMatch) return exactMatch;
+  }
+
+  if (hasCode) {
+    const codeMatch = roster.find((row) => normalizeStudentCode(row.studentCode) === submissionCode);
+    if (codeMatch) return codeMatch;
+  }
+
+  if (hasName && hasLevel) {
+    const nameAndLevelMatch = roster.find((row) => normalize(row.name) === submissionName && normalize(row.level) === submissionLevel);
+    if (nameAndLevelMatch) return nameAndLevelMatch;
+  }
+
+  if (hasName) {
+    const nameMatch = roster.find((row) => normalize(row.name) === submissionName);
+    if (nameMatch) return nameMatch;
+  }
+
+  return null;
 }
 
 export default function MarkingPage() {
@@ -353,16 +391,12 @@ export default function MarkingPage() {
   };
 
   const handleSelectFromNotification = async (submission) => {
-    if (!submission?.studentCode || !submission?.level) {
+    if (!submission?.studentCode && !submission?.studentName) {
       error("This notification is missing student information and cannot be opened.");
       return;
     }
 
-    const matchingStudent = roster.find((row) => {
-      const sameCode = normalize(row.studentCode) && normalize(row.studentCode) === normalize(submission.studentCode);
-      const sameLevel = normalize(row.level) && normalize(row.level) === normalize(submission.level);
-      return sameCode && sameLevel;
-    }) || roster.find((row) => normalize(row.studentCode) === normalize(submission.studentCode));
+    const matchingStudent = findRosterMatchForSubmission(roster, submission);
 
     if (!matchingStudent) {
       setSubmissionNotifications((prev) => prev.filter((row) => row.path !== submission.path));
