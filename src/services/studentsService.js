@@ -1,4 +1,4 @@
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { db } from "../firebase.js";
 import {
   loadPublishedStudentRows,
@@ -61,6 +61,20 @@ export async function loadStudentsByFieldWithFirestore(fieldName, classId, fires
   return snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort(byNameAsc);
 }
 
+export async function listAllStudentsWithFirestore(firestore = { collection, getDocs, db }) {
+  const snap = await firestore.getDocs(firestore.collection(firestore.db, "students"));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort(byNameAsc);
+}
+
+export async function updateStudentByIdWithFirestore(studentId, payload, firestore = { doc, updateDoc, db }) {
+  if (!normalize(studentId)) {
+    throw new Error("Student ID is required");
+  }
+
+  const studentRef = firestore.doc(firestore.db, "students", studentId);
+  await firestore.updateDoc(studentRef, payload);
+}
+
 export async function listStudentsByClassWithDeps(
   classId,
   {
@@ -94,4 +108,12 @@ export async function listStudentsByClassWithDeps(
 
 export async function listStudentsByClass(classId) {
   return listStudentsByClassWithDeps(classId);
+}
+
+export async function listAllStudents() {
+  return listAllStudentsWithFirestore();
+}
+
+export async function updateStudentById(studentId, payload) {
+  return updateStudentByIdWithFirestore(studentId, payload);
 }
