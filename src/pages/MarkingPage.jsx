@@ -534,7 +534,7 @@ export default function MarkingPage() {
         score: Number(score),
         comments: feedback.trim(),
         level,
-        link: referenceEntry.answer_url || DEFAULT_REFERENCE_LINK,
+        link: referenceEntry.answer_url ?? DEFAULT_REFERENCE_LINK,
       });
       setSaveReceipt(receipt);
 
