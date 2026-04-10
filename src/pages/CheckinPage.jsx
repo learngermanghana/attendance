@@ -240,6 +240,22 @@ export default function CheckinPage() {
     };
   }, [checkinStatus, serverTimeMs, personalizedStartMessage, personalizedEndedMessage]);
 
+  const preClassCountdown = useMemo(() => {
+    if (!checkinStatus || !Number.isFinite(serverTimeMs)) return null;
+
+    const status = String(checkinStatus.status || "");
+    const openFrom = Number(checkinStatus.openFrom || 0) || null;
+    if (status !== "scheduled" || !openFrom) return null;
+
+    const remainingMs = openFrom - serverTimeMs;
+    if (remainingMs <= 0) return null;
+
+    return {
+      remainingLabel: formatDuration(remainingMs),
+      startTimeLabel: formatClock(openFrom),
+    };
+  }, [checkinStatus, serverTimeMs]);
+
   const submit = async (e) => {
     e.preventDefault();
     if (validationError) {
@@ -289,6 +305,14 @@ export default function CheckinPage() {
       <div className="checkin-card">
         <h2>Student Check-in</h2>
         <p className="checkin-subtitle">{personalizedStartMessage}</p>
+
+        {preClassCountdown && (
+          <div className="checkin-live-countdown" role="status" aria-live="polite">
+            <div className="checkin-live-countdown-title">Class starts in</div>
+            <div className="checkin-live-countdown-timer">{preClassCountdown.remainingLabel}</div>
+            <div className="checkin-live-countdown-note">Countdown to {preClassCountdown.startTimeLabel} {ATTENDANCE_TIME_ZONE_LABEL}</div>
+          </div>
+        )}
 
         {statusSummary && (
           <div className={`checkin-status checkin-status-${statusSummary.tone}`}>

@@ -23,6 +23,34 @@
   color: #475569;
 }
 
+.checkin-live-countdown {
+  margin: 0 0 12px;
+  border: 1px solid #c7d2fe;
+  background: #eef2ff;
+  border-radius: 12px;
+  padding: 12px;
+  color: #312e81;
+}
+
+.checkin-live-countdown-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.checkin-live-countdown-timer {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-top: 2px;
+}
+
+.checkin-live-countdown-note {
+  margin-top: 4px;
+  font-size: 12px;
+}
+
 .checkin-meta {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
