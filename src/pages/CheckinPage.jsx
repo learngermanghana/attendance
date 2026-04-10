@@ -26,9 +26,33 @@ function formatDuration(ms) {
   if (!Number.isFinite(ms)) return "-";
   if (ms <= 0) return "00:00";
   const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
+  if (hours > 0) {
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  }
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function resolveFallbackStartTimestamp(dateValue, startTimeValue) {
+  const safeDate = String(dateValue || "").trim();
+  const safeStartTime = String(startTimeValue || "").trim();
+  if (!safeDate || !safeStartTime) return null;
+
+  const [yearRaw, monthRaw, dayRaw] = safeDate.split("-");
+  const [hoursRaw, minutesRaw] = safeStartTime.split(":");
+  const year = Number(yearRaw);
+  const month = Number(monthRaw);
+  const day = Number(dayRaw);
+  const hour = Number(hoursRaw);
+  const minute = Number(minutesRaw);
+
+  if (![year, month, day, hour, minute].every(Number.isFinite)) return null;
+  if (month < 1 || month > 12 || day < 1 || day > 31 || hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+
+  const asUtc = Date.UTC(year, month - 1, day, hour - 1, minute, 0, 0);
+  return Number.isFinite(asUtc) ? asUtc : null;
 }
 
 function formatInterval(openFrom, openTo) {
@@ -241,20 +265,23 @@ export default function CheckinPage() {
   }, [checkinStatus, serverTimeMs, personalizedStartMessage, personalizedEndedMessage]);
 
   const preClassCountdown = useMemo(() => {
-    if (!checkinStatus || !Number.isFinite(serverTimeMs)) return null;
+    if (!Number.isFinite(serverTimeMs)) return null;
+    const status = String(checkinStatus?.status || "");
+    const serverScheduledStart = Number(checkinStatus?.openFrom || 0) || null;
+    const fallbackStart = resolveFallbackStartTimestamp(date, startTime);
+    const startMs = serverScheduledStart || fallbackStart;
 
-    const status = String(checkinStatus.status || "");
-    const openFrom = Number(checkinStatus.openFrom || 0) || null;
-    if (status !== "scheduled" || !openFrom) return null;
+    if (!startMs) return null;
+    if (checkinStatus && status !== "scheduled") return null;
 
-    const remainingMs = openFrom - serverTimeMs;
+    const remainingMs = startMs - serverTimeMs;
     if (remainingMs <= 0) return null;
 
     return {
       remainingLabel: formatDuration(remainingMs),
-      startTimeLabel: formatClock(openFrom),
+      startTimeLabel: formatClock(startMs),
     };
-  }, [checkinStatus, serverTimeMs]);
+  }, [checkinStatus, serverTimeMs, date, startTime]);
 
   const submit = async (e) => {
     e.preventDefault();
