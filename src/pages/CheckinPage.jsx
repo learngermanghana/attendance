@@ -22,6 +22,19 @@ function formatClock(timestamp) {
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", timeZone: ATTENDANCE_TIME_ZONE });
 }
 
+function formatLiveClockLabel(timestamp) {
+  if (!Number.isFinite(timestamp)) return "--:--:--";
+  const d = new Date(Number(timestamp));
+  if (Number.isNaN(d.getTime())) return "--:--:--";
+  return d.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+    timeZone: ATTENDANCE_TIME_ZONE,
+  });
+}
+
 function formatDuration(ms) {
   if (!Number.isFinite(ms)) return "-";
   if (ms <= 0) return "00:00";
@@ -119,7 +132,7 @@ export default function CheckinPage() {
   const [statusBusy, setStatusBusy] = useState(false);
   const [statusError, setStatusError] = useState("");
   const [checkinStatus, setCheckinStatus] = useState(null);
-  const [serverTimeMs, setServerTimeMs] = useState(null);
+  const [serverTimeMs, setServerTimeMs] = useState(() => Date.now());
 
   const expectedStudents = useMemo(() => parseExpectedNames(expectedStudentsRaw), [expectedStudentsRaw]);
 
@@ -188,12 +201,11 @@ export default function CheckinPage() {
   }, [classId, sessionId, statusApiUrl]);
 
   useEffect(() => {
-    if (!Number.isFinite(serverTimeMs)) return undefined;
     const t = window.setInterval(() => {
-      setServerTimeMs((prev) => (Number.isFinite(prev) ? prev + 1000 : prev));
+      setServerTimeMs((prev) => (Number.isFinite(prev) ? prev + 1000 : Date.now()));
     }, 1000);
     return () => window.clearInterval(t);
-  }, [serverTimeMs]);
+  }, []);
 
 
   const attendanceWindowLabel = useMemo(() => {
@@ -332,6 +344,9 @@ export default function CheckinPage() {
       <div className="checkin-card">
         <h2>Student Check-in</h2>
         <p className="checkin-subtitle">{personalizedStartMessage}</p>
+        <div className="checkin-live-clock" role="status" aria-live="polite">
+          Current time: <b>{formatLiveClockLabel(serverTimeMs)}</b> {ATTENDANCE_TIME_ZONE_LABEL}
+        </div>
 
         {preClassCountdown && (
           <div className="checkin-live-countdown" role="status" aria-live="polite">
