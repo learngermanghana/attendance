@@ -23,6 +23,16 @@
   color: #475569;
 }
 
+.checkin-live-clock {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #dbeafe;
+  background: #f8fbff;
+  color: #1e3a8a;
+  font-size: 14px;
+}
+
 .checkin-live-countdown {
   margin: 0 0 12px;
   border: 1px solid #c7d2fe;
