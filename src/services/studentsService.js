@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { collection, doc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
 import { db } from "../firebase.js";
 import {
   loadPublishedStudentRows,
@@ -75,6 +75,19 @@ export async function updateStudentByIdWithFirestore(studentId, payload, firesto
   await firestore.updateDoc(studentRef, payload);
 }
 
+export async function createStudentWithFirestore(
+  studentId,
+  payload,
+  firestore = { doc, setDoc, serverTimestamp, db },
+) {
+  if (!normalize(studentId)) {
+    throw new Error("Student ID is required");
+  }
+
+  const studentRef = firestore.doc(firestore.db, "students", studentId);
+  await firestore.setDoc(studentRef, { ...payload, updated_at: firestore.serverTimestamp() }, { merge: true });
+}
+
 export async function listStudentsByClassWithDeps(
   classId,
   {
@@ -116,4 +129,8 @@ export async function listAllStudents() {
 
 export async function updateStudentById(studentId, payload) {
   return updateStudentByIdWithFirestore(studentId, payload);
+}
+
+export async function createStudent(studentId, payload) {
+  return createStudentWithFirestore(studentId, payload);
 }
