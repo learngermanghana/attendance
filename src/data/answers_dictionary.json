@@ -756,11 +756,11 @@
   "A2 6.16 Wohlbefinden und Entspannung": {
     "answers": {
       "teil3": {
-        "Answer1": "C) Anzeige",
-        "Answer2": "B) Anzeige",
-        "Answer3": "E) Anzeige",
-        "Answer4": "F) Anzeige",
-        "Answer5": "A) Anzeige",
+        "Answer1": "B) Anzeige C",
+        "Answer2": "A) Anzeige B",
+        "Answer3": "B) Anzeige E",
+        "Answer4": "C) Anzeige F",
+        "Answer5": "A) Anzeige A",
         "Answer6": "B) Mehr Obst und Gemüse essen",
         "Answer7": "C) 30 Minuten"
       },
