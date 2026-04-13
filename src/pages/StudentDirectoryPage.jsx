@@ -346,6 +346,7 @@ export default function StudentDirectoryPage() {
             style={{
               border: activeTab === "directory" ? "1px solid #2563eb" : "1px solid #d1d5db",
               background: activeTab === "directory" ? "#eff6ff" : "#fff",
+              color: "#1a2233",
             }}
           >
             Student Directory
@@ -356,6 +357,7 @@ export default function StudentDirectoryPage() {
             style={{
               border: activeTab === "add" ? "1px solid #2563eb" : "1px solid #d1d5db",
               background: activeTab === "add" ? "#eff6ff" : "#fff",
+              color: "#1a2233",
             }}
           >
             Add Student
@@ -412,6 +414,7 @@ export default function StudentDirectoryPage() {
                               padding: "10px 8px",
                               marginBottom: 8,
                               cursor: "pointer",
+                              color: "#1a2233",
                             }}
                           >
                             <div style={{ fontWeight: 600 }}>{student.name || "Unnamed"}</div>
