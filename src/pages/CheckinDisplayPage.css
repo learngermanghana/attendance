@@ -28,6 +28,48 @@
   color: #475569;
 }
 
+.checkin-display-live-clock {
+  margin: 0 auto 10px;
+  max-width: 100%;
+  border-radius: 10px;
+  border: 1px solid #dbeafe;
+  background: #f8fbff;
+  color: #1e3a8a;
+  padding: 10px 12px;
+  font-size: 14px;
+  text-align: left;
+}
+
+.checkin-display-live-countdown {
+  margin: 0 auto 10px;
+  max-width: 100%;
+  border: 1px solid #c7d2fe;
+  background: #eef2ff;
+  border-radius: 12px;
+  padding: 12px;
+  color: #312e81;
+  text-align: left;
+}
+
+.checkin-display-live-countdown-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.checkin-display-live-countdown-timer {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-top: 2px;
+}
+
+.checkin-display-live-countdown-note {
+  margin-top: 4px;
+  font-size: 12px;
+}
+
 .checkin-display-alert {
   margin: 0 auto 10px;
   max-width: 100%;

@@ -72,6 +72,32 @@ function parseDateTime(dateValue, timeValue) {
   );
 }
 
+function formatLiveClockLabel(timestamp) {
+  if (!Number.isFinite(timestamp)) return "--:--:--";
+  const d = new Date(Number(timestamp));
+  if (Number.isNaN(d.getTime())) return "--:--:--";
+  return d.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+    timeZone: ATTENDANCE_TIME_ZONE,
+  });
+}
+
+function formatDuration(ms) {
+  if (!Number.isFinite(ms)) return "-";
+  if (ms <= 0) return "00:00";
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  if (hours > 0) {
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  }
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
 export default function CheckinDisplayPage() {
   const [sp] = useSearchParams();
   const classId = sp.get("classId") || sp.get("className") || "";
@@ -157,6 +183,15 @@ export default function CheckinDisplayPage() {
     };
   }, [dateLabel, nowMs, startTime, endTime]);
 
+  const preClassCountdown = useMemo(() => {
+    const startAt = parseDateTime(dateLabel, startTime);
+    if (!startAt || nowMs >= startAt) return null;
+    return {
+      remainingLabel: formatDuration(startAt - nowMs),
+      startTimeLabel: formatDisplayTimeLabel(startTime, startAt),
+    };
+  }, [dateLabel, nowMs, startTime]);
+
   const hasRequiredParams = Boolean(classId && String(sessionId || "").trim());
 
   return (
@@ -164,6 +199,18 @@ export default function CheckinDisplayPage() {
       <div className="checkin-display-card">
         <h1>Student Self Check-in</h1>
         <p>Scan the QR code to open the check-in form.</p>
+        <div className="checkin-display-live-clock" role="status" aria-live="polite">
+          Current time: <b>{formatLiveClockLabel(nowMs)}</b> {ATTENDANCE_TIME_ZONE_LABEL}
+        </div>
+        {preClassCountdown && (
+          <div className="checkin-display-live-countdown" role="status" aria-live="polite">
+            <div className="checkin-display-live-countdown-title">Class starts in</div>
+            <div className="checkin-display-live-countdown-timer">{preClassCountdown.remainingLabel}</div>
+            <div className="checkin-display-live-countdown-note">
+              Countdown to {preClassCountdown.startTimeLabel} {ATTENDANCE_TIME_ZONE_LABEL}
+            </div>
+          </div>
+        )}
         <div className={`checkin-display-alert checkin-display-alert-${statusInfo.kind}`}>
           <div className="checkin-display-alert-title">{statusInfo.title}</div>
           <div>{statusInfo.detail}</div>
