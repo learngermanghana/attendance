@@ -39,6 +39,11 @@ const FEEDBACK_TEMPLATES = [
     label: "Wrong/incomplete task",
     text: "This submission does not fully match the assigned task. Please check the assignment instructions carefully and resubmit the correct task. Make sure all required parts are completed before submitting.",
   },
+  {
+    id: "three-attempts-flat-60",
+    label: "3 attempts: flat 60",
+    text: "The student has submitted this work 3 times and could not meet the required standard. A flat mark of 60 has been awarded.",
+  },
 ];
 
 function normalize(value) {
