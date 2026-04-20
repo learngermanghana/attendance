@@ -56,6 +56,28 @@ function resolveTopicFromTitle(title) {
   return String(segments[segments.length - 1] || text).trim();
 }
 
+function normalizeApiBaseUrl(url) {
+  return String(url || "").trim().replace(/\/+$/, "");
+}
+
+function resolveOpenSessionApiUrl() {
+  const explicitUrl = String(import.meta.env.VITE_OPEN_SESSION_API_URL || "").trim();
+  if (explicitUrl) return explicitUrl;
+
+  const apiBaseUrl = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
+  if (apiBaseUrl) return `${apiBaseUrl}/openSession`;
+
+  throw new Error("Missing check-in API configuration. Set VITE_OPEN_SESSION_API_URL or VITE_API_BASE_URL.");
+}
+
+function toSessionApiErrorMessage(error, actionLabel) {
+  const rawMessage = String(error?.message || "").trim();
+  if (error instanceof TypeError || /failed to fetch|networkerror|network error/i.test(rawMessage)) {
+    return `Network error while trying to ${actionLabel} check-in. Confirm the API URL is correct and the Firebase Functions endpoint allows this app origin (CORS).`;
+  }
+  return rawMessage || `Error trying to ${actionLabel} check-in`;
+}
+
 function mergeStudentsWithTemplate(studentTemplate, baseStudents) {
   const merged = { ...studentTemplate };
 
@@ -436,7 +458,7 @@ export default function AttendancePage() {
       }
 
       const token = await user.getIdToken();
-      const res = await fetch(import.meta.env.VITE_OPEN_SESSION_API_URL, {
+      const res = await fetch(resolveOpenSessionApiUrl(), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -461,7 +483,7 @@ export default function AttendancePage() {
       setSessionOpen(true);
       success("Check-in opened.");
     } catch (e) {
-      error(e?.message || "Error opening check-in");
+      error(toSessionApiErrorMessage(e, "open"));
     } finally {
       setSessionBusy(false);
     }
@@ -471,7 +493,7 @@ export default function AttendancePage() {
     setSessionBusy(true);
     try {
       const token = await user.getIdToken();
-      const res = await fetch(import.meta.env.VITE_OPEN_SESSION_API_URL, {
+      const res = await fetch(resolveOpenSessionApiUrl(), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -491,7 +513,7 @@ export default function AttendancePage() {
       setSessionOpen(false);
       success("Check-in closed.");
     } catch (e) {
-      error(e?.message || "Error closing check-in");
+      error(toSessionApiErrorMessage(e, "close"));
     } finally {
       setSessionBusy(false);
     }
