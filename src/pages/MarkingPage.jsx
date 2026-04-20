@@ -42,7 +42,7 @@ const FEEDBACK_TEMPLATES = [
   {
     id: "three-attempts-flat-60",
     label: "3 attempts: flat 60",
-    text: "The student has submitted this work 3 times and could not meet the required standard. A flat mark of 60 has been awarded.",
+    text: "You have submitted this work 3 times and could not meet the required standard. A flat mark of 60 has been awarded. Please refer to the previous comments to see the exact errors. You can improve by watching the lecture again and reading through the grammar notes carefully.",
   },
 ];
 
