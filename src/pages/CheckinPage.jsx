@@ -15,6 +15,13 @@ function resolveStatusApiUrl() {
   return checkinUrl.replace(/\/checkin\/?$/, "/checkinStatus");
 }
 
+function resolvePublicAppBaseUrl() {
+  const envBaseUrl = String(import.meta.env.VITE_PUBLIC_APP_BASE_URL || "").trim();
+  const fallbackBaseUrl = String(window.location.origin || "").trim();
+  const baseUrl = envBaseUrl || fallbackBaseUrl;
+  return baseUrl.replace(/\/+$/, "");
+}
+
 function formatClock(timestamp) {
   if (!timestamp) return "-";
   const d = new Date(Number(timestamp));
@@ -144,10 +151,12 @@ export default function CheckinPage() {
 
   const selfCheckinUrl = useMemo(() => window.location.href, []);
   const matchingSlide = useMemo(() => getTeachingSlideByAssignmentId(assignmentId), [assignmentId]);
+  const publicAppBaseUrl = useMemo(resolvePublicAppBaseUrl, []);
   const slideDownloadUrl = useMemo(() => {
     if (!matchingSlide?.course || !matchingSlide?.id) return "";
-    return `/teaching-slides/public/${matchingSlide.course}/print#print-${matchingSlide.id}`;
-  }, [matchingSlide]);
+    const path = `/teaching-slides/public/${matchingSlide.course}/print#print-${matchingSlide.id}`;
+    return `${publicAppBaseUrl}${path}`;
+  }, [matchingSlide, publicAppBaseUrl]);
 
   const assignmentStoragePath = useMemo(() => {
     if (!classId || !(savedSessionId || sessionId)) return "-";
