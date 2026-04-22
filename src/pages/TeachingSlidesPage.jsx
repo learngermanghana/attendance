@@ -419,7 +419,7 @@ function SlidePrintPack({ courseId, publicView = false }) {
 
 export default function TeachingSlidesPage({ publicView = false }) {
   const { slideId, courseId, legacySlideId } = useParams();
-  if (publicView && courseId && slideId === "print") {
+  if (publicView && courseId) {
     return <SlidePrintPack courseId={courseId} publicView />;
   }
 
