@@ -46,7 +46,8 @@ export function generateCourseSchedule({
       ? normalizeWeekdays(weekDaysMap[weekLabel] || weekDaysMap[String(weekIndex)] || fallbackDays)
       : fallbackDays;
 
-    sessions.forEach((topic) => {
+    sessions.forEach((session) => {
+      const topic = typeof session === "string" ? session : String(session?.topic || "").trim();
       while (true) {
         const cursorIso = cursor.format("YYYY-MM-DD");
         const dayName = cursor.format("dddd");
@@ -54,7 +55,7 @@ export function generateCourseSchedule({
         const isHoliday = holidays.has(cursorIso);
 
         if (isPreferredDay && !isHoliday) {
-          const assignmentId = buildAssignmentId(level, topic, dayIndex);
+          const assignmentId = String(session?.assignmentId || "").trim() || buildAssignmentId(level, topic, dayIndex);
           rows.push({
             week: weekLabel,
             day: `Day ${dayIndex}`,

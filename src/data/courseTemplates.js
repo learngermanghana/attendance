@@ -1,13 +1,44 @@
 export const RAW_SCHEDULE_A1 = [
-  ["Week One", ["Chapter 0.1 - Lesen & Horen"]],
-  ["Week Two", ["Chapters 0.2 and 1.1 - Lesen & Horen", "Chapter 1.1 - Schreiben & Sprechen and Chapter 1.2 - Lesen & Horen", "Chapter 2 - Lesen & Horen"]],
-  ["Week Three", ["Chapter 1.2 - Schreiben & Sprechen (Recap)", "Chapter 2.3 - Schreiben & Sprechen", "Chapter 3 - Lesen & Horen"]],
-  ["Week Four", ["Chapter 4 - Lesen & Horen", "Chapter 5 - Lesen & Horen", "Chapter 6 - Lesen & Horen and Chapter 2.4 - Schreiben & Sprechen"]],
-  ["Week Five", ["Chapter 7 - Lesen & Horen", "Chapter 8 - Lesen & Horen", "Chapter 3.5 - Schreiben & Sprechen"]],
-  ["Week Six", ["Chapter 3.6 - Schreiben & Sprechen", "Chapter 4.7 - Schreiben & Sprechen", "Chapter 9 and 10 - Lesen & Horen"]],
-  ["Week Seven", ["Chapter 11 - Lesen & Horen", "Chapter 12.1 - Lesen & Horen and Schreiben & Sprechen (including 5.8)", "Chapter 5.9 - Schreiben & Sprechen"]],
-  ["Week Eight", ["Chapter 6.10 - Schreiben & Sprechen (Intro to letter writing)", "Chapter 13 - Lesen & Horen and Chapter 6.11 - Schreiben & Sprechen", "Chapter 14.1 - Lesen & Horen and Chapter 7.12 - Schreiben & Sprechen"]],
-  ["Week Nine", ["Chapter 14.2 - Lesen & Horen and Chapter 7.12 - Schreiben & Sprechen", "Chapter 8.13 - Schreiben & Sprechen"]],
+  ["Week One", [{ assignmentId: "A1-0.1", topic: "Chapter 0.1 - Lesen & Hören" }]],
+  ["Week Two", [
+    { assignmentId: "A1-0.2", topic: "Chapters 0.2 and 1.1 - Lesen & Hören" },
+    { assignmentId: "A1-1.1", topic: "Chapter 1.1 - Schreiben & Sprechen and Chapter 1.2 - Lesen & Hören" },
+    { assignmentId: "A1-2", topic: "Chapter 2 - Lesen & Hören" },
+  ]],
+  ["Week Three", [
+    { assignmentId: "A1-1.2", topic: "Chapter 1.2 - Schreiben & Sprechen (Recap)" },
+    { assignmentId: "A1-2.3", topic: "Chapter 2.3 - Schreiben & Sprechen" },
+    { assignmentId: "A1-3", topic: "Chapter 3 - Lesen & Hören" },
+  ]],
+  ["Week Four", [
+    { assignmentId: "A1-4", topic: "Chapter 4 - Lesen & Hören" },
+    { assignmentId: "A1-5", topic: "Chapter 5 - Lesen & Hören" },
+    { assignmentId: "A1-6", topic: "Chapter 6 - Lesen & Hören and Chapter 2.4 - Schreiben & Sprechen" },
+  ]],
+  ["Week Five", [
+    { assignmentId: "A1-7", topic: "Chapter 7 - Lesen & Hören" },
+    { assignmentId: "A1-8", topic: "Chapter 8 - Lesen & Hören" },
+    { assignmentId: "A1-3.5", topic: "Chapter 3.5 - Schreiben & Sprechen" },
+  ]],
+  ["Week Six", [
+    { assignmentId: "A1-3.6", topic: "Chapter 3.6 - Schreiben & Sprechen" },
+    { assignmentId: "A1-4.7", topic: "Chapter 4.7 - Schreiben & Sprechen" },
+    { assignmentId: "A1-9", topic: "Chapter 9 and 10 - Lesen & Hören" },
+  ]],
+  ["Week Seven", [
+    { assignmentId: "A1-11", topic: "Chapter 11 - Lesen & Hören" },
+    { assignmentId: "A1-12.1", topic: "Chapter 12.1 - Lesen & Hören and Schreiben & Sprechen (including 5.8)" },
+    { assignmentId: "A1-5.9", topic: "Chapter 5.9 - Schreiben & Sprechen" },
+  ]],
+  ["Week Eight", [
+    { assignmentId: "A1-6.10", topic: "Chapter 6.10 - Schreiben & Sprechen (Intro to letter writing)" },
+    { assignmentId: "A1-13", topic: "Chapter 13 - Lesen & Hören and Chapter 6.11 - Schreiben & Sprechen" },
+    { assignmentId: "A1-14.1", topic: "Chapter 14.1 - Lesen & Hören and Chapter 7.12 - Schreiben & Sprechen" },
+  ]],
+  ["Week Nine", [
+    { assignmentId: "A1-14.2", topic: "Chapter 14.2 - Lesen & Hören and Chapter 7.12 - Schreiben & Sprechen" },
+    { assignmentId: "A1-8.13", topic: "Chapter 8.13 - Schreiben & Sprechen" },
+  ]],
 ];
 
 export const RAW_SCHEDULE_A2 = [
