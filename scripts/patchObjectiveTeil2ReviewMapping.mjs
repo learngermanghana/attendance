@@ -42,3 +42,6 @@ if (source.includes(oldObjectivePartFilter)) {
 
 fs.writeFileSync(target, source);
 console.log("Patched objective Teil 2 review mapping.");
+
+// Keep A1 objective vocabulary normalization in the same build/test lifecycle.
+await import("./patchA1VocabularyTolerance.mjs");
