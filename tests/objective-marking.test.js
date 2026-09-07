@@ -719,6 +719,30 @@ Teil 3
   assert.deepEqual(Object.entries(result.details).filter(([, detail]) => !detail.correct), []);
 });
 
+test("German prose containing an does not bypass writing-block detection", () => {
+  const reference = {
+    assignmentKey: "TEST-PROSE",
+    rawAnswers: {
+      Answer1: "A) Das Essen",
+      Answer2: "A) Die Musik",
+      Answer3: "A) Der Unterricht",
+      Answer4: "A) Das Buch",
+      Answer5: "A) Die Familie",
+    },
+  };
+  const result = computeObjectiveScore(reference, `
+1. Das Essen ist an Feiertagen besonders wichtig.
+2. Die Musik erinnert an schöne Momente.
+3. Der Unterricht beginnt an jedem Montag.
+4. Das Buch liegt an seinem Platz.
+5. Die Familie denkt an die Reise.
+  `);
+
+  assert.equal(result.totalCount, 5);
+  assert.equal(result.correctCount, 0);
+  assert.deepEqual(Object.values(result.details).map((detail) => detail.student), ["", "", "", "", ""]);
+});
+
 test("A1-6 maps unnumbered Teil 1 vocabulary before restarted choice sections", () => {
   const result = computeObjectiveScore("A1-6", `
 Teil 1:
