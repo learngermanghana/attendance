@@ -732,10 +732,30 @@ function flattenAnswerGroups(groups = []) {
     .map((entry) => entry.answer));
 }
 
+function extractSectionAnswerEntries(text = "") {
+  const numberedEntries = extractRestartedNumberingEntries(text);
+  if (numberedEntries.length) return numberedEntries;
+
+  // Vocabulary sections are sometimes pasted as unnumbered bilingual pairs.
+  // Keep this deliberately narrow so ordinary prose or writing sections cannot
+  // become positional objective answers merely because they contain lines.
+  const pairedEntries = String(text || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => {
+      if (!line || /^\s*\d{1,3}\s*[).:–-]/.test(line)) return false;
+      const parts = line.split(/\s+[-–:=]\s+/);
+      return parts.length >= 2 && parts.every((part) => normalizeAnswer(part));
+    })
+    .map((answer, index) => ({ number: index + 1, answer }));
+
+  return pairedEntries.length >= 2 ? pairedEntries : [];
+}
+
 function getFlatAnswerCandidateSequences(submissionText = "") {
   const sections = splitSubmissionIntoSections(submissionText);
   const sectionGroups = sections
-    .map((section) => extractRestartedNumberingEntries(section.text))
+    .map((section) => extractSectionAnswerEntries(section.text))
     .filter((entries) => entries.length && !isLikelyWritingBlock(entries));
 
   const blockGroups = splitIntoAnswerBlocks(submissionText)
