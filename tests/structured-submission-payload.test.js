@@ -44,6 +44,6 @@ test("marking service normalization prefers structuredSections over duplicated l
   const source = fs.readFileSync(new URL("../src/services/markingServiceBase.js", import.meta.url), "utf8");
   assert.match(source, /from "\.\.\/utils\/structuredSubmissionPayload\.js"/);
   assert.match(source, /const structuredSections = data\.structuredSections \|\| data\.submissionSections \|\| null/);
+  assert.match(source, /const submissionSectionOrder = data\.submissionSectionOrder \|\| data\.requiredSubmissionParts \|\| \[\]/);
   assert.match(source, /resolveStructuredSubmissionText\(\{/);
-  assert.match(source, /submissionSectionOrder: data\.submissionSectionOrder \|\| data\.requiredSubmissionParts \|\| \[\]/);
 });
