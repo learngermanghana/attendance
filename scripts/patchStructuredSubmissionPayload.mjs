@@ -32,8 +32,8 @@ replaceOnce(
 const requiredMarkers = [
   'from "../utils/structuredSubmissionPayload.js"',
   "const structuredSections = data.structuredSections || data.submissionSections || null;",
+  "const submissionSectionOrder = data.submissionSectionOrder || data.requiredSubmissionParts || [];",
   "resolveStructuredSubmissionText({",
-  "submissionSectionOrder: data.submissionSectionOrder || data.requiredSubmissionParts || []",
   "submissionStructureVersion: data.submissionStructureVersion || null",
 ];
 
