@@ -51,7 +51,7 @@ export function hasLikelyUnlabelledWritingBeforeObjective(submissionText = "") {
 
   const hasGreeting = /\b(?:hallo|lieber|liebe|guten tag|sehr geehrte(?:r|n)?|dear|hello|hi)\b/i.test(leading);
   const hasClosing = /\b(?:viele gr[üu](?:ß|ss)e|liebe gr[üu](?:ß|ss)e|mit freundlichen gr[üu](?:ß|ss)en|tsch[üu]ss|bis bald|regards|best wishes|sincerely)\b/i.test(leading);
-  const firstPerson = /\b(?:ich|mir|mich|mein|meine|wir|uns)\b/i.test(leading);
+  const firstPerson = /\b(?:ich|mir|mich|mein(?:e|er|em|en|es)?|wir|uns)\b/i.test(leading);
   const sentenceCount = (leading.match(/[.!?]/g) || []).length;
 
   const essaySignals = leading.match(/\b(?:meine meinung|meiner meinung|einerseits|andererseits|zusammenfassend|abschließend|zum beispiel|vor- und nachteile|vorteile|nachteile)\b/gi) || [];

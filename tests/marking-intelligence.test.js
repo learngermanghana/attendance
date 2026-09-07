@@ -98,6 +98,28 @@ Lesen
   assert.match(prepared, /\nLesen\n1\. a/);
 });
 
+test("accepts Meiner Meinung as first-person evidence in an otherwise impersonal essay", () => {
+  const submission = `Meiner Meinung nach ist persönlicher Kontakt im Berufsleben sehr wichtig, weil dabei Wissen unmittelbar geteilt werden kann.
+
+Einerseits bietet Homeoffice mehr Flexibilität. Zum Beispiel kann dadurch viel Zeit gespart werden.
+
+Andererseits entstehen Nachteile, wenn persönlicher Austausch fehlt. Aufgaben können schwieriger abgestimmt werden, und Missverständnisse bleiben länger unbemerkt.
+
+Zusammenfassend lässt sich sagen, dass eine ausgewogene Verbindung von Homeoffice und persönlicher Zusammenarbeit die beste Lösung darstellt.
+
+Lesen
+1. A
+2. B
+3. A
+
+Hören
+1. A
+2. A`;
+
+  assert.equal(hasLikelyUnlabelledWritingBeforeObjective(submission), true);
+  assert.match(ensureExplicitWritingLabel(submission), /^Teil 2 Schreiben\nMeiner Meinung nach/);
+});
+
 test("does not relabel already labelled writing or objective-only work", () => {
   const labelled = "Teil 2\nHallo Anna, ich schreibe dir.\nTeil 3\n1.B";
   const objectiveOnly = "Teil 3\n1.B\n2.C\nTeil 4\n1.A";
