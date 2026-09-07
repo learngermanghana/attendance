@@ -663,7 +663,7 @@ function isCorrectAnswer(item, student) {
 
 function isLikelyWritingBlock(entries = []) {
   if (!entries.length) return false;
-  const bilingualVocabularyCount = entries.filter((entry) => /^(?:der|die|das)\b.*\b(?:the|a|an)\b/i.test(entry.answer)).length;
+  const bilingualVocabularyCount = entries.filter((entry) => /^(?:der|die|das)\b.*[-–:=]\s*(?:[a-j][.)]?\s*)?(?:the|a|an)\b/i.test(entry.answer)).length;
   if (bilingualVocabularyCount >= Math.max(2, entries.length * 0.7)) return false;
   const longSentenceCount = entries.filter((entry) => normalizeAnswer(entry.answer).split(/\s+/).length >= 5 || /[.!?]/.test(entry.answer)).length;
   const optionCount = entries.filter((entry) => extractOptionLetter(entry.answer)).length;
