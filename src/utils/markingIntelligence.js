@@ -54,7 +54,10 @@ export function hasLikelyUnlabelledWritingBeforeObjective(submissionText = "") {
   const firstPerson = /\b(?:ich|mir|mich|mein|meine|wir|uns)\b/i.test(leading);
   const sentenceCount = (leading.match(/[.!?]/g) || []).length;
 
-  return firstPerson && sentenceCount >= 2 && (hasGreeting || hasClosing);
+  const essaySignals = leading.match(/\b(?:meine meinung|meiner meinung|einerseits|andererseits|zusammenfassend|abschließend|zum beispiel|vor- und nachteile|vorteile|nachteile)\b/gi) || [];
+  const looksLikeEssay = words.length >= 40 && sentenceCount >= 3 && essaySignals.length >= 2;
+
+  return firstPerson && sentenceCount >= 2 && (hasGreeting || hasClosing || looksLikeEssay);
 }
 
 export function ensureExplicitWritingLabel(submissionText = "") {
