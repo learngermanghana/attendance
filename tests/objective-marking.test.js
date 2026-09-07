@@ -682,6 +682,43 @@ Teil 3
 });
 
 
+test("A1-6 ignores matching letters embedded in numbered bilingual vocabulary answers", () => {
+  const result = computeObjectiveScore("A1-6", `
+1. das Wohnzimmer f. the living room
+2. die Küche - a. the kitchen
+3. das Schlafzimmer -b. the bedroom
+4. das Badezimmer -d. the bathroom
+5. der Balkon - c. the balcony
+6. der Flur - e. the hallway
+7. das Bett - i. the bed
+8. der Tisch - h. the table
+9. der Stuhl - g. the chair
+10. der Schrank - j. the wardrobe
+
+Teil 2
+1. b) Vier
+2. a) Ein Sofa und ein Fernseher
+3. b) Einen Herd, einen Kühlschrank und einen Tisch mit vier Stühlen
+4. c) Ein großes Bett
+5. d) Eine Dusche, eine Badewanne und ein Waschbecken
+6. b) Klein und schön
+7. c) Blumen und einen kleinen Tisch mit zwei Stühlen
+
+Teil 3
+1. b) Vier
+2. b) Ein Sofa und ein Fernseher
+3. b) Einen Herd, einen Kühlschrank und einen Tisch mit vier Stühlen
+4. c) Ein großes Bett
+5. d) Eine Dusche, eine Badewanne und ein Waschbecken
+6. b) Klein und schön
+7. c) Blumen und einen kleinen Tisch mit zwei Stühlen
+  `);
+
+  assert.equal(result.totalCount, 24);
+  assert.equal(result.correctCount, 24);
+  assert.deepEqual(Object.entries(result.details).filter(([, detail]) => !detail.correct), []);
+});
+
 test("A1-6 maps unnumbered Teil 1 vocabulary before restarted choice sections", () => {
   const result = computeObjectiveScore("A1-6", `
 Teil 1:
