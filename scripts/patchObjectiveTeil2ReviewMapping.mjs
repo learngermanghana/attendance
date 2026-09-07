@@ -45,3 +45,5 @@ console.log("Patched objective Teil 2 review mapping.");
 
 // Keep A1 objective vocabulary normalization in the same build/test lifecycle.
 await import("./patchA1VocabularyTolerance.mjs");
+// Prefer structured one-box submission payloads whenever the campus provides them.
+await import("./patchStructuredSubmissionPayload.mjs");
