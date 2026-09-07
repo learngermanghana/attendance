@@ -25,6 +25,21 @@ ich möchte einen Deutschkurs besuchen und brauche mehr Informationen. Wann begi
 Mit freundlichen Grüßen
 Lowie Boateng`;
 
+const marySubmissionText = `Teil 1 informal letter
+Lieber John,
+Ich schreibe dir,weil du Geburtstag hast. Herzlichen Glückwunsch zum Geburtstag!Ich Wünsche dir alles Gute.
+Gibt es eine feier bei dir?  Kann Meine familie mittkommen?
+Liebe Grüße
+Mary
+
+Teil 2 formal letter
+Sehr geehrte Damen und Hereen,
+Ich schreibe Ihnen,Weil ich einen Deutschkurs besuchen möchte.Auf Ihrer Website fehlen informationen.
+Wann beginnt der kurs?Wie viele Kostet der kurs?
+Kann ich online bezahlen?
+Mit freundlichen Grüßen
+Mary Mensah`;
+
 test("A1-12.3 exact two-letter submission is writing-only and never receives a fake objective zero", () => {
   const normalized = normalizeAnswerKeyEntry("Introduction to Letter Writing 12.3", rawReference);
   assert.equal(normalized.format, "writing");
@@ -51,4 +66,36 @@ test("A1-12.3 exact two-letter submission is writing-only and never receives a f
   assert.equal(auto.objectiveScore, null);
   assert.ok(auto.writingScore !== null);
   assert.ok(auto.detectedParts.some((part) => part.partType === "writing"));
+});
+
+
+test("A1-12.3 manifest marks Mary's informal and formal letters as writing only", () => {
+  const manifestReference = {
+    ...rawReference,
+    format: "writing",
+    expectedParts: ["teil1", "teil2"],
+    writingParts: ["teil1", "teil2"],
+    aiGradedParts: ["teil1", "teil2"],
+    referenceAnswerParts: [],
+  };
+
+  const deterministic = checkDeterministicObjectiveAnswers({
+    referenceEntry: manifestReference,
+    submissionText: marySubmissionText,
+    partId: "main",
+  });
+  assert.equal(deterministic, null);
+
+  const objective = computeObjectiveScore(manifestReference, marySubmissionText);
+  assert.equal(objective.totalCount, 0);
+
+  const auto = autoMarkSubmission({
+    referenceEntry: manifestReference,
+    submission: { assignmentKey: "A1-12.3", level: "A1" },
+    submissionText: marySubmissionText,
+  });
+  assert.equal(auto.objectiveTotal, 0);
+  assert.equal(auto.objectiveScore, null);
+  assert.ok(auto.writingScore !== null);
+  assert.equal(auto.detectedParts.filter((part) => part.partType === "writing").length, 2);
 });

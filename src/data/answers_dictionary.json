@@ -649,19 +649,33 @@
     },
     "answer_url": "",
     "assignment_id": "A1-12.3",
+    "format": "writing",
     "expectedParts": [
-      "main"
+      "teil1",
+      "teil2"
     ],
-    "answerLayout": "flat",
-    "referenceAnswerParts": [
-      "main"
+    "answerLayout": "multipart",
+    "writingParts": [
+      "teil1",
+      "teil2"
     ],
+    "aiGradedParts": [
+      "teil1",
+      "teil2"
+    ],
+    "referenceAnswerParts": [],
     "partGrading": {
-      "main": {
-        "label": "main",
-        "hasReferenceAnswers": true,
-        "gradingMode": "answer_key",
-        "instruction": "Flat answer-key assignment. Grade the student submission against the direct Answer1, Answer2, etc. keys."
+      "teil1": {
+        "label": "informal letter",
+        "hasReferenceAnswers": false,
+        "gradingMode": "ai_written_response",
+        "instruction": "Grade the student's informal letter using the A1 writing rubric."
+      },
+      "teil2": {
+        "label": "formal letter",
+        "hasReferenceAnswers": false,
+        "gradingMode": "ai_written_response",
+        "instruction": "Grade the student's formal letter using the A1 writing rubric."
       }
     }
   },
