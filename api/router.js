@@ -287,6 +287,10 @@ function normalizeManifestEntry(sourceKey, sourceEntry = {}) {
   const parts = splitAnswersIntoParts(rawAnswers);
   const totalAnswers = countPartAnswers(parts);
   const expectedParts = normalizeExpectedParts(sourceEntry.expectedParts || sourceEntry.expected_parts, parts);
+  const writingParts = normalizeExpectedParts(sourceEntry.writingParts || sourceEntry.writing_parts, {})
+    .filter((partId) => format === "writing" || partId !== "main");
+  const referenceAnswerParts = normalizeExpectedParts(sourceEntry.referenceAnswerParts || sourceEntry.reference_answer_parts, {})
+    .filter((partId) => !writingParts.includes(partId) && totalAnswers > 0);
 
   return {
     assignmentKey,
@@ -298,6 +302,9 @@ function normalizeManifestEntry(sourceKey, sourceEntry = {}) {
     rawAnswers,
     parts,
     expectedParts,
+    writingParts,
+    aiGradedParts: normalizeExpectedParts(sourceEntry.aiGradedParts || sourceEntry.ai_graded_parts, writingParts),
+    referenceAnswerParts,
     answerLayout: sourceEntry.answerLayout || sourceEntry.answer_layout || (expectedParts.includes("main") ? "flat" : "parts"),
     totalAnswers,
     source: "github-answer-manifest",
