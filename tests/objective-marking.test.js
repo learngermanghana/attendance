@@ -682,6 +682,52 @@ Teil 3
 });
 
 
+test("A1-6 maps unnumbered Teil 1 vocabulary before restarted choice sections", () => {
+  const result = computeObjectiveScore("A1-6", `
+Teil 1:
+das Wohnzimmer – the living room
+die Küche - the kitchen
+das Schlafzimmer – the bedroom
+das Badezimmer – the bathroom
+der Balkon – the balcony
+der Flur – the hallway
+das Bett – the bedder
+Tisch – the table
+der Stuhl – the chair
+der Schrank – the wardrobe
+
+Teil 2
+1. b) Vier
+2. a) Ein Sofa und ein Fernseher
+3. d) Eine Dusche und eine Badewanne
+4. c) Ein großes Bett
+5. d) Eine Dusche, eine Badewanne und ein Waschbecken
+6. c) Groß und schön
+7. d) Eine Dusche und eine Badewanne
+
+Teil 3:
+1.b) Vier
+2.b) Ein Sofa und ein Fernseher
+3.b) Einen Herd, einen Kühlschrank und einen Tisch mit vier Stühlen
+4.c) Ein großes Bett
+5.d) Eine Dusche, eine Badewanne und ein Waschbecken
+6.b) Klein und schön
+7.c) Blumen und einen kleinen Tisch mit zwei Stühlen
+  `);
+
+  assert.equal(result.totalCount, 24);
+  assert.equal(result.correctCount, 21);
+  assert.deepEqual(
+    Object.entries(result.details)
+      .filter(([, detail]) => !detail.correct)
+      .map(([question]) => question),
+    ["13", "16", "17"],
+  );
+  assert.equal(result.details[1].student, "das Wohnzimmer – the living room");
+  assert.equal(result.details[10].student, "der Schrank – the wardrobe");
+});
+
+
 test("A1-0.2 aligns a second 1-5 answer group without a Teil heading", () => {
   const submission = `1 c
 2 A
