@@ -64,6 +64,40 @@ test("detects an unlabelled letter before Teil 3 and adds a temporary Teil 2 lab
   assert.match(prepared, /\nTeil 3\n1\.B/);
 });
 
+test("detects Fred's unlabelled B1 opinion essay before Hören and Lesen", () => {
+  const submission = `Meine Meinung ist, dass persönlicher Kontakt in meinem Traumberuf für mich sehr wichtig ist, weil man Wissen teilen und neue Fähigkeiten direkt von anderen Menschen lernen kann.
+
+Einerseits gibt es Vorteile beim Homeoffice. Zum Beispiel kann man mehr Zeit mit seiner Familie verbringen.
+
+Andererseits gibt es auch Nachteile. Zum Beispiel kann es schwieriger sein, Verantwortung zu übernehmen und die Arbeit gut zu erledigen, wenn man wenig persönlichen Kontakt hat.
+
+In meinem Heimatland arbeiten viele Menschen als Angestellte. Aber IT und KI schaffen jetzt mehr Möglichkeiten, selbstständig zu arbeiten. Dadurch gibt es auch mehr Möglichkeiten für Homeoffice-Jobs.
+
+Zusammenfassend lässt sich sagen, dass persönlicher Kontakt für mich wichtig ist. Trotzdem hat Homeoffice Vorteile, weil man flexibler arbeiten und mehr Zeit mit der Familie verbringen kann.
+
+Hören
+1. a
+2. a
+3. a
+4. a
+5. a
+
+Lesen
+1. a
+2. b
+3. a
+4. b
+5. b
+6. b
+7. b`;
+
+  assert.equal(hasLikelyUnlabelledWritingBeforeObjective(submission), true);
+  const prepared = ensureExplicitWritingLabel(submission);
+  assert.match(prepared, /^Teil 2 Schreiben\nMeine Meinung ist/);
+  assert.match(prepared, /\nHören\n1\. a/);
+  assert.match(prepared, /\nLesen\n1\. a/);
+});
+
 test("does not relabel already labelled writing or objective-only work", () => {
   const labelled = "Teil 2\nHallo Anna, ich schreibe dir.\nTeil 3\n1.B";
   const objectiveOnly = "Teil 3\n1.B\n2.C\nTeil 4\n1.A";
