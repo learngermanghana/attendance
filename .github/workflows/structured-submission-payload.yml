@@ -1,0 +1,41 @@
+name: Structured submission payload
+
+on:
+  pull_request:
+    paths:
+      - "src/utils/structuredSubmissionPayload.js"
+      - "src/services/markingServiceBase.js"
+      - "scripts/patchStructuredSubmissionPayload.mjs"
+      - "scripts/patchObjectiveTeil2ReviewMapping.mjs"
+      - "tests/structured-submission-payload.test.js"
+      - ".github/workflows/structured-submission-payload.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/utils/structuredSubmissionPayload.js"
+      - "src/services/markingServiceBase.js"
+      - "scripts/patchStructuredSubmissionPayload.mjs"
+      - "scripts/patchObjectiveTeil2ReviewMapping.mjs"
+      - "tests/structured-submission-payload.test.js"
+      - ".github/workflows/structured-submission-payload.yml"
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Apply admin structured payload lifecycle twice
+        run: |
+          node scripts/patchObjectiveTeil2ReviewMapping.mjs
+          node scripts/patchObjectiveTeil2ReviewMapping.mjs
+      - name: Test structured payload handoff
+        run: node --test tests/structured-submission-payload.test.js
+      - name: Build admin
+        run: npm run build
