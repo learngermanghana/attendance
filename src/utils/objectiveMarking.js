@@ -588,7 +588,13 @@ function textMatches(expectedRaw = "", studentRaw = "") {
 function normalizeVocabularyAnswer(value = "") {
   const tokens = normalizeAnswer(value).split(/\s+/).filter(Boolean);
   if (tokens.length > 1 && GERMAN_ARTICLES.has(tokens[0])) tokens.shift();
-  return tokens.filter((token) => !ENGLISH_ARTICLES.has(token)).join(" ");
+  return tokens
+    .filter((token, index) => {
+      if (ENGLISH_ARTICLES.has(token)) return false;
+      const isEmbeddedMatchingLetter = /^[b-j]$/.test(token) && ENGLISH_ARTICLES.has(tokens[index + 1]);
+      return !isEmbeddedMatchingLetter;
+    })
+    .join(" ");
 }
 
 function normalizeStrictGrammarToken(value = "") {
@@ -657,6 +663,8 @@ function isCorrectAnswer(item, student) {
 
 function isLikelyWritingBlock(entries = []) {
   if (!entries.length) return false;
+  const bilingualVocabularyCount = entries.filter((entry) => /^(?:der|die|das)\b.*\b(?:the|a|an)\b/i.test(entry.answer)).length;
+  if (bilingualVocabularyCount >= Math.max(2, entries.length * 0.7)) return false;
   const longSentenceCount = entries.filter((entry) => normalizeAnswer(entry.answer).split(/\s+/).length >= 5 || /[.!?]/.test(entry.answer)).length;
   const optionCount = entries.filter((entry) => extractOptionLetter(entry.answer)).length;
   return longSentenceCount >= Math.max(2, entries.length * 0.7) && optionCount === 0;
