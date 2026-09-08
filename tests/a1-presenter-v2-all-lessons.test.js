@@ -91,10 +91,15 @@ test("A1 workbook-aligned Day 1-10 lessons retain their real workbook bridge", (
   }
 });
 
-test("A1-5.10 has a dedicated conjunctions slide linked to the Falowen grammar page", () => {
-  const slide = getSlidesByCourse("A1").find((entry) => entry.assignmentId === "A1-5.10");
+test("A1-5.10 has a dedicated conjunctions slide on canonical Day 24", () => {
+  const slides = getSlidesByCourse("A1");
+  const slide = slides.find((entry) => entry.assignmentId === "A1-5.10");
   assert.ok(slide, "A1-5.10 slide missing");
   assert.equal(slide.id, "a1-5-10");
+  assert.equal(slide.dayNumber, 24);
+  assert.equal(slide.day, "Day 24");
+  assert.match(slide.title, /^A1 Day 24 · Konjunktionen und grundlegender Satzbau$/);
+  assert.equal(slides.find((entry) => entry.dayNumber === 24)?.assignmentId, "A1-5.10");
   assert.equal(slide.workbookConnection?.grammarUrl, "/campus/course/conjunctions-5-10");
   assert.equal(slide.workbookConnection?.workbookUrl, "");
 
