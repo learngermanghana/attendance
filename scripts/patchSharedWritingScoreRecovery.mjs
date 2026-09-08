@@ -48,3 +48,4 @@ if (!markingService.includes(recoveryInvocation)) {
 fs.writeFileSync(markingServicePath, markingService);
 
 console.log("Shared marking now recovers malformed-boundary writing scores and normalizes recovered percentages to /100.");
+await import("./patchA2B1MarkingWeights.mjs");
