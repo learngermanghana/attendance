@@ -67,6 +67,7 @@ jobs:
             scripts/patchClassSessionReminderEmails.mjs \
             scripts/patchClassReminderDiagnosticBestEffort.mjs \
             scripts/patchClassReminderConciseLinks.mjs \
+            scripts/patchCheckinStatusMetadataHydration.mjs \
             scripts/patchLeadClassStartReminderEmails.mjs \
             scripts/patchAutoCompleteClassSessions.mjs \
             scripts/patchCloudCostOptimizations.mjs \
@@ -81,11 +82,13 @@ jobs:
           node --check functions/main.js
           node --check functions/pendingStudentCleanup.js
           node --check functions/classSessionReminderEmails.js
+          node --check functions/classSessionAutoCheckin.js
           node --check functions/autoCompleteClassSessions.js
           node --check functions/attendanceConfirmationEmails.js
           node --test functions/classEmailScheduling.test.js functions/attendanceSessionClassIdentity.test.js
           node --test tests/pending-student-cleanup.test.js
           node --test tests/student-payment-links.test.js tests/student-payment-listener-stability.test.js tests/student-payment-update-emails.test.js tests/student-contract-lifecycle.test.js tests/automatic-orientation-sync.test.js
+          node --test tests/class-reminder-orientation-links.test.js tests/checkin-status-metadata-hydration.test.js
           grep -F 'app.post("/payments/create-link"' functions/index.js
           grep -F 'app.post("/payments/paystack-webhook"' functions/index.js
           grep -F 'app.get("/payments/student/:studentId"' functions/index.js
@@ -118,13 +121,18 @@ jobs:
           grep -F 'new URLSearchParams({ classId, sessionId })' functions/classSessionReminderEmails.js
           grep -F 'Open today’s Course Book:' functions/classSessionReminderEmails.js
           grep -F 'button_label: text(zoom.url || DEFAULT_CLASS_REMINDER_ZOOM.joinUrl) ? "Join Zoom" : ""' functions/classSessionReminderEmails.js
+          grep -F '/^(tutorial|orientation|complete)$/i' functions/classSessionReminderEmails.js
+          grep -F 'checkinMetadataHydrated: true' functions/index.js
+          grep -F 'classStartsAt: startsAt.toISOString()' functions/classSessionAutoCheckin.js
+          grep -F 'const hydratedAssignmentId' src/pages/CheckinPage.jsx
+          grep -F 'getTeachingSlideByAssignmentId(hydratedAssignmentId)' src/pages/CheckinPage.jsx
           grep -F 'schedule: "*/15 * * * *"' functions/attendanceConfirmationEmails.js
           grep -F 'async function queueAttendanceConfirmationEvent' functions/attendanceConfirmationEmails.js
           grep -F '.where("nextRunAt", "<=",' functions/attendanceConfirmationEmails.js
           ! grep -F 'const classSnap = await db.collection("classes").get();' functions/attendanceConfirmationEmails.js
           ! grep -F 'const studentSnap = await db.collection("students").get();' functions/attendanceConfirmationEmails.js
           grep -F 'acceptClassNameSessionMatch(session, klass)' functions/attendanceConfirmationEmails.js
-          grep -F 'schedule: "0 8 * * *"' functions/leadClassStartReminderEmails.js
+          grep -F 'schedule: "0 8 * * * *"' functions/leadClassStartReminderEmails.js
           grep -F 'schedule: "*/5 * * * *"' functions/autoCompleteClassSessions.js
           grep -F 'async function loadRecentCompletionCandidates' functions/autoCompleteClassSessions.js
           ! grep -F 'const snapshot = await db.collection("classSessions").get();' functions/autoCompleteClassSessions.js
