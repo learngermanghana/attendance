@@ -77,10 +77,13 @@ jobs:
             node "$script"
           done
           node --check functions/index.js
+          node --check functions/main.js
+          node --check functions/pendingStudentCleanup.js
           node --check functions/classSessionReminderEmails.js
           node --check functions/autoCompleteClassSessions.js
           node --check functions/attendanceConfirmationEmails.js
           node --test functions/classEmailScheduling.test.js functions/attendanceSessionClassIdentity.test.js
+          node --test tests/pending-student-cleanup.test.js
           node --test tests/student-payment-links.test.js tests/student-payment-listener-stability.test.js tests/student-payment-update-emails.test.js tests/student-contract-lifecycle.test.js tests/automatic-orientation-sync.test.js
           grep -F 'app.post("/payments/create-link"' functions/index.js
           grep -F 'app.post("/payments/paystack-webhook"' functions/index.js
@@ -97,6 +100,8 @@ jobs:
           ! grep -F 'The main purpose of your message is understandable' src/utils/essayFeedbackEvidence.js
           ! grep -F 'Check verb position, articles and every task point before submitting' src/utils/essayFeedbackEvidence.js
           grep -F 'exports.sendClassSessionReminderEmails = createClassSessionReminderEmailJob' functions/index.js
+          grep -F 'module.exports.cleanupExpiredPendingStudents = onSchedule' functions/main.js
+          grep -F 'module.exports.sendClassSessionReminderEmails = onSchedule' functions/main.js
           grep -F 'exports.sendAttendanceConfirmationEmails = createAttendanceConfirmationEmailJob' functions/index.js
           grep -F 'exports.queueAttendanceConfirmationFromSession = onDocumentWritten' functions/index.js
           grep -F 'exports.queueAttendanceConfirmationFromCheckin = onDocumentWritten' functions/index.js
@@ -148,7 +153,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions:falowenadmin:api,functions:falowenadmin:createFlatSubmissionMarkingJob,functions:falowenadmin:createNestedSubmissionMarkingJob,functions:falowenadmin:createPostSubmissionMarkingJob,functions:falowenadmin:maintainStudentPaymentContracts,functions:falowenadmin:autoSyncPaidStudentOrientation,functions:falowenadmin:sendClassSessionReminderEmails,functions:falowenadmin:sendAttendanceConfirmationEmails,functions:falowenadmin:queueAttendanceConfirmationFromSession,functions:falowenadmin:queueAttendanceConfirmationFromCheckin,functions:falowenadmin:queueAttendanceConfirmationFromClassSession,functions:falowenadmin:autoCompleteClassSessions --force --debug 2>&1 | tee firebase-deploy.log
+          firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions:falowenadmin:api,functions:falowenadmin:createFlatSubmissionMarkingJob,functions:falowenadmin:createNestedSubmissionMarkingJob,functions:falowenadmin:createPostSubmissionMarkingJob,functions:falowenadmin:maintainStudentPaymentContracts,functions:falowenadmin:autoSyncPaidStudentOrientation,functions:falowenadmin:cleanupExpiredPendingStudents,functions:falowenadmin:sendClassSessionReminderEmails,functions:falowenadmin:sendAttendanceConfirmationEmails,functions:falowenadmin:queueAttendanceConfirmationFromSession,functions:falowenadmin:queueAttendanceConfirmationFromCheckin,functions:falowenadmin:queueAttendanceConfirmationFromClassSession,functions:falowenadmin:autoCompleteClassSessions --force --debug 2>&1 | tee firebase-deploy.log
 
       - name: Upload Firebase failure log
         if: failure()
