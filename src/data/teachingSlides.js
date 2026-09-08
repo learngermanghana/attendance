@@ -304,3 +304,24 @@ export function getTeachingSlideByAssignmentId(assignmentId) {
   if (!normalized) return null;
   return teachingSlides.find((slide) => String(slide.assignmentId || "").trim().toUpperCase() === normalized) || null;
 }
+
+export function getSlidesByCourse(courseId) {
+  const normalized = String(courseId || "").trim().toUpperCase();
+  return teachingSlides
+    .filter((slide) => String(slide.course || "").trim().toUpperCase() === normalized)
+    .sort((a, b) => Number(a.dayNumber || 0) - Number(b.dayNumber || 0));
+}
+
+export function getSlideNavigation(id, courseId) {
+  const courseSlides = courseId ? getSlidesByCourse(courseId) : teachingSlides;
+  const index = courseSlides.findIndex((slide) => slide.id === id);
+  if (index < 0) return { previous: null, next: null };
+  return {
+    previous: courseSlides[index - 1] || null,
+    next: courseSlides[index + 1] || null,
+  };
+}
+
+export function getAvailableSlideCourses() {
+  return [...new Set(teachingSlides.map((slide) => slide.course).filter(Boolean))].sort();
+}
