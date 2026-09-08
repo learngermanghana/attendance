@@ -17,7 +17,8 @@ function replaceOnce(source, before, after, label) {
 let apiSource = fs.readFileSync(apiPath, "utf8");
 if (!apiSource.includes("checkinMetadataHydrated: true")) {
   const statusPattern = /app\.get\("\/checkinStatus", async \(req, res\) => \{[\s\S]*?\n\}\);\n\n+async function mergeSessionDocuments/;
-  const statusReplacement = `app.get("/checkinStatus", async (req, res) => {
+  // Keep generated source raw so regex escapes survive and avoid nested template interpolation.
+  const statusReplacement = String.raw`app.get("/checkinStatus", async (req, res) => {
   try {
     const classId = normalizeClassComparable(req.query.classId || req.query.className);
     const sessionId = String(req.query.sessionId || req.query.session || "").trim();
@@ -182,6 +183,9 @@ async function mergeSessionDocuments`;
     throw new Error("Could not find /checkinStatus handler for metadata hydration.");
   }
   apiSource = apiSource.replace(statusPattern, statusReplacement);
+  if (!apiSource.includes('.find((value) => /^\\d{4}-\\d{2}-\\d{2}$/.test(value))')) {
+    throw new Error("Generated check-in status date regex lost digit escapes.");
+  }
 }
 fs.writeFileSync(apiPath, apiSource, "utf8");
 
