@@ -90,6 +90,10 @@ patchFile("src/data/teachingSlides.js", [
     from: 'function buildLevelSlides(level) {\n  const entries = Object.values(courseDictionary[level] || {}).sort((left, right) => compareChapter(left.chapter, right.chapter));\n  return entries.map((entry, index) => createTemplateSlide(level, entry, index + 1));\n}',
     to: 'function buildLevelSlides(level) {\n  const entries = Object.values(courseDictionary[level] || {}).sort((left, right) => compareChapter(left.chapter, right.chapter));\n  return entries.map((entry, index) => {\n    const lessonNumber = String(level || "").toUpperCase() === "A1"\n      ? getCourseTaskDay("A1", entry.assignment_id, index)\n      : index + 1;\n    return createTemplateSlide(level, entry, lessonNumber);\n  });\n}',
   },
+  {
+    from: 'const a1Slides = buildLevelSlides("A1").map((slide) => curatedSlidesByAssignment[slide.assignmentId] || slide);',
+    to: 'const a1Slides = buildLevelSlides("A1").map((slide, index) => {\n  const resolved = curatedSlidesByAssignment[slide.assignmentId] || slide;\n  const dayNumber = getCourseTaskDay("A1", resolved.assignmentId, index);\n  const titleBody = String(resolved.title || "")\n    .replace(/^A1\\s+(?:Lesson|Day)\\s+\\d+\\s*·\\s*/i, "")\n    .replace(/^A1\\s*·\\s*/i, "")\n    .trim();\n  return {\n    ...resolved,\n    day: `Day ${dayNumber}`,\n    dayNumber,\n    title: titleBody ? `A1 Day ${dayNumber} · ${titleBody}` : `A1 Day ${dayNumber}`,\n  };\n});',
+  },
 ]);
 
 patchFile("src/utils/teachingPresenter.js", [
@@ -109,4 +113,4 @@ if (fs.existsSync(b1RegressionPath)) {
   ]);
 }
 
-console.log("B2/C1 speaking models and A1 official teaching-slide day mapping are patched.");
+console.log("B2/C1 speaking models and canonical A1 teaching-slide day mapping are patched after curated replacements.");
