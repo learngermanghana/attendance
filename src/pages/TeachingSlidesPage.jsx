@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import TeachingSlidePresenter from "../components/TeachingSlidePresenter.jsx";
+import A1GrammarPresenter from "../components/A1GrammarPresenter.jsx";
 import TeacherLessonBlocks from "../components/TeacherLessonBlocks.jsx";
 import StudentCourseSlides from "../components/StudentCourseSlides.jsx";
 import {
@@ -100,8 +101,13 @@ function SlideDetail({ slide, courseId }) {
   const [presenterMode, setPresenterMode] = useState(() => new URLSearchParams(window.location.search).get("present") === "1");
   const { previous, next } = getSlideNavigation(slide.id, courseId);
   const topicLabel = getUnifiedTopicLabel(slide.assignmentId, slide.topic);
+  const a1GrammarLesson = String(slide.course || "").trim().toUpperCase() === "A1"
+    && String(slide.assignmentId || "").trim().toUpperCase() !== "A1-TUTORIAL";
 
   if (presenterMode) {
+    if (a1GrammarLesson) {
+      return <A1GrammarPresenter slide={slide} topicLabel={topicLabel} onExit={() => setPresenterMode(false)} />;
+    }
     return <TeachingSlidePresenter slide={slide} topicLabel={topicLabel} onExit={() => setPresenterMode(false)} />;
   }
 
