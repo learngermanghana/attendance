@@ -88,6 +88,59 @@ function normalizeQSectionAliases(text = "") {
   return hasImplicitOpeningAnswers ? `Teil 1\n${normalized}` : normalized;
 }
 
+function normalizeQuestionAnswerPayload(value = "") {
+  let answer = String(value || "")
+    .replace(/^\s*(?:ans(?:wer)?|antwort)\s*[:.-]?\s*/i, "")
+    .trim();
+  if (!answer) return "";
+
+  let option = "";
+  const leadingOption = answer.match(/^([A-FX])(?:\s*[.)]\s*|\s+|$)/i);
+  if (leadingOption) {
+    option = leadingOption[1].toUpperCase();
+    answer = answer.slice(leadingOption[0].length).trim();
+  } else {
+    const trailingOption = answer.match(/\s+([A-FX])\s*[.)]?\s*$/i);
+    if (trailingOption) {
+      option = trailingOption[1].toUpperCase();
+      answer = answer.slice(0, trailingOption.index).trim();
+    }
+  }
+
+  if (/^\d{1,2}\s*:\s*\d{2}\s*(?:uhr)?[.!]?\s*$/i.test(answer)) {
+    answer = `Um ${answer}`;
+  }
+
+  if (option && answer) return `${option}) ${answer}`;
+  if (option) return option;
+  return answer;
+}
+
+function normalizeNumberedQuestionAnswerPairs(text = "") {
+  const lines = String(text || "").split(/\r?\n/);
+  const normalized = [];
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const current = lines[index];
+    const question = current.match(/^(\s*)(\d{1,3})\s*[).:–-]\s*(.+\?)\s*$/);
+    const next = lines[index + 1] || "";
+    const nextIsAnswer = /^\s*(?:ans(?:wer)?|antwort)\s*[:.-]?\s*\S/i.test(next);
+
+    if (question && nextIsAnswer) {
+      const answer = normalizeQuestionAnswerPayload(next);
+      if (answer) {
+        normalized.push(`${question[1]}${Number(question[2])}) ${answer}`);
+        index += 1;
+        continue;
+      }
+    }
+
+    normalized.push(current);
+  }
+
+  return normalized.join("\n");
+}
+
 function normalizeStandaloneAnswerPrefixes(text = "") {
   return String(text || "").replace(
     /(^|\n)([ \t]*)(?:ans(?:wer)?|antwort)[ \t]*[:.-]?[ \t]*([A-FX])(?:[ \t]*[.)])?[ \t]*(?=\n|$)/gi,
@@ -104,7 +157,9 @@ function normalizeCompactObjectiveSeparators(text = "") {
 
 export function parseSubmissionSections(text = "") {
   const source = normalizeStandaloneAnswerPrefixes(
-    normalizeQSectionAliases(normalizeLeadingShortAnswerBlock(text)),
+    normalizeNumberedQuestionAnswerPairs(
+      normalizeQSectionAliases(normalizeLeadingShortAnswerBlock(text)),
+    ),
   );
   const markerRegex = /(?:^|\n)[ \t]*((?:teil|tiel|part)[ \t]*([1-4]|I{1,3}|IV)(?:[ \t]*(?:[.:;|·•–-][ \t]*)?(?:lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing))?|lesen|reading|h[oö]ren|hoeren|listening|schreiben|writing)[ \t]*(?:\([^\n)]*\))?[ \t]*[.:;]?[ \t]*/gi;
   const markers = [];
