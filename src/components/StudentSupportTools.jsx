@@ -168,7 +168,7 @@ export default function StudentSupportTools({ student, draft = {}, onStudentDele
   const deleteAccount = () =>
     runAction("delete", async () => {
       const typed = window.prompt(
-        `This permanently deletes ${studentName}'s Falowen account, submissions, scores, notifications, attendance check-ins, and linked Google Sheet rows where configured. Type DELETE to continue.`,
+        `ADMIN OVERRIDE: permanently delete ${studentName}'s Falowen account even if an active contract exists. This deletes submissions, scores, notifications, attendance check-ins, and linked Google Sheet rows where configured. Type DELETE to continue.`,
       );
       if (typed !== "DELETE") {
         notify("info", "Student account deletion cancelled.");
@@ -203,7 +203,7 @@ export default function StudentSupportTools({ student, draft = {}, onStudentDele
       <div>
         <h3 style={{ margin: "0 0 4px" }}>Student support</h3>
         <p style={{ margin: 0, color: "#64748b" }}>
-          Main actions only: password, account status, payment reminder, review link, and permanent account deletion.
+          Main actions only: password, account status, payment reminder, review link, and permanent account deletion. Contract status never blocks an admin deletion.
         </p>
       </div>
 
@@ -225,8 +225,9 @@ export default function StudentSupportTools({ student, draft = {}, onStudentDele
           onClick={deleteAccount}
           disabled={busyAction === "delete"}
           style={{ background: "#dc2626", borderColor: "#b91c1c" }}
+          title="Admin override: permanently delete even with an active contract"
         >
-          {busyAction === "delete" ? "Deleting..." : "Delete account"}
+          {busyAction === "delete" ? "Deleting..." : "Delete account (override)"}
         </button>
       </div>
 
