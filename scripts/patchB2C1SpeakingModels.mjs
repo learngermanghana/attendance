@@ -63,12 +63,32 @@ function patchFile(relativePath, replacements) {
 
 patchFile("src/data/teachingSlides.js", [
   {
+    from: 'import { getSlideQuestionSet } from "./teachingSlideQuestionDictionary.js";',
+    to: 'import { getSlideQuestionSet } from "./teachingSlideQuestionDictionary.js";\nimport { getCourseTaskDay } from "./courseSessionGroups.js";',
+  },
+  {
     from: 'import { c1PresenterSlides } from "./c1PresenterSlides.js";',
     to: 'import { c1PresenterSlides } from "./c1PresenterSlides.js";\nimport { attachAdvancedSpeakingModels } from "./advancedSpeakingModels.js";',
   },
   {
     from: "const curatedSlides = [",
     to: "attachAdvancedSpeakingModels({ b2Slides: b2PresenterSlides, c1Slides: c1PresenterSlides });\n\nconst curatedSlides = [",
+  },
+  {
+    from: 'function createTemplateSlide(level, entry, lessonNumber) {\n  const levelLabel = level.toUpperCase();',
+    to: 'function createTemplateSlide(level, entry, lessonNumber) {\n  const levelLabel = level.toUpperCase();\n  const dayLabel = levelLabel === "A1" ? "Day" : "Lesson";',
+  },
+  {
+    from: '    day: `Lesson ${lessonNumber}`,',
+    to: '    day: `${dayLabel} ${lessonNumber}`,',
+  },
+  {
+    from: '    title: `${levelLabel} Lesson ${lessonNumber} · ${entry.de}`,',
+    to: '    title: `${levelLabel} ${dayLabel} ${lessonNumber} · ${entry.de}`,',
+  },
+  {
+    from: 'function buildLevelSlides(level) {\n  const entries = Object.values(courseDictionary[level] || {}).sort((left, right) => compareChapter(left.chapter, right.chapter));\n  return entries.map((entry, index) => createTemplateSlide(level, entry, index + 1));\n}',
+    to: 'function buildLevelSlides(level) {\n  const entries = Object.values(courseDictionary[level] || {}).sort((left, right) => compareChapter(left.chapter, right.chapter));\n  return entries.map((entry, index) => {\n    const lessonNumber = String(level || "").toUpperCase() === "A1"\n      ? getCourseTaskDay("A1", entry.assignment_id, index)\n      : index + 1;\n    return createTemplateSlide(level, entry, lessonNumber);\n  });\n}',
   },
 ]);
 
@@ -89,4 +109,4 @@ if (fs.existsSync(b1RegressionPath)) {
   ]);
 }
 
-console.log("B2/C1 speaking models are patched.");
+console.log("B2/C1 speaking models and A1 official teaching-slide day mapping are patched.");

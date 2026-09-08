@@ -57,6 +57,28 @@ test("all real A1 teaching lessons use Presenter 2.0 while orientation stays cla
   }
 });
 
+test("A1 Day 11 and Day 12 teaching slides use the official class-day mapping", () => {
+  const slides = getSlidesByCourse("A1");
+  const day11 = slides.find((slide) => slide.assignmentId === "A1-7");
+  const day12 = slides.find((slide) => slide.assignmentId === "A1-8");
+
+  assert.ok(day11, "A1 Day 11 / A1-7 teaching slide missing");
+  assert.ok(day12, "A1 Day 12 / A1-8 teaching slide missing");
+
+  assert.equal(day11.dayNumber, 11);
+  assert.equal(day11.day, "Day 11");
+  assert.match(day11.title, /^A1 Day 11 ·/);
+  assert.match(day11.topic, /Die 12-Stunden-Uhr/);
+
+  assert.equal(day12.dayNumber, 12);
+  assert.equal(day12.day, "Day 12");
+  assert.match(day12.title, /^A1 Day 12 ·/);
+  assert.match(day12.topic, /Die 24-Stunden-Uhr und Datum/);
+
+  assert.ok(slides.some((slide) => slide.dayNumber === 11), "A1 Day 11 should be visible in the teacher slide list");
+  assert.ok(slides.some((slide) => slide.dayNumber === 12), "A1 Day 12 should be visible in the teacher slide list");
+});
+
 test("A1 workbook-aligned Day 1-10 lessons retain their real workbook bridge", () => {
   assert.ok(WORKBOOK_ALIGNED.length >= 10);
 

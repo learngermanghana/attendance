@@ -8,6 +8,7 @@ on:
       - "src/utils/teachingPresenter.js"
       - "src/data/teacherSlideSupport.js"
       - "src/data/courseDictionary.js"
+      - "src/data/courseSessionGroups.js"
       - "src/data/teachingSlides.js"
       - "src/data/a1WorkbookAlignedSlidesDays1To5.js"
       - "src/data/a1WorkbookAlignedSlidesDays6To10.js"
@@ -22,6 +23,7 @@ on:
       - "src/data/b1WorkbookAlignedSlidesDays1To10.js"
       - "src/data/b1WorkbookAlignedSlidesDays11To20.js"
       - "src/data/b1WorkbookAlignedSlidesDays21To28.js"
+      - "scripts/patchB2C1SpeakingModels.mjs"
       - "tests/a1-presenter-v2-all-lessons.test.js"
       - "tests/a1-workbook-aligned-slides-days1-5.test.js"
       - "tests/a1-workbook-aligned-slides-days6-10.test.js"
@@ -52,6 +54,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Apply generated teaching-slide patches
+        run: node scripts/patchB2C1SpeakingModels.mjs
 
       - name: Test complete A1, A2, B1, B2 and C1 Presenter 2.0 rollout
         run: node --test tests/a1-presenter-v2-all-lessons.test.js tests/a1-workbook-aligned-slides-days1-5.test.js tests/a1-workbook-aligned-slides-days6-10.test.js tests/a2-presenter-v2-all-days.test.js tests/b1-presenter-v2-days1-6.test.js tests/b1-presenter-v2-all-days.test.js tests/b2-presenter-v2-all-days.test.js tests/c1-presenter-v2-all-days.test.js tests/teaching-presenter.test.js tests/b1-workbook-aligned-slides-days1-10.test.js tests/b1-workbook-aligned-slides-days11-20.test.js tests/b1-workbook-aligned-slides-days21-28.test.js
