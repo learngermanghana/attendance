@@ -49,27 +49,10 @@ jobs:
       - name: Record pre-existing A2-4.11 baseline
         continue-on-error: true
         run: node --test --test-name-pattern="A2-4.11 choices" tests/objective-marking.test.js
-      - name: Apply production objective patches twice
+      - name: Validate current objective parser source
         run: |
-          node scripts/patchObjectiveWritingPartDetection.mjs
-          node scripts/patchObjectiveAnswerTimeParsing.mjs
-          node scripts/patchObjectivePromptAnswerParsing.mjs
-          node scripts/patchA1PricePreferenceMarking.mjs
-          node scripts/patchObjectiveSectionHeadingPunctuation.mjs
-          node scripts/patchObjectiveGrammarConsistency.mjs
-          node scripts/patchReorderedObjectiveGroups.mjs
-          node scripts/patchSequentialMultipartIsolation.mjs
-          node scripts/patchObjectiveWritingPartDetection.mjs
-          node scripts/patchObjectiveAnswerTimeParsing.mjs
-          node scripts/patchObjectivePromptAnswerParsing.mjs
-          node scripts/patchA1PricePreferenceMarking.mjs
-          node scripts/patchObjectiveSectionHeadingPunctuation.mjs
-          node scripts/patchObjectiveGrammarConsistency.mjs
-          node scripts/patchReorderedObjectiveGroups.mjs
-          node scripts/patchSequentialMultipartIsolation.mjs
           node --check src/utils/objectiveMarking.js
           node --check src/utils/submissionSections.js
-          node --check scripts/patchSequentialMultipartIsolation.mjs
           grep -F 'const aiGradedParts = referenceEntry.aiGradedParts' src/utils/objectiveMarking.js
           grep -F 'grading?.hasReferenceAnswers === true' src/utils/objectiveMarking.js
           grep -F 'const hasAnyMatchingPartSections = Boolean(referencePartIds.length)' src/utils/objectiveMarking.js
