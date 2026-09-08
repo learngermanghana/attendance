@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'src/utils/objectiveMarking.js'
+      - 'src/utils/submissionSections.js'
       - 'scripts/patchObjectiveWritingPartDetection.mjs'
       - 'scripts/patchObjectiveAnswerTimeParsing.mjs'
       - 'scripts/patchObjectivePromptAnswerParsing.mjs'
@@ -14,6 +15,7 @@ on:
       - 'scripts/patchSequentialMultipartIsolation.mjs'
       - 'tests/a1-12.1-objective-parts.test.js'
       - 'tests/a1-12.1-unlabelled-block-isolation.test.js'
+      - 'tests/a1-12-2-question-ans-lines.test.js'
       - 'package.json'
       - '.github/workflows/a1-12-objective-parts-tests.yml'
   push:
@@ -21,6 +23,7 @@ on:
       - main
     paths:
       - 'src/utils/objectiveMarking.js'
+      - 'src/utils/submissionSections.js'
       - 'scripts/patchObjectiveWritingPartDetection.mjs'
       - 'scripts/patchObjectiveAnswerTimeParsing.mjs'
       - 'scripts/patchObjectivePromptAnswerParsing.mjs'
@@ -31,6 +34,7 @@ on:
       - 'scripts/patchSequentialMultipartIsolation.mjs'
       - 'tests/a1-12.1-objective-parts.test.js'
       - 'tests/a1-12.1-unlabelled-block-isolation.test.js'
+      - 'tests/a1-12-2-question-ans-lines.test.js'
       - 'package.json'
       - '.github/workflows/a1-12-objective-parts-tests.yml'
 
@@ -64,11 +68,14 @@ jobs:
           node scripts/patchReorderedObjectiveGroups.mjs
           node scripts/patchSequentialMultipartIsolation.mjs
           node --check src/utils/objectiveMarking.js
+          node --check src/utils/submissionSections.js
           node --check scripts/patchSequentialMultipartIsolation.mjs
           grep -F 'const aiGradedParts = referenceEntry.aiGradedParts' src/utils/objectiveMarking.js
           grep -F 'grading?.hasReferenceAnswers === true' src/utils/objectiveMarking.js
           grep -F 'const hasAnyMatchingPartSections = Boolean(referencePartIds.length)' src/utils/objectiveMarking.js
           grep -F 'if (sequentialPartAnswers.size > 0 || hasAnyMatchingPartSections) return "";' src/utils/objectiveMarking.js
+      - name: Test A1-12.2 numbered question plus Ans lines
+        run: node --test tests/a1-12-2-question-ans-lines.test.js
       - name: Test unlabelled and partial-labelled multipart isolation
         run: node --test tests/a1-12.1-unlabelled-block-isolation.test.js
       - name: Test Josephine A1-12.1 result
