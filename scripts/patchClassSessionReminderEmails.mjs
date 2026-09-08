@@ -42,6 +42,15 @@ if (!workerSource.includes("const DEFAULT_CLASS_REMINDER_ZOOM")) {
   workerSource = workerSource.replace(zoomConfigAnchor, `${zoomConfigAnchor}\n${zoomConfigBlock}`);
 }
 
+if (!workerSource.includes('const DEFAULT_FALOWEN_LEARNING_BASE_URL = "https://www.falowen.app";')) {
+  const anchor = 'const DEFAULT_CHECKIN_BASE_URL = "https://admin.falowen.app";';
+  if (!workerSource.includes(anchor)) throw new Error("Could not find the check-in URL constant for learning-link patching.");
+  workerSource = workerSource.replace(
+    anchor,
+    `${anchor}\nconst DEFAULT_FALOWEN_LEARNING_BASE_URL = "https://www.falowen.app";`,
+  );
+}
+
 if (!workerSource.includes("chatUrl: DEFAULT_CLASS_REMINDER_ZOOM.chatUrl")) {
   const zoomDetailsPattern = /function zoomDetails\(klass = \{\}, profile = \{\}\) \{[\s\S]*?\n\}\n\nfunction buildReminderMessage/;
   const fixedZoomDetails = [
@@ -61,26 +70,179 @@ if (!workerSource.includes("chatUrl: DEFAULT_CLASS_REMINDER_ZOOM.chatUrl")) {
   workerSource = workerSource.replace(zoomDetailsPattern, fixedZoomDetails);
 }
 
-if (!workerSource.includes('lines.push("", "Meeting chat link", zoom.chatUrl);')) {
-  const joinBlockPattern = /  if \(zoom\.url \|\| zoom\.meetingId \|\| zoom\.passcode\) \{[\s\S]*?\n  \}\n  lines\.push/;
-  const fixedJoinBlock = [
-    "  if (zoom.url || zoom.chatUrl || zoom.meetingId || zoom.passcode || zoom.sip) {",
-    '    lines.push("", "Join Zoom Meeting");',
-    "    if (zoom.url) lines.push(zoom.url);",
-    '    if (zoom.chatUrl) lines.push("", "Meeting chat link", zoom.chatUrl);',
-    '    if (zoom.meetingId) lines.push("", `Meeting ID: ${zoom.meetingId}`);',
-    '    if (zoom.passcode) lines.push(`Passcode: ${zoom.passcode}`);',
-    '    if (zoom.sip) lines.push("", "Join by SIP", `• ${zoom.sip}`);',
-    "  }",
-    "  lines.push",
-  ].join("\n");
-  if (!joinBlockPattern.test(workerSource)) throw new Error("Could not find the class reminder Zoom message block.");
-  workerSource = workerSource.replace(joinBlockPattern, fixedJoinBlock);
+if (!workerSource.includes("function buildChapterLinks")) {
+  const helperAnchor = "function buildCheckinUrl";
+  if (!workerSource.includes(helperAnchor)) throw new Error("Could not find the class reminder check-in URL builder.");
+  const helperBlock = `function resolveReminderLearningBaseUrl(runtimeConfig = {}, env = process.env) {
+  const communication = runtimeConfig.communication
+    || runtimeConfig.announcements
+    || runtimeConfig.announcement
+    || {};
+  return text(
+    env.FALOWEN_LEARNING_BASE_URL
+    || communication.falowen_learning_base_url
+    || communication.learning_base_url
+    || DEFAULT_FALOWEN_LEARNING_BASE_URL,
+  ).replace(/\\/+$/, "") || DEFAULT_FALOWEN_LEARNING_BASE_URL;
 }
 
-if (!workerSource.includes("link: text(DEFAULT_CLASS_REMINDER_ZOOM.joinUrl),")) {
-  if (!workerSource.includes('    link: "",')) throw new Error("Could not find the class reminder announcement link field.");
-  workerSource = workerSource.replace('    link: "",', "    link: text(DEFAULT_CLASS_REMINDER_ZOOM.joinUrl),");
+function resolveSessionDay(session = {}) {
+  const candidates = [
+    session.curriculumIndex,
+    session.curriculumDay,
+    session.day,
+    session.dayNumber,
+    session.officialSessionIndex,
+    session.sessionIndex,
+    session.dayIndex,
+  ];
+  for (const value of candidates) {
+    const numeric = Number(value);
+    if (Number.isInteger(numeric) && numeric >= 0) return numeric;
+  }
+  const label = text(session.topic || session.title || session.sessionLabel || session.lessonTitle);
+  const match = label.match(/\\bday\\s*(\\d+)\\b/i);
+  return match?.[1] ? Number(match[1]) : null;
+}
+
+function assignmentLearningIdentity(assignmentId = "") {
+  const raw = text(assignmentId);
+  const match = raw.match(/^([A-C]\\d)-(.+)$/i);
+  if (!match) return null;
+  const level = match[1].toUpperCase();
+  let identity = text(match[2]);
+  if (!identity || /^(tutorial|complete)$/i.test(identity)) return null;
+  const practice = /-PRACTICE$/i.test(identity);
+  identity = identity.replace(/-PRACTICE$/i, "");
+  const routeKey = `${identity.toLowerCase()}${practice ? "-practice" : ""}`;
+  return { level, chapter: identity, routeKey, practice };
+}
+
+function buildChapterLinks({ klass = {}, session = {}, baseUrl = DEFAULT_FALOWEN_LEARNING_BASE_URL } = {}) {
+  const root = text(baseUrl).replace(/\\/+$/, "") || DEFAULT_FALOWEN_LEARNING_BASE_URL;
+  const fallbackLevel = text(klass.levelId || klass.level).toUpperCase();
+  const day = resolveSessionDay(session);
+  const seen = new Set();
+  return assignmentIds(session).flatMap((assignmentId) => {
+    const identity = assignmentLearningIdentity(assignmentId);
+    if (!identity) return [];
+    const level = identity.level || fallbackLevel;
+    let route = "";
+    if (level === "A1") {
+      const segment = encodeURIComponent(identity.routeKey);
+      route = identity.routeKey.includes(".")
+        ? `/campus/course/lesson/A1/${segment}`
+        : `/campus/course/lesson/A1/chapter/${segment}`;
+    } else if (level && Number.isInteger(day)) {
+      route = `/campus/course/lesson/${encodeURIComponent(level)}/${day}?view=workbook`;
+    }
+    if (!route) return [];
+    const url = `${root}${route}`;
+    if (seen.has(url)) return [];
+    seen.add(url);
+    return [{
+      assignmentId: text(assignmentId),
+      chapter: identity.chapter,
+      label: `Open Chapter ${identity.chapter}${identity.practice ? " Practice" : ""}`,
+      url,
+    }];
+  });
+}
+
+`;
+  workerSource = workerSource.replace(helperAnchor, `${helperBlock}${helperAnchor}`);
+}
+
+if (!workerSource.includes("new URLSearchParams({ classId, sessionId })")) {
+  const checkinPattern = /function buildCheckinUrl\(\{ klass = \{\}, session = \{\}, students = \[\], baseUrl = DEFAULT_CHECKIN_BASE_URL \} = \{\}\) \{[\s\S]*?\n\}\n\nfunction zoomDetails/;
+  const shortCheckin = `function buildCheckinUrl({ klass = {}, session = {}, baseUrl = DEFAULT_CHECKIN_BASE_URL } = {}) {
+  const classId = text(klass.id || klass.classId || klass.classRecordId);
+  const sessionId = text(session.id);
+  if (!classId || !sessionId) return "";
+  const params = new URLSearchParams({ classId, sessionId });
+  return `${text(baseUrl).replace(/\\/+$/, "") || DEFAULT_CHECKIN_BASE_URL}/checkin?${params.toString()}`;
+}
+
+function zoomDetails`;
+  if (!checkinPattern.test(workerSource)) throw new Error("Could not find the long class reminder check-in URL builder.");
+  workerSource = workerSource.replace(checkinPattern, shortCheckin);
+}
+
+if (!workerSource.includes("Open today’s Course Book:")) {
+  const messagePattern = /function buildReminderMessage\(\{[\s\S]*?\n\}\n\nfunction rowForReminder/;
+  const conciseMessage = `function buildReminderMessage({ student, klass, session, leadMin, zoom = {}, checkinUrl = "", chapterLinks = [] } = {}) {
+  const timezone = text(klass.timezone) || TZ;
+  const startsAt = sessionStart(session);
+  const name = text(student.name || student.displayName) || "Student";
+  const className = text(klass.name || klass.className || klass.classId || klass.id) || "your class";
+  const assignments = assignmentIds(session);
+  const lines = [
+    `Hello ${name},`,
+    "",
+    `Your ${className} class starts in ${leadMin} minutes.`,
+    "",
+    `Topic: ${topicForSession(session)}`,
+    ...(assignments.length ? [`Assignment${assignments.length === 1 ? "" : "s"}: ${assignments.join(" + ")}`] : []),
+    `Date: ${formatDate(startsAt, timezone)}`,
+    `Time: ${formatTime(startsAt, timezone)} Ghana time`,
+  ];
+  if (zoom.url) {
+    lines.push("", "Join Zoom: use the Join Zoom button in this email.");
+  }
+  if (chapterLinks.length) {
+    lines.push("", "Open today’s Course Book:");
+    chapterLinks.forEach((link) => lines.push(`${link.label}: ${link.url}`));
+  }
+  if (checkinUrl) {
+    lines.push("", "Check In Now", checkinUrl);
+  }
+  if (zoom.meetingId || zoom.passcode) {
+    lines.push("");
+    if (zoom.meetingId) lines.push(`Meeting ID: ${zoom.meetingId}`);
+    if (zoom.passcode) lines.push(`Passcode: ${zoom.passcode}`);
+  }
+  lines.push("", "Please join 5 minutes early.", "", "Best regards,", "Learn Language Education Academy (Falowen)");
+  return lines.join("\\n");
+}
+
+function rowForReminder`;
+  if (!messagePattern.test(workerSource)) throw new Error("Could not find the class reminder message builder.");
+  workerSource = workerSource.replace(messagePattern, conciseMessage);
+}
+
+if (!workerSource.includes("chapter_links: JSON.stringify(chapterLinks),")) {
+  const rowPattern = /function rowForReminder\(\{[\s\S]*?\n\}\n\nasync function postRows/;
+  const rowBlock = `function rowForReminder({ klass, student, session, leadMin, message, checkinUrl = "", zoom = {}, chapterLinks = [] } = {}) {
+  return {
+    announcement: message,
+    class: text(klass.name || klass.className || klass.classId || klass.id),
+    date: isoDate(sessionStart(session), text(klass.timezone) || TZ),
+    link: text(zoom.url || DEFAULT_CLASS_REMINDER_ZOOM.joinUrl),
+    button_label: text(zoom.url || DEFAULT_CLASS_REMINDER_ZOOM.joinUrl) ? "Join Zoom" : "",
+    checkin_link: checkinUrl,
+    checkin_link_label: checkinUrl ? "Check In Now" : "",
+    course_link: chapterLinks[0]?.url || "",
+    course_link_label: chapterLinks.length ? "Open Course Book" : "",
+    chapter_links: JSON.stringify(chapterLinks),
+    topic: `Class reminder — ${topicForSession(session)}`,
+    email: text(student.email),
+    attach_certificate: "FALSE",
+    cert_level: text(klass.levelId || klass.level),
+    delivery_mode: "individual",
+    allow_bcc_fallback: "FALSE",
+    email_type: "class_reminder",
+    reminder_lead_minutes: String(leadMin),
+    show_progress: "FALSE",
+    show_review: "FALSE",
+    show_app_button: "FALSE",
+    show_class: "TRUE",
+    show_date: "TRUE",
+  };
+}
+
+async function postRows`;
+  if (!rowPattern.test(workerSource)) throw new Error("Could not find the class reminder webhook row builder.");
+  workerSource = workerSource.replace(rowPattern, rowBlock);
 }
 
 const stateHelper = `async function writeClassReminderState({ db, admin, klass, session, leadMin, status, skipReason = "", error = "", recipientCount = null }) {
@@ -152,6 +314,24 @@ if (!workerSource.includes('status: "processing", recipientCount: recipients.len
   const profile = await loadZoomProfile(db, klass);`);
 }
 
+if (!workerSource.includes("const chapterLinks = buildChapterLinks")) {
+  const rowsBlock = `  const rows = recipients.map((student) => {
+    const message = buildReminderMessage({ student, klass, session, leadMin, zoom, checkinUrl });
+    return rowForReminder({ klass, student, session, leadMin, message, checkinUrl });
+  });`;
+  const replacement = `  const chapterLinks = buildChapterLinks({
+    klass,
+    session,
+    baseUrl: resolveReminderLearningBaseUrl(runtimeConfig),
+  });
+  const rows = recipients.map((student) => {
+    const message = buildReminderMessage({ student, klass, session, leadMin, zoom, checkinUrl, chapterLinks });
+    return rowForReminder({ klass, student, session, leadMin, message, checkinUrl, zoom, chapterLinks });
+  });`;
+  if (!workerSource.includes(rowsBlock)) throw new Error("Could not find class reminder row creation block.");
+  workerSource = workerSource.replace(rowsBlock, replacement);
+}
+
 if (!workerSource.includes('classReminderEmailLastSkipReason: "",')) {
   workerSource = workerSource.replace(
 `      classReminderEmailLastStatus: "sent",
@@ -174,6 +354,16 @@ if (!workerSource.includes('classReminderEmailLastStatus: "failed",\n      class
       classReminderEmailLastError: message,`);
 }
 
+if (!workerSource.includes("    buildChapterLinks,")) {
+  workerSource = workerSource.replace("    buildCheckinUrl,", "    buildChapterLinks,\n    buildCheckinUrl,");
+}
+if (!workerSource.includes("    resolveReminderLearningBaseUrl,")) {
+  workerSource = workerSource.replace(
+    "    resolveCheckinBaseUrl,",
+    "    resolveCheckinBaseUrl,\n    resolveReminderLearningBaseUrl,\n    resolveSessionDay,",
+  );
+}
+
 fs.writeFileSync(workerPath, workerSource);
 
 const patchedIndex = fs.readFileSync(indexPath, "utf8");
@@ -192,7 +382,11 @@ const checks = [
   [worker.includes("https://us06web.zoom.us/j/6886900916?pwd=bEdtR3RLQ2dGTytvYzNrMUV3eFJwUT09"), "Class reminder Zoom join link is missing."],
   [worker.includes("https://us06web.zoom.us/launch/jc/6886900916"), "Class reminder Zoom chat link is missing."],
   [worker.includes("6886900916@zoomcrc.com"), "Class reminder Zoom SIP address is missing."],
-  [worker.includes("link: text(DEFAULT_CLASS_REMINDER_ZOOM.joinUrl),"), "Announcement row Zoom link is missing."],
+  [worker.includes('button_label: text(zoom.url || DEFAULT_CLASS_REMINDER_ZOOM.joinUrl) ? "Join Zoom" : "",'), "Join Zoom button label is missing."],
+  [worker.includes("function buildChapterLinks"), "Course Book chapter link builder is missing."],
+  [worker.includes("Open today’s Course Book:"), "Course Book links are missing from reminder copy."],
+  [worker.includes("new URLSearchParams({ classId, sessionId })"), "Short check-in URL is missing."],
+  [worker.includes("chapter_links: JSON.stringify(chapterLinks),"), "Structured chapter links are missing from webhook rows."],
   [worker.includes("runAutoOpenCheckins"), "Automatic 30-minute attendance opener is missing."],
   [worker.includes("baseUrl: resolveCheckinBaseUrl(runtimeConfig)"), "Runtime check-in base URL is not threaded into reminder delivery."],
 ];
@@ -200,4 +394,4 @@ for (const [passed, message] of checks) {
   if (!passed) throw new Error(message);
 }
 
-console.log("Session-topic class reminder scheduler, auto check-in, runtime URL delivery diagnostics and standard Zoom meeting verified.");
+console.log("Class reminders now use concise Zoom CTA, short check-in URLs and task-matched Course Book links.");
