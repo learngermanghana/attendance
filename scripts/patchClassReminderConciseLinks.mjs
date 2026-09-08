@@ -116,7 +116,7 @@ if (!source.includes("new URLSearchParams({ classId, sessionId })")) {
 }
 
 const messagePattern = /function buildReminderMessage\(\{[\s\S]*?\n\}\n\nfunction rowForReminder/;
-if (!source.includes("Open today’s Course Book:")) {
+if (!source.includes("Attendance Check-in")) {
   const replacement = [
     'function buildReminderMessage({ student, klass, session, leadMin, zoom = {}, checkinUrl = "", chapterLinks = [] } = {}) {',
     '  const timezone = text(klass.timezone) || TZ;',
