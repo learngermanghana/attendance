@@ -65,6 +65,7 @@ jobs:
           node --check scripts/patchClassReminderDiagnosticBestEffort.mjs
           node --check scripts/patchClassReminderConciseLinks.mjs
           node --check scripts/patchCheckinStatusMetadataHydration.mjs
+          grep -F 'if (!source.includes("Attendance Check-in")) {' scripts/patchClassReminderConciseLinks.mjs
           node scripts/patchClassSessionReminderEmails.mjs
           node scripts/patchClassReminderDiagnosticBestEffort.mjs
           node scripts/patchClassReminderDiagnosticBestEffort.mjs
@@ -84,6 +85,7 @@ jobs:
           grep -F 'runAutoOpenCheckins' functions/classSessionReminderEmails.js
           grep -F 'Check In Now' functions/classSessionReminderEmails.js
           grep -F 'new URLSearchParams({ classId, sessionId })' functions/classSessionReminderEmails.js
+          grep -F 'Attendance Check-in' functions/classSessionReminderEmails.js
           grep -F 'Open today’s Course Book:' functions/classSessionReminderEmails.js
           grep -F 'chapter_links: JSON.stringify(chapterLinks)' functions/classSessionReminderEmails.js
           grep -F 'button_label: text(zoom.url || DEFAULT_CLASS_REMINDER_ZOOM.joinUrl) ? "Join Zoom" : ""' functions/classSessionReminderEmails.js
