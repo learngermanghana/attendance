@@ -9,8 +9,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
 const workerPath = path.join(repoRoot, "functions", "classSessionReminderEmails.js");
 const patchPath = path.join(repoRoot, "scripts", "patchClassSessionReminderEmails.mjs");
+const concisePatchPath = path.join(repoRoot, "scripts", "patchClassReminderConciseLinks.mjs");
 const workerSource = fs.readFileSync(workerPath, "utf8");
 const patchSource = fs.readFileSync(patchPath, "utf8");
+const concisePatchSource = fs.readFileSync(concisePatchPath, "utf8");
 
 const JOIN_URL = "https://us06web.zoom.us/j/6886900916?pwd=bEdtR3RLQ2dGTytvYzNrMUV3eFJwUT09";
 const CHAT_URL = "https://us06web.zoom.us/launch/jc/6886900916";
@@ -35,13 +37,13 @@ function reminderFixture() {
   };
 }
 
-test("deployment patch contains the complete standard Zoom meeting", () => {
+test("deployment patches contain the standard Zoom meeting and concise CTA", () => {
   assert.ok(patchSource.includes(JOIN_URL));
   assert.ok(patchSource.includes(CHAT_URL));
   assert.ok(patchSource.includes('meetingId: "688 690 0916"'));
   assert.ok(patchSource.includes('passcode: "german"'));
   assert.ok(patchSource.includes('sip: "6886900916@zoomcrc.com"'));
-  assert.ok(patchSource.includes("link: text(DEFAULT_CLASS_REMINDER_ZOOM.joinUrl),"));
+  assert.ok(concisePatchSource.includes('"Join Zoom"'));
 });
 
 if (workerSource.includes("const DEFAULT_CLASS_REMINDER_ZOOM")) {
@@ -53,7 +55,7 @@ if (workerSource.includes("const DEFAULT_CLASS_REMINDER_ZOOM")) {
     zoomDetails,
   } = _test;
 
-  test("30-minute and 10-minute reminders always use the standard Zoom meeting", () => {
+  test("30-minute and 10-minute reminders use a clean Zoom CTA with backup credentials", () => {
     const fixture = reminderFixture();
     const zoom = zoomDetails(fixture.klass, {
       joinUrl: "https://example.com/old-profile-link",
@@ -71,14 +73,13 @@ if (workerSource.includes("const DEFAULT_CLASS_REMINDER_ZOOM")) {
     for (const leadMin of [30, 10]) {
       const message = buildReminderMessage({ ...fixture, leadMin, zoom });
       assert.match(message, new RegExp(`starts in ${leadMin} minutes`));
-      assert.match(message, /Join Zoom Meeting/);
-      assert.ok(message.includes(JOIN_URL));
-      assert.match(message, /Meeting chat link/);
-      assert.ok(message.includes(CHAT_URL));
+      assert.match(message, /Join Zoom: use the Join Zoom button in this email\./);
+      assert.ok(!message.includes(JOIN_URL));
+      assert.ok(!message.includes(CHAT_URL));
+      assert.doesNotMatch(message, /Meeting chat link/);
+      assert.doesNotMatch(message, /Join by SIP/);
       assert.match(message, /Meeting ID: 688 690 0916/);
       assert.match(message, /Passcode: german/);
-      assert.match(message, /Join by SIP/);
-      assert.match(message, /6886900916@zoomcrc\.com/);
 
       const row = rowForReminder({
         klass: fixture.klass,
@@ -86,12 +87,14 @@ if (workerSource.includes("const DEFAULT_CLASS_REMINDER_ZOOM")) {
         session: fixture.session,
         leadMin,
         message,
+        zoom,
       });
       assert.equal(row.link, JOIN_URL);
+      assert.equal(row.button_label, "Join Zoom");
     }
   });
 } else {
-  test("runtime Zoom assertions run after the deployment patch", {
-    skip: "Run node scripts/patchClassSessionReminderEmails.mjs before this runtime test.",
+  test("runtime Zoom assertions run after the deployment patches", {
+    skip: "Run class reminder deployment patches before this runtime test.",
   }, () => {});
 }
