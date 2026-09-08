@@ -64,7 +64,7 @@ if (!apiSource.includes("checkinMetadataHydrated: true")) {
         month: "2-digit",
         day: "2-digit",
       }).formatToParts(new Date(millis)).map((part) => [part.type, part.value]));
-      return `${parts.year}-${parts.month}-${parts.day}`;
+      return [parts.year, parts.month, parts.day].join("-");
     };
     const formatTimeValue = (millis) => {
       if (!Number.isFinite(millis)) return "";
