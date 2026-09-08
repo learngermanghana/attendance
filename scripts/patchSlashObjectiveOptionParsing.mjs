@@ -71,7 +71,30 @@ if (!unnumberedChoiceSource.includes("const unnumberedChoicePattern = /^[A-FX]")
     throw new Error("Unnumbered objective choice-block anchor changed in objectiveMarking.js");
   }
   unnumberedChoiceSource = unnumberedChoiceSource.replace(unnumberedChoiceAnchor, unnumberedChoiceReplacement);
-  fs.writeFileSync(unnumberedChoiceTarget, unnumberedChoiceSource);
 }
 
+// Explicitly labelled sections take precedence over all flat fallback parsing. Use
+// the same section-aware extractor here as well; otherwise a valid bare-choice
+// block is discovered above but discarded by the labelled-section resolver.
+const matchingSectionBefore = [
+  '  if (matchingSectionText !== undefined) {',
+  '    const matchingSectionAnswers = extractNumberedTextAnswers(matchingSectionText);',
+  '    return matchingSectionAnswers[item.questionNumber] ?? "";',
+  '  }',
+].join("\n");
+const matchingSectionAfter = [
+  '  if (matchingSectionText !== undefined) {',
+  '    const matchingSectionAnswers = Object.fromEntries(',
+  '      extractSectionAnswerEntries(matchingSectionText).map((entry) => [entry.number, entry.answer]),',
+  '    );',
+  '    return matchingSectionAnswers[item.questionNumber] ?? "";',
+  '  }',
+].join("\n");
+if (unnumberedChoiceSource.includes(matchingSectionBefore)) {
+  unnumberedChoiceSource = unnumberedChoiceSource.replace(matchingSectionBefore, matchingSectionAfter);
+} else if (!unnumberedChoiceSource.includes(matchingSectionAfter)) {
+  throw new Error("Labelled objective section resolver anchor changed in objectiveMarking.js");
+}
+
+fs.writeFileSync(unnumberedChoiceTarget, unnumberedChoiceSource);
 console.log("Slash-separated and unnumbered multipart objective choice answers are parsed deterministically.");
