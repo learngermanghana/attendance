@@ -135,15 +135,15 @@ if (!source.includes("Open today’s Course Book:")) {
     '    `Time: ${formatTime(startsAt, timezone)} Ghana time` ,',
     '  ];',
     '  if (zoom.url) lines.push("", "Join Zoom: use the Join Zoom button in this email.");',
-    '  if (chapterLinks.length) {',
-    '    lines.push("", "Open today’s Course Book:");',
-    '    chapterLinks.forEach((link) => lines.push(`${link.label}: ${link.url}`));',
-    '  }',
-    '  if (checkinUrl) lines.push("", "Check In Now", checkinUrl);',
     '  if (zoom.meetingId || zoom.passcode) {',
     '    lines.push("");',
     '    if (zoom.meetingId) lines.push(`Meeting ID: ${zoom.meetingId}`);',
     '    if (zoom.passcode) lines.push(`Passcode: ${zoom.passcode}`);',
+    '  }',
+    '  if (checkinUrl) lines.push("", "Attendance Check-in", "Check In Now", checkinUrl);',
+    '  if (chapterLinks.length) {',
+    '    lines.push("", "Open today’s Course Book:");',
+    '    chapterLinks.forEach((link) => lines.push(`${link.label}: ${link.url}`));',
     '  }',
     '  lines.push("", "Please join 5 minutes early.", "", "Best regards,", "Learn Language Education Academy (Falowen)");',
     '  return lines.join("\\n");',
@@ -228,6 +228,7 @@ const required = [
   'const DEFAULT_FALOWEN_LEARNING_BASE_URL = "https://www.falowen.app";',
   "function buildChapterLinks",
   "new URLSearchParams({ classId, sessionId })",
+  "Attendance Check-in",
   "Open today’s Course Book:",
   'button_label: text(zoom.url || DEFAULT_CLASS_REMINDER_ZOOM.joinUrl) ? "Join Zoom" : "",',
   "chapter_links: JSON.stringify(chapterLinks),",
@@ -238,5 +239,12 @@ required.forEach((marker) => {
   if (!source.includes(marker)) throw new Error(`Concise class reminder marker missing: ${marker}`);
 });
 
+const zoomActionIndex = source.indexOf("Join Zoom: use the Join Zoom button in this email.");
+const attendanceActionIndex = source.indexOf("Attendance Check-in");
+const courseBookActionIndex = source.indexOf("Open today’s Course Book:");
+if (!(zoomActionIndex >= 0 && zoomActionIndex < attendanceActionIndex && attendanceActionIndex < courseBookActionIndex)) {
+  throw new Error("Class reminder actions must be ordered Zoom, Attendance Check-in, Course Book.");
+}
+
 fs.writeFileSync(workerPath, source, "utf8");
-console.log("Class reminders now use short check-in URLs, a Zoom CTA and task-matched Course Book links.");
+console.log("Class reminders now use short check-in URLs with actions ordered Zoom, Attendance Check-in, then Course Book.");
