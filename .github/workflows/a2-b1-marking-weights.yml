@@ -1,0 +1,72 @@
+name: A2 B1 marking weights
+
+on:
+  pull_request:
+    paths:
+      - 'src/utils/markingScorePolicy.js'
+      - 'src/utils/finalScore.js'
+      - 'scripts/patchA2B1MarkingWeights.mjs'
+      - 'scripts/patchA2B1WritingScoreNormalization.mjs'
+      - 'scripts/patchA2B1PassMetadata.mjs'
+      - 'scripts/patchSharedWritingScoreRecovery.mjs'
+      - 'src/pages/MarkingPage.jsx'
+      - 'src/pages/MarkingQuickPage.jsx'
+      - 'src/utils/autoMarking.js'
+      - 'src/utils/finalDeterministicFeedback.js'
+      - 'src/services/markingServiceBase.js'
+      - 'api/router.js'
+      - 'tests/a2-b1-marking-weights.test.js'
+      - '.github/workflows/a2-b1-marking-weights.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/utils/markingScorePolicy.js'
+      - 'src/utils/finalScore.js'
+      - 'scripts/patchA2B1MarkingWeights.mjs'
+      - 'scripts/patchA2B1WritingScoreNormalization.mjs'
+      - 'scripts/patchA2B1PassMetadata.mjs'
+      - 'scripts/patchSharedWritingScoreRecovery.mjs'
+      - 'src/pages/MarkingPage.jsx'
+      - 'src/pages/MarkingQuickPage.jsx'
+      - 'src/utils/autoMarking.js'
+      - 'src/utils/finalDeterministicFeedback.js'
+      - 'src/services/markingServiceBase.js'
+      - 'api/router.js'
+      - 'tests/a2-b1-marking-weights.test.js'
+      - '.github/workflows/a2-b1-marking-weights.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm ci
+      - name: Apply marking lifecycle patches twice
+        run: |
+          node scripts/patchSmartMarkingNaturalFeedback.mjs
+          node scripts/patchSharedWritingScoreRecovery.mjs
+          node scripts/patchSharedWritingScoreRecovery.mjs
+      - name: Validate materialized weighted marking paths
+        run: |
+          node --check src/utils/markingScorePolicy.js
+          node --check src/utils/finalScore.js
+          node --check src/utils/autoMarking.js
+          node --check src/utils/finalDeterministicFeedback.js
+          node --check src/services/markingServiceBase.js
+          node --check api/router.js
+          grep -F 'policy = "a2-b1-40-30-30"' src/utils/markingScorePolicy.js
+          grep -F 'passed: aggregate.passed' src/utils/autoMarking.js
+          grep -F 'deterministicPartWeights: hasWritingScore ? { teil2: 0.4, teil3: 0.3, teil4: 0.3 }' src/services/markingServiceBase.js
+          grep -F 'deterministicPartWeights: hasWriting ? { teil2: 0.4, teil3: 0.3, teil4: 0.3 }' api/router.js
+          grep -F 'writingMinimumMet: weightedOutcome.writingMinimumMet' src/pages/MarkingPage.jsx
+          grep -F 'if (/\b(?:A2|B1)\b|^(?:A2|B1)[-_.]/.test(levelHint)) return 100;' src/pages/MarkingPage.jsx
+          grep -F 'result.scoreBreakdown?.policy === "a2-b1-40-30-30"' src/pages/MarkingQuickPage.jsx
+          grep -F 'writing_minimum_met:' src/services/markingServiceBase.js
+          grep -F 'marking_policy:' src/services/markingServiceBase.js
+      - name: Run weighted scoring regressions
+        run: node --test tests/a2-b1-marking-weights.test.js tests/final-score.test.js
