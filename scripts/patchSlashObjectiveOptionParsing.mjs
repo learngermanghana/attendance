@@ -61,7 +61,7 @@ const unnumberedChoiceReplacement = [
   '    .filter(Boolean);',
   '  const unnumberedChoicePattern = /^[A-FX](?:(?:\\s*[).:/-]\\s*.*)|(?:\\s+.+))?$/i;',
   '  if (unnumberedLines.length >= 2 && unnumberedLines.every((line) => unnumberedChoicePattern.test(line))) {',
-  '    return unnumberedLines.map((answer, index) => ({ number: index + 1, answer: cleanParsedAnswer(answer) }));',
+  '    return unnumberedLines.map((answer, index) => ({ number: index + 1, answer }));',
   '  }',
   '',
   '  // Vocabulary sections are sometimes pasted as unnumbered bilingual pairs.',
