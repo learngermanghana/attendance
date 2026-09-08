@@ -56,7 +56,7 @@ autoMarking = replaceOnce(
 autoMarking = replaceOnce(
   autoMarking,
   `  const availableScores = [objectivePercentage, writingScore].filter((value) => value !== null);\n  const finalScore = availableScores.length ? Math.round(availableScores.reduce((sum, value) => sum + value, 0) / availableScores.length) : 0;`,
-  `  const objectiveDetails = Object.fromEntries(objectiveResults.flatMap((part) =>\n    Object.entries(part.result?.details || {}).map(([key, detail]) => {\n      const normalizedKey = /^teil[34][._-]/i.test(key) ? key : \`${part.partId}.\${key}\`;\n      return [normalizedKey, { ...(detail || {}), partId: detail?.partId || part.partId }];\n    }),\n  ));\n  const weightedOutcome = calculateWeightedMarkingOutcome({\n    level,\n    writingPercent: writingScore,\n    objectiveScore: objectivePercentage,\n    objectiveDetails,\n    hasWriting: writingScore !== null,\n  });\n  const finalScore = weightedOutcome.finalScore;`,
+  `  const objectiveDetails = Object.fromEntries(objectiveResults.flatMap((part) =>\n    Object.entries(part.result?.details || {}).map(([key, detail]) => {\n      const normalizedKey = /^teil[34][._-]/i.test(key) ? key : \`\${part.partId}.\${key}\`;\n      return [normalizedKey, { ...(detail || {}), partId: detail?.partId || part.partId }];\n    }),\n  ));\n  const weightedOutcome = calculateWeightedMarkingOutcome({\n    level,\n    writingPercent: writingScore,\n    objectiveScore: objectivePercentage,\n    objectiveDetails,\n    hasWriting: writingScore !== null,\n  });\n  const finalScore = weightedOutcome.finalScore;`,
   "autoMarking weighted aggregate",
 );
 autoMarking = replaceOnce(
@@ -190,7 +190,7 @@ router = replaceOnce(
 fs.writeFileSync(routerPath, router);
 
 for (const [path, required] of [
-  [markingPagePath, ["a2-b1-40-30-30", "writingMinimumMet", "calculateFinalScore(objectiveScorePercent, schreibenMark, {"]],
+  [markingPagePath, ["calculateWeightedMarkingOutcome", "writingMinimumMet", "calculateFinalScore(objectiveScorePercent, schreibenMark, {"]],
   [autoMarkingPath, ["aggregatePartResults(parts = [], level", "passed: aggregate.passed", "objectiveDetails: aggregate.objectiveDetails"]],
   [deterministicPath, ["calculateWeightedMarkingOutcome", "writingMinimumMet: weightedOutcome.writingMinimumMet"]],
   [servicePath, ["deterministicPartWeights", "Teil 2 · Schreiben", "weightedOutcome.passed"]],
