@@ -1,15 +1,11 @@
 const baseExports = require("./index.js");
 const admin = require("firebase-admin");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
-const { defineSecret } = require("firebase-functions/params");
 const {
-  createExpiredPendingStudentCleanupJob,
   runExpiredPendingStudentCleanup,
 } = require("./pendingStudentCleanup.js");
 const { runClassSessionReminderEmailJob } = require("./classSessionReminderEmails.js");
 
-const studentDeleteAppsScriptUrlSecret = defineSecret("STUDENT_DELETE_APPS_SCRIPT_URL");
-const studentDeleteSyncSecret = defineSecret("STUDENT_DELETE_SYNC_SECRET");
 const db = admin.firestore();
 
 function parseRuntimeConfig() {
@@ -22,32 +18,34 @@ function parseRuntimeConfig() {
   }
 }
 
-function secretValue(secret, envName) {
-  try {
-    return String(secret?.value?.() || process.env[envName] || "").trim();
-  } catch {
-    return String(process.env[envName] || "").trim();
-  }
-}
-
 async function cleanupExpiredPendingStudentsNow() {
   return runExpiredPendingStudentCleanup({
     admin,
     db,
     now: Date.now(),
-    appsScriptUrl: secretValue(studentDeleteAppsScriptUrlSecret, "STUDENT_DELETE_APPS_SCRIPT_URL"),
-    syncSecret: secretValue(studentDeleteSyncSecret, "STUDENT_DELETE_SYNC_SECRET"),
+    // Google Sheet cleanup is optional. The production Firebase project does
+    // not currently have the student-delete webhook secrets configured, so
+    // account/data deletion must never depend on them.
+    appsScriptUrl: String(process.env.STUDENT_DELETE_APPS_SCRIPT_URL || "").trim(),
+    syncSecret: String(process.env.STUDENT_DELETE_SYNC_SECRET || "").trim(),
   });
 }
 
 module.exports = baseExports;
 
-module.exports.cleanupExpiredPendingStudents = createExpiredPendingStudentCleanupJob({
-  admin,
-  db,
-  onSchedule,
-  appsScriptUrlSecret: studentDeleteAppsScriptUrlSecret,
-  syncSecret: studentDeleteSyncSecret,
+module.exports.cleanupExpiredPendingStudents = onSchedule({
+  schedule: "*/5 * * * *",
+  timeZone: "Africa/Accra",
+  retryCount: 1,
+  memory: "256MiB",
+}, async () => {
+  const result = await cleanupExpiredPendingStudentsNow();
+  console.log("expired_pending_student_cleanup", {
+    checked: result.checked,
+    candidates: result.candidates,
+    deleted: result.deleted,
+  });
+  return result;
 });
 
 // Replace the original reminder export with a cleanup-first version. Pending
@@ -57,7 +55,6 @@ module.exports.sendClassSessionReminderEmails = onSchedule({
   schedule: "*/5 * * * *",
   timeZone: "Africa/Accra",
   retryCount: 1,
-  secrets: [studentDeleteAppsScriptUrlSecret, studentDeleteSyncSecret],
 }, async () => {
   const cleanup = await cleanupExpiredPendingStudentsNow();
   console.log("class_reminder_pre_cleanup", {
