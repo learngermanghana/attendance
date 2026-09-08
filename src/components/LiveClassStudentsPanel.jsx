@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { loadClassAttendanceAnalytics } from "../services/attendanceAnalyticsService.js";
+import { deleteStudentAccount } from "../services/studentsService.js";
 
 function normalize(value) {
   return String(value ?? "").trim();
@@ -136,12 +137,15 @@ export default function LiveClassStudentsPanel({
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [actionFeedback, setActionFeedback] = useState("");
+  const [deletingStudentKey, setDeletingStudentKey] = useState("");
   const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     let active = true;
     setLoading(true);
     setError("");
+    setActionFeedback("");
     setQuery("");
     setSelectedKey("");
 
@@ -200,6 +204,54 @@ export default function LiveClassStudentsPanel({
   const selectedAttendance = attendanceSummaryFor(analytics, selected || {});
   const attendanceHistory = useMemo(() => [...(selectedAttendance?.records || [])]
     .sort((left, right) => (right.startsAtMs || 0) - (left.startsAtMs || 0)), [selectedAttendance?.records]);
+  const selectedDeletionKey = selectedEntry?.key || "";
+  const canDeleteSelected = Boolean(
+    normalize(selected?.id)
+      || normalize(selected?.uid)
+      || normalize(selected?.studentCode)
+      || normalize(selected?.studentcode)
+      || email,
+  );
+
+  const deleteSelectedStudent = async () => {
+    if (!selected || !canDeleteSelected || deletingStudentKey) return;
+
+    const confirmed = window.prompt(
+      `ADMIN OVERRIDE: permanently delete ${name || "this student"} even if an active contract exists. This removes the Falowen account and linked student records. Type DELETE to continue.`,
+    );
+    if (confirmed !== "DELETE") return;
+
+    const targetIdentifiers = new Set([
+      selected.id,
+      selected.uid,
+      selected.studentCode,
+      selected.studentcode,
+      selected.email,
+    ].map(comparable).filter(Boolean));
+
+    setDeletingStudentKey(selectedDeletionKey || "deleting");
+    setError("");
+    setActionFeedback("");
+    try {
+      await deleteStudentAccount(selected);
+      setStudents((current) => current.filter((student) => {
+        const identifiers = [
+          student.id,
+          student.uid,
+          student.studentCode,
+          student.studentcode,
+          student.email,
+        ].map(comparable).filter(Boolean);
+        return !identifiers.some((identifier) => targetIdentifiers.has(identifier));
+      }));
+      setSelectedKey("");
+      setActionFeedback(`${name || "Student"} was permanently deleted. An active contract did not block the admin deletion.`);
+    } catch (deleteError) {
+      setError(deleteError?.message || "Unable to delete this student account.");
+    } finally {
+      setDeletingStudentKey("");
+    }
+  };
 
   return (
     <article className="card">
@@ -220,6 +272,7 @@ export default function LiveClassStudentsPanel({
       </div>
 
       {error ? <div style={{ marginTop: 14, padding: 12, border: "1px solid #fecaca", background: "#fef2f2", color: "#991b1b", borderRadius: 8 }}>{error}</div> : null}
+      {actionFeedback ? <div style={{ marginTop: 14, padding: 12, border: "1px solid #bbf7d0", background: "#f0fdf4", color: "#166534", borderRadius: 8 }}>{actionFeedback}</div> : null}
       {loading ? <p>Loading students and attendance for the selected class…</p> : null}
 
       {!loading && !error && !students.length ? (
@@ -285,6 +338,21 @@ export default function LiveClassStudentsPanel({
                   <Link to="/student-activity">Student Activity</Link>
                   <Link to="/student-results">Results</Link>
                   <Link to={`/attendance/session/${encodeURIComponent(classId)}`}>Class Attendance</Link>
+                  <button
+                    type="button"
+                    onClick={deleteSelectedStudent}
+                    disabled={!canDeleteSelected || Boolean(deletingStudentKey)}
+                    title="Admin override: permanently delete even with an active contract"
+                    style={{
+                      background: "#dc2626",
+                      borderColor: "#b91c1c",
+                      color: "#fff",
+                      cursor: !canDeleteSelected || deletingStudentKey ? "not-allowed" : "pointer",
+                      opacity: !canDeleteSelected || deletingStudentKey ? 0.6 : 1,
+                    }}
+                  >
+                    {deletingStudentKey === selectedDeletionKey ? "Deleting…" : "Delete account"}
+                  </button>
                 </div>
               </div>
 
