@@ -1,6 +1,8 @@
-const test = require("node:test");
-const assert = require("node:assert/strict");
+import test from "node:test";
+import assert from "node:assert/strict";
+import { createRequire } from "node:module";
 
+const require = createRequire(import.meta.url);
 const {
   TRIAL_DURATION_MS,
   expiredPendingReason,
