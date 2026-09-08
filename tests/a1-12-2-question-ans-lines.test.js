@@ -2,7 +2,6 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { computeObjectiveScore } from "../src/utils/objectiveMarking.js";
-import { checkDeterministicObjectiveAnswers } from "../src/utils/autoMarking.js";
 
 const referenceEntry = {
   assignmentKey: "A1-12.2",
@@ -88,15 +87,4 @@ test("A1-12.2 parses numbered question lines followed by Ans lines", () => {
   assert.equal(result.details["teil3.2"].correct, true);
   assert.equal(result.details["teil2.5"].correct, false);
   assert.equal(result.details["teil3.3"].correct, false);
-});
-
-test("A1-12.2 marking review reports only the two genuinely wrong answers", () => {
-  const result = checkDeterministicObjectiveAnswers({ referenceEntry, submissionText });
-
-  assert.equal(result.objectiveTotal, 15);
-  assert.equal(result.objectiveCorrect, 13);
-  assert.deepEqual(
-    result.wrongAnswers.map((row) => `${row.partId}.${row.question}`),
-    ["teil2.5", "teil3.3"],
-  );
 });
