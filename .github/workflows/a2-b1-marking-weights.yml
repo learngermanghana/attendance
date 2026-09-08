@@ -6,8 +6,10 @@ on:
       - 'src/utils/markingScorePolicy.js'
       - 'src/utils/finalScore.js'
       - 'scripts/patchA2B1MarkingWeights.mjs'
+      - 'scripts/patchA2B1WritingScoreNormalization.mjs'
       - 'scripts/patchSharedWritingScoreRecovery.mjs'
       - 'src/pages/MarkingPage.jsx'
+      - 'src/pages/MarkingQuickPage.jsx'
       - 'src/utils/autoMarking.js'
       - 'src/utils/finalDeterministicFeedback.js'
       - 'src/services/markingServiceBase.js'
@@ -21,8 +23,10 @@ on:
       - 'src/utils/markingScorePolicy.js'
       - 'src/utils/finalScore.js'
       - 'scripts/patchA2B1MarkingWeights.mjs'
+      - 'scripts/patchA2B1WritingScoreNormalization.mjs'
       - 'scripts/patchSharedWritingScoreRecovery.mjs'
       - 'src/pages/MarkingPage.jsx'
+      - 'src/pages/MarkingQuickPage.jsx'
       - 'src/utils/autoMarking.js'
       - 'src/utils/finalDeterministicFeedback.js'
       - 'src/services/markingServiceBase.js'
@@ -58,5 +62,7 @@ jobs:
           grep -F 'deterministicPartWeights: hasWritingScore ? { teil2: 0.4, teil3: 0.3, teil4: 0.3 }' src/services/markingServiceBase.js
           grep -F 'deterministicPartWeights: hasWriting ? { teil2: 0.4, teil3: 0.3, teil4: 0.3 }' api/router.js
           grep -F 'writingMinimumMet: weightedOutcome.writingMinimumMet' src/pages/MarkingPage.jsx
+          grep -F 'if (/\b(?:A2|B1)\b|^(?:A2|B1)[-_.]/.test(levelHint)) return 100;' src/pages/MarkingPage.jsx
+          grep -F 'result.scoreBreakdown?.policy === "a2-b1-40-30-30"' src/pages/MarkingQuickPage.jsx
       - name: Run weighted scoring regressions
         run: node --test tests/a2-b1-marking-weights.test.js tests/final-score.test.js
