@@ -28,6 +28,10 @@
       "destination": "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/payments/$1"
     },
     {
+      "source": "/api/student-leads/(.*)",
+      "destination": "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/student-leads/$1"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/router?path=$1"
     },
