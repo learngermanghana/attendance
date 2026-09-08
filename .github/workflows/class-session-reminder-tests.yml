@@ -3,32 +3,44 @@ name: Class Session Reminder Tests
 on:
   pull_request:
     paths:
+      - 'functions/index.js'
       - 'functions/classSessionReminderEmails.js'
       - 'functions/classSessionAutoCheckin.js'
+      - 'src/pages/CheckinPage.jsx'
       - 'scripts/patchClassSessionReminderEmails.mjs'
       - 'scripts/patchClassReminderDiagnosticBestEffort.mjs'
       - 'scripts/patchClassReminderConciseLinks.mjs'
+      - 'scripts/patchCheckinStatusMetadataHydration.mjs'
       - 'tests/class-session-reminder-emails.test.js'
       - 'tests/class-session-reminder-zoom.test.js'
       - 'tests/class-session-reminder-checkin-link.test.js'
       - 'tests/class-session-auto-checkin.test.js'
       - 'tests/class-session-reminder-runtime-config.test.js'
+      - 'tests/class-reminder-orientation-links.test.js'
+      - 'tests/checkin-status-metadata-hydration.test.js'
+      - 'package.json'
       - 'firebase.json'
       - '.github/workflows/deploy-firebase.yml'
       - '.github/workflows/class-session-reminder-tests.yml'
   push:
     branches: [main]
     paths:
+      - 'functions/index.js'
       - 'functions/classSessionReminderEmails.js'
       - 'functions/classSessionAutoCheckin.js'
+      - 'src/pages/CheckinPage.jsx'
       - 'scripts/patchClassSessionReminderEmails.mjs'
       - 'scripts/patchClassReminderDiagnosticBestEffort.mjs'
       - 'scripts/patchClassReminderConciseLinks.mjs'
+      - 'scripts/patchCheckinStatusMetadataHydration.mjs'
       - 'tests/class-session-reminder-emails.test.js'
       - 'tests/class-session-reminder-zoom.test.js'
       - 'tests/class-session-reminder-checkin-link.test.js'
       - 'tests/class-session-auto-checkin.test.js'
       - 'tests/class-session-reminder-runtime-config.test.js'
+      - 'tests/class-reminder-orientation-links.test.js'
+      - 'tests/checkin-status-metadata-hydration.test.js'
+      - 'package.json'
       - 'firebase.json'
       - '.github/workflows/deploy-firebase.yml'
       - '.github/workflows/class-session-reminder-tests.yml'
@@ -52,11 +64,14 @@ jobs:
           node --check scripts/patchClassSessionReminderEmails.mjs
           node --check scripts/patchClassReminderDiagnosticBestEffort.mjs
           node --check scripts/patchClassReminderConciseLinks.mjs
+          node --check scripts/patchCheckinStatusMetadataHydration.mjs
           node scripts/patchClassSessionReminderEmails.mjs
           node scripts/patchClassReminderDiagnosticBestEffort.mjs
           node scripts/patchClassReminderDiagnosticBestEffort.mjs
           node scripts/patchClassReminderConciseLinks.mjs
           node scripts/patchClassReminderConciseLinks.mjs
+          node scripts/patchCheckinStatusMetadataHydration.mjs
+          node scripts/patchCheckinStatusMetadataHydration.mjs
           node --check functions/index.js
           node --check functions/classSessionReminderEmails.js
           node --check functions/classSessionAutoCheckin.js
@@ -72,6 +87,11 @@ jobs:
           grep -F 'Open today’s Course Book:' functions/classSessionReminderEmails.js
           grep -F 'chapter_links: JSON.stringify(chapterLinks)' functions/classSessionReminderEmails.js
           grep -F 'button_label: text(zoom.url || DEFAULT_CLASS_REMINDER_ZOOM.joinUrl) ? "Join Zoom" : ""' functions/classSessionReminderEmails.js
+          grep -F '/^(tutorial|orientation|complete)$/i' functions/classSessionReminderEmails.js
+          grep -F 'checkinMetadataHydrated: true' functions/index.js
+          grep -F 'classStartsAt: startsAt.toISOString()' functions/classSessionAutoCheckin.js
+          grep -F 'const hydratedAssignmentId' src/pages/CheckinPage.jsx
+          grep -F 'getTeachingSlideByAssignmentId(hydratedAssignmentId)' src/pages/CheckinPage.jsx
       - name: Test session reminders and automatic attendance opening
         run: >-
           node --test
@@ -80,3 +100,5 @@ jobs:
           tests/class-session-reminder-checkin-link.test.js
           tests/class-session-auto-checkin.test.js
           tests/class-session-reminder-runtime-config.test.js
+          tests/class-reminder-orientation-links.test.js
+          tests/checkin-status-metadata-hydration.test.js
