@@ -180,15 +180,101 @@ function createTemplateSlide(level, entry, lessonNumber) {
   };
 }
 
+function enhanceA1Day2PronounSlide(slide) {
+  const assignmentId = String(slide.assignmentId || "").trim().toUpperCase();
+  if (assignmentId !== "A1-1.1") return slide;
+
+  return {
+    ...slide,
+    objective: "Students connect Day 1 greetings and Day 2 spelling to a first complete self-introduction, recognise the German sentence pattern person + conjugated verb + information, use ich/du/er/sie verb endings with wohnen and kommen, handle heißen correctly, and answer basic personal-information questions.",
+    estimatedDuration: "50–65 minutes",
+    warmupQuestionsDe: [
+      "Wie begrüßt du jemanden?",
+      "Wie heißt du?",
+      "Wie buchstabierst du deinen Vornamen?",
+      "Woher kommst du?",
+      "Wo wohnst du?",
+    ],
+    keyPhrasesDe: [
+      "Hallo! Ich heiße Ama. A-M-A. Ich komme aus Ghana. Ich wohne in Accra. Tschüss!",
+      "Satzmuster: Person + konjugiertes Verb + Information",
+      "Ich wohne in Accra. / Du wohnst in Kumasi. / Ama wohnt in Tema.",
+      "wohnen: ich wohne · du wohnst · er/sie wohnt",
+      "kommen: ich komme · du kommst · er/sie kommt",
+      "heißen: ich heiße · du heißt · er/sie heißt",
+      "Wie heißt du? – Ich heiße Ama.",
+      "Woher kommst du? – Ich komme aus Ghana.",
+      "Wo wohnst du? – Ich wohne in Accra.",
+      "Wo arbeitest du? – Ich arbeite in Accra.",
+    ],
+    studentQuestionsDe: [
+      "Wie heißt du?",
+      "Wie buchstabierst du deinen Vornamen?",
+      "Woher kommst du?",
+      "Wo wohnst du?",
+      "Wo arbeitest du?",
+      "Wie heißt dein Freund oder deine Freundin und wo wohnt er oder sie?",
+    ],
+    teacherNotesEn: [
+      "Begin by recycling Day 1 rather than starting pronouns as a disconnected grammar topic: greeting → name → spelling → origin → residence → farewell.",
+      "Write one sentence pattern visibly before the conjugation table: Person + conjugated verb + information. Keep the conjugated verb highlighted in every example.",
+      "Teach only the singular pattern needed here first: ich -e, du -st, er/sie -t with wohnen and kommen. Do not overload students with the complete conjugation system yet.",
+      "Separate heißen from the regular pattern and explicitly contrast the common error du heißst with the correct form du heißt.",
+      "Teach every personal-information statement together with its matching question so students build a conversational toolkit, not isolated grammar knowledge.",
+      "Keep the existing workbook bridge intact: Teil 1 Hören followed by Teil 2 Schreiben.",
+    ],
+    interactionFlow: [
+      { phase: "Day 1 + alphabet bridge", detailEn: "7 min: build the complete model together: Hallo! → Ich heiße Ama. → A-M-A. → Ich komme aus Ghana. → Ich wohne in Accra. → Tschüss! Students then substitute their own information." },
+      { phase: "First German sentence formula", detailEn: "8 min: place Person + Verb + Information on the board. Compare Ich wohne in Accra, Du wohnst in Kumasi and Ama wohnt in Tema; students identify the changing verb." },
+      { phase: "Visual conjugation pattern", detailEn: "10 min: build wohnen as ich wohne / du wohnst / er-sie wohnt, then transfer the same pattern to kommen. Focus on -e, -st and -t only." },
+      { phase: "heißen special pattern", detailEn: "7 min: contrast ich heiße / du heißt / er-sie heißt and correct the deliberate error Du heißst Felix → Du heißt Felix." },
+      { phase: "Question → answer toolkit", detailEn: "10 min: practise Wie heißt du?, Woher kommst du?, Wo wohnst du? and Wo arbeitest du? with complete answers before switching roles." },
+      { phase: "Workbook bridge", detailEn: "8 min: rehearse the same name, origin, residence and workplace information needed for the Hören and short self-introduction writing task." },
+    ],
+    wrapUpTaskDe: "Stell dich in 5–6 kurzen Sätzen vor: Begrüßung, Name, Buchstabieren, Herkunft, Wohnort und Verabschiedung. Beantworte danach: Wie heißt du? Woher kommst du? Wo wohnst du?",
+    teacherSupport: {
+      ...(slide.teacherSupport || {}),
+      lessonOverviewEn: "The second half of Day 2 should feel like the next step after greetings and the alphabet, not a new disconnected grammar unit. Students recycle the Day 1 greeting/farewell, spell their name from the alphabet lesson, then learn how subject + conjugated verb + information lets them introduce themselves and ask another person the same questions.",
+      grammarFocusEn: [
+        "First sentence formula: person + conjugated verb + information. Keep the verb visibly highlighted in examples.",
+        "Regular singular pattern with wohnen: ich wohne, du wohnst, er/sie wohnt.",
+        "Transfer the same basic endings to kommen: ich komme, du kommst, er/sie kommt.",
+        "Treat heißen separately: ich heiße, du heißt, er/sie heißt. Do not form *du heißst.",
+        "Pair statements with questions: Wie heißt du? → Ich heiße ...; Woher kommst du? → Ich komme aus ...; Wo wohnst du? → Ich wohne in ...; Wo arbeitest du? → Ich arbeite ...",
+      ],
+      modelExamplesDe: [
+        "Hallo! Ich heiße Ama. A-M-A. Ich komme aus Ghana. Ich wohne in Accra. Tschüss!",
+        "Ich wohne in Accra. – Du wohnst in Kumasi. – Ama wohnt in Tema.",
+        "Ich komme aus Ghana. – Du kommst aus Nigeria. – Er kommt aus Deutschland.",
+        "Ich heiße Ama. – Du heißt Felix. – Sie heißt Sarah.",
+        "Wie heißt du? – Ich heiße Ama.",
+        "Woher kommst du? – Ich komme aus Ghana.",
+        "Wo wohnst du? – Ich wohne in Accra.",
+        "Wo arbeitest du? – Ich arbeite in Accra.",
+      ],
+      commonMistakesEn: [
+        "Using an infinitive after the subject: ich wohnen / du kommen instead of ich wohne / du kommst.",
+        "Using the same verb form for every person instead of changing -e, -st and -t.",
+        "Writing du heißst instead of du heißt.",
+        "Using ich heißt instead of ich heiße.",
+        "Learning statements without being able to ask the matching personal-information question.",
+        "Treating the alphabet, greetings and pronouns as separate topics instead of combining them in one short self-introduction.",
+      ],
+    },
+  };
+}
+
 function buildLevelSlides(level) {
   const entries = Object.values(courseDictionary[level] || {}).sort((left, right) => compareChapter(left.chapter, right.chapter));
   return entries.map((entry, index) => createTemplateSlide(level, entry, index + 1));
 }
 
+const upgradedA1WorkbookAlignedSlidesDays1To5 = a1WorkbookAlignedSlidesDays1To5.map(enhanceA1Day2PronounSlide);
+
 const curatedSlidesByAssignment = Object.fromEntries(
   [
     ...curatedSlides,
-    ...a1WorkbookAlignedSlidesDays1To5,
+    ...upgradedA1WorkbookAlignedSlidesDays1To5,
     ...a1WorkbookAlignedSlidesDays6To10,
     ...a1LaterTeachingSlides,
     ...a2WorkbookAlignedSlides,
@@ -217,25 +303,4 @@ export function getTeachingSlideByAssignmentId(assignmentId) {
   const normalized = String(assignmentId || "").trim().toUpperCase();
   if (!normalized) return null;
   return teachingSlides.find((slide) => String(slide.assignmentId || "").trim().toUpperCase() === normalized) || null;
-}
-
-export function getSlidesByCourse(courseId) {
-  const normalized = String(courseId || "").trim().toUpperCase();
-  return teachingSlides
-    .filter((slide) => slide.course.toUpperCase() === normalized)
-    .sort((a, b) => a.dayNumber - b.dayNumber);
-}
-
-export function getSlideNavigation(id, courseId) {
-  const courseSlides = courseId ? getSlidesByCourse(courseId) : teachingSlides;
-  const index = courseSlides.findIndex((slide) => slide.id === id);
-  if (index < 0) return { previous: null, next: null };
-  return {
-    previous: courseSlides[index - 1] || null,
-    next: courseSlides[index + 1] || null,
-  };
-}
-
-export function getAvailableSlideCourses() {
-  return [...new Set(teachingSlides.map((slide) => slide.course))].sort();
 }
