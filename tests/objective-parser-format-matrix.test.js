@@ -116,6 +116,7 @@ A`;
     [1, 2, 3, 4, 5].map((question) => result.details[`teil4.${question}`].student),
     ["B", "C", "A", "B", "A"],
   );
+  assert.equal(Object.values(result.details).filter((detail) => detail.student).length, 10);
   assert.equal(result.details["teil3.1"].correct, false);
   assert.equal(Object.entries(result.details).filter(([, detail]) => detail.correct).length, 9);
 });
