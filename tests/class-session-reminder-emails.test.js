@@ -7,10 +7,12 @@ const { _test } = require("../functions/classSessionReminderEmails.js");
 
 const {
   assignmentIds,
+  buildChapterLinks,
   buildReminderMessage,
   findDueSessionReminders,
   isHolidayClosed,
   resolveClassForSession,
+  resolveSessionDay,
   rowForReminder,
   studentBelongsToClass,
   topicForSession,
@@ -109,6 +111,66 @@ test("grouped lesson topic and assignment IDs appear in the reminder email", () 
   assert.match(row.topic, /Class reminder/);
   assert.equal(row.reminder_lead_minutes, "10");
 });
+
+if (typeof buildChapterLinks === "function") {
+  test("A1 Day 2 reminder links each canonical assignment to its exact Course Book chapter", () => {
+    const klass = { id: "a1-berlin", name: "A1 Berlin Klasse", levelId: "A1", timezone: "Africa/Accra" };
+    const session = {
+      id: "a1-berlin-2026-09-08-1100",
+      curriculumIndex: 2,
+      startsAt: "2026-09-08T11:00:00.000Z",
+      topic: "Day 2: German Alphabet + Personal Pronouns and Verb Conjugation",
+      assignmentIds: ["A1-0.2", "A1-1.1"],
+    };
+    const links = buildChapterLinks({ klass, session });
+
+    assert.equal(resolveSessionDay(session), 2);
+    assert.deepEqual(links.map((link) => link.url), [
+      "https://www.falowen.app/campus/course/lesson/A1/0.2",
+      "https://www.falowen.app/campus/course/lesson/A1/1.1",
+    ]);
+    assert.deepEqual(links.map((link) => link.label), [
+      "Open Chapter 0.2",
+      "Open Chapter 1.1",
+    ]);
+
+    const message = buildReminderMessage({
+      student: { name: "Millicent Odoi", email: "millicent@example.com" },
+      klass,
+      session,
+      leadMin: 10,
+      chapterLinks: links,
+    });
+    assert.match(message, /Open today’s Course Book:/);
+    assert.ok(message.includes("Open Chapter 0.2: https://www.falowen.app/campus/course/lesson/A1/0.2"));
+    assert.ok(message.includes("Open Chapter 1.1: https://www.falowen.app/campus/course/lesson/A1/1.1"));
+
+    const row = rowForReminder({
+      klass,
+      student: { name: "Millicent Odoi", email: "millicent@example.com" },
+      session,
+      leadMin: 10,
+      message,
+      chapterLinks: links,
+    });
+    assert.equal(row.course_link, links[0].url);
+    assert.equal(row.course_link_label, "Open Course Book");
+    assert.deepEqual(JSON.parse(row.chapter_links), links);
+  });
+
+  test("A1 practice identities use the registered short practice route", () => {
+    const links = buildChapterLinks({
+      klass: { levelId: "A1" },
+      session: { topic: "Day 3", assignmentIds: ["A1-1.1-PRACTICE"] },
+    });
+    assert.equal(links[0]?.url, "https://www.falowen.app/campus/course/lesson/A1/1.1-practice");
+    assert.equal(links[0]?.label, "Open Chapter 1.1 Practice");
+  });
+} else {
+  test("Course Book reminder-link assertions run after deployment patches", {
+    skip: "Run class reminder deployment patches before this runtime test.",
+  }, () => {});
+}
 
 test("school-closed holidays and Admin exclusion dates suppress reminders", () => {
   const session = { startsAt: "2026-08-04T11:00:00.000Z" };

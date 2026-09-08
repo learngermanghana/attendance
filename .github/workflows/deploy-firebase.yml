@@ -66,6 +66,7 @@ jobs:
             scripts/patchAttendanceConfirmationEventDrivenV2.mjs \
             scripts/patchClassSessionReminderEmails.mjs \
             scripts/patchClassReminderDiagnosticBestEffort.mjs \
+            scripts/patchClassReminderConciseLinks.mjs \
             scripts/patchLeadClassStartReminderEmails.mjs \
             scripts/patchAutoCompleteClassSessions.mjs \
             scripts/patchCloudCostOptimizations.mjs \
@@ -114,6 +115,9 @@ jobs:
           grep -F 'async function loadStudentsForDueClasses' functions/classSessionReminderEmails.js
           ! grep -F 'db.collection("classSessions").get(),' functions/classSessionReminderEmails.js
           grep -F 'class_reminder_diagnostic_write_failed' functions/classSessionReminderEmails.js
+          grep -F 'new URLSearchParams({ classId, sessionId })' functions/classSessionReminderEmails.js
+          grep -F 'Open today’s Course Book:' functions/classSessionReminderEmails.js
+          grep -F 'button_label: text(zoom.url || DEFAULT_CLASS_REMINDER_ZOOM.joinUrl) ? "Join Zoom" : ""' functions/classSessionReminderEmails.js
           grep -F 'schedule: "*/15 * * * *"' functions/attendanceConfirmationEmails.js
           grep -F 'async function queueAttendanceConfirmationEvent' functions/attendanceConfirmationEmails.js
           grep -F '.where("nextRunAt", "<=",' functions/attendanceConfirmationEmails.js

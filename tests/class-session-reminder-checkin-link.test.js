@@ -12,7 +12,7 @@ const {
   rowForReminder,
 } = _test;
 
-test("class reminder builds the same canonical long check-in URL used by the attendance page", () => {
+test("class reminder check-in URL carries only the canonical class and session identity", () => {
   const klass = {
     id: "Y4xjoaF5wK0RmDyIEvkY",
     name: "A2 Munich Klasse",
@@ -32,7 +32,7 @@ test("class reminder builds the same canonical long check-in URL used by the att
     classId: klass.id,
     role: "student",
     status: "active",
-    name: "",
+    name: `Student ${index + 1}`,
     email: `student${index + 1}@example.com`,
   }));
 
@@ -40,11 +40,16 @@ test("class reminder builds the same canonical long check-in URL used by the att
 
   assert.equal(
     url,
-    "https://admin.falowen.app/checkin?classId=Y4xjoaF5wK0RmDyIEvkY&sessionId=A2+Munich+Klasse_2026-09-02_1900&date=2026-09-02&sessionLabel=Day+14%3A+Beruf+und+Karriere&assignmentId=A2-5.14&startTime=19%3A00&endTime=20%3A30&expectedStudents=&expectedCount=10",
+    "https://admin.falowen.app/checkin?classId=Y4xjoaF5wK0RmDyIEvkY&sessionId=A2+Munich+Klasse_2026-09-02_1900",
   );
+  assert.ok(!url.includes("expectedStudents"));
+  assert.ok(!url.includes("expectedCount"));
+  assert.ok(!url.includes("sessionLabel"));
+  assert.ok(!url.includes("assignmentId"));
+  assert.ok(url.length < 150);
 });
 
-test("check-in URL is included in reminder text and dedicated webhook fields", () => {
+test("short check-in URL is included in reminder text and dedicated webhook fields", () => {
   const klass = { id: "a2-munich", name: "A2 Munich Klasse", timezone: "Africa/Accra" };
   const session = {
     id: "a2-munich-2026-09-02-1900",
@@ -73,7 +78,7 @@ test("check-in URL is included in reminder text and dedicated webhook fields", (
   });
 
   assert.match(message, /Check In Now/);
-  assert.match(message, /https:\/\/admin\.falowen\.app\/checkin\?/);
+  assert.ok(message.includes(checkinUrl));
   assert.equal(row.checkin_link, checkinUrl);
   assert.equal(row.checkin_link_label, "Check In Now");
 });

@@ -33,6 +33,7 @@
         "node scripts/patchAttendanceConfirmationEventDrivenV2.mjs",
         "node scripts/patchClassSessionReminderEmails.mjs",
         "node scripts/patchClassReminderDiagnosticBestEffort.mjs",
+        "node scripts/patchClassReminderConciseLinks.mjs",
         "node scripts/patchLeadClassStartReminderEmails.mjs",
         "node scripts/patchAutoCompleteClassSessions.mjs",
         "node scripts/patchCloudCostOptimizations.mjs",

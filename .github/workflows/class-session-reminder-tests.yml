@@ -7,6 +7,7 @@ on:
       - 'functions/classSessionAutoCheckin.js'
       - 'scripts/patchClassSessionReminderEmails.mjs'
       - 'scripts/patchClassReminderDiagnosticBestEffort.mjs'
+      - 'scripts/patchClassReminderConciseLinks.mjs'
       - 'tests/class-session-reminder-emails.test.js'
       - 'tests/class-session-reminder-zoom.test.js'
       - 'tests/class-session-reminder-checkin-link.test.js'
@@ -22,6 +23,7 @@ on:
       - 'functions/classSessionAutoCheckin.js'
       - 'scripts/patchClassSessionReminderEmails.mjs'
       - 'scripts/patchClassReminderDiagnosticBestEffort.mjs'
+      - 'scripts/patchClassReminderConciseLinks.mjs'
       - 'tests/class-session-reminder-emails.test.js'
       - 'tests/class-session-reminder-zoom.test.js'
       - 'tests/class-session-reminder-checkin-link.test.js'
@@ -43,15 +45,18 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Validate Firebase scheduler patch
+      - name: Validate Firebase scheduler patches
         run: |
           node --check functions/classSessionReminderEmails.js
           node --check functions/classSessionAutoCheckin.js
           node --check scripts/patchClassSessionReminderEmails.mjs
           node --check scripts/patchClassReminderDiagnosticBestEffort.mjs
+          node --check scripts/patchClassReminderConciseLinks.mjs
           node scripts/patchClassSessionReminderEmails.mjs
           node scripts/patchClassReminderDiagnosticBestEffort.mjs
           node scripts/patchClassReminderDiagnosticBestEffort.mjs
+          node scripts/patchClassReminderConciseLinks.mjs
+          node scripts/patchClassReminderConciseLinks.mjs
           node --check functions/index.js
           node --check functions/classSessionReminderEmails.js
           node --check functions/classSessionAutoCheckin.js
@@ -59,12 +64,14 @@ jobs:
           grep -F 'schedule: "*/5 * * * *"' functions/classSessionReminderEmails.js
           grep -F 'class_reminder_diagnostic_write_failed' functions/classSessionReminderEmails.js
           grep -F 'https://us06web.zoom.us/j/6886900916?pwd=bEdtR3RLQ2dGTytvYzNrMUV3eFJwUT09' functions/classSessionReminderEmails.js
-          grep -F 'https://us06web.zoom.us/launch/jc/6886900916' functions/classSessionReminderEmails.js
-          grep -F '6886900916@zoomcrc.com' functions/classSessionReminderEmails.js
           grep -F 'checkin_link: checkinUrl' functions/classSessionReminderEmails.js
           grep -F 'baseUrl: resolveCheckinBaseUrl(runtimeConfig)' functions/classSessionReminderEmails.js
           grep -F 'runAutoOpenCheckins' functions/classSessionReminderEmails.js
           grep -F 'Check In Now' functions/classSessionReminderEmails.js
+          grep -F 'new URLSearchParams({ classId, sessionId })' functions/classSessionReminderEmails.js
+          grep -F 'Open today’s Course Book:' functions/classSessionReminderEmails.js
+          grep -F 'chapter_links: JSON.stringify(chapterLinks)' functions/classSessionReminderEmails.js
+          grep -F 'button_label: text(zoom.url || DEFAULT_CLASS_REMINDER_ZOOM.joinUrl) ? "Join Zoom" : ""' functions/classSessionReminderEmails.js
       - name: Test session reminders and automatic attendance opening
         run: >-
           node --test
