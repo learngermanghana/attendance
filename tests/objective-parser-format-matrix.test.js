@@ -82,3 +82,41 @@ Teil 2 · Hören 1B · 2C · 3A · 4B · 5B`;
 
   assertPerfect("B1-3.9", submission, 12, "stale B1 middle-dot headings");
 });
+
+test("A2-6.16 parses unnumbered choice lines inside labelled Teil 3 and Teil 4", () => {
+  const submission = `Teil 2
+Sehr geehrte Damen und Herren,
+ich schreibe Ihnen, weil ich seit einigen Tagen gesundheitliche Probleme habe. Ich möchte gern einen Termin vereinbaren.
+Mit freundlichen Grüßen
+Sarah
+
+Teil 3
+C
+A
+B
+C
+A
+
+Teil 4
+B
+C
+A
+B
+A`;
+
+  const result = computeObjectiveScore("A2-6.16", submission);
+
+  assert.equal(result.totalCount, 10);
+  assert.equal(result.correctCount, 9);
+  assert.deepEqual(
+    [1, 2, 3, 4, 5].map((question) => result.details[`teil3.${question}`].student),
+    ["C", "A", "B", "C", "A"],
+  );
+  assert.deepEqual(
+    [1, 2, 3, 4, 5].map((question) => result.details[`teil4.${question}`].student),
+    ["B", "C", "A", "B", "A"],
+  );
+  assert.equal(Object.values(result.details).filter((detail) => detail.student).length, 10);
+  assert.equal(result.details["teil3.1"].correct, false);
+  assert.equal(Object.entries(result.details).filter(([, detail]) => detail.correct).length, 9);
+});
