@@ -1,4 +1,5 @@
 name: A1-12 Objective Part Tests
+# Validate the current parser source directly; historical patch scripts are not replayed in CI.
 
 on:
   pull_request:
