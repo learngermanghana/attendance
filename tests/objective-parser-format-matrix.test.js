@@ -117,5 +117,5 @@ A`;
     ["B", "C", "A", "B", "A"],
   );
   assert.equal(result.details["teil3.1"].correct, false);
-  assert.ok(Object.entries(result.details).filter(([, detail]) => detail.correct).length === 9);
+  assert.equal(Object.entries(result.details).filter(([, detail]) => detail.correct).length, 9);
 });
