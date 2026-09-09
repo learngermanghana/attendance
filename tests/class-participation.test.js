@@ -62,6 +62,19 @@ test("presenter restores participation from cloud before allowing new marks", ()
   assert.doesNotMatch(source, /saveScore|gradeService|updateGrade/);
 });
 
+test("presenter clearly separates class participation from the selected student's metrics", () => {
+  const source = read("src/components/PresenterStudentPicker.jsx");
+  assert.match(source, /const classParticipatedCount = eligible\.filter/);
+  assert.match(source, /const classParticipationPercent = eligible\.length/);
+  assert.match(source, /aria-label="Class participation summary"/);
+  assert.match(source, /Class participation \{classParticipatedCount\}\/\{eligible\.length\}/);
+  assert.match(source, /presenter-student-current-stats/);
+  assert.match(source, /Participated \{currentTurns\}/);
+  assert.match(source, /Correct \{currentCorrect\}/);
+  assert.match(source, /Needs help \{currentNeedsHelp\}/);
+  assert.doesNotMatch(source, /Participation \{participatedKeys\.size\}/);
+});
+
 test("presenter can return late students to the random rotation without resetting the class", () => {
   const source = read("src/components/PresenterStudentPicker.jsx");
   assert.match(source, /function markJoinedLate/);
@@ -83,6 +96,7 @@ test("presenter build hook also registers the participation API", () => {
   const presenterPatch = read("scripts/patchPresenterStudentPicker.mjs");
   const apiPatch = read("scripts/patchClassParticipationApi.mjs");
   assert.match(presenterPatch, /patchClassParticipationApi\.mjs/);
+  assert.match(presenterPatch, /class-participation-metric-clarity/);
   assert.match(apiPatch, /registerClassParticipationRoutes/);
 });
 
