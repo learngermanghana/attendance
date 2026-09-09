@@ -1,3 +1,4 @@
+import "./patchStudentProfileUpdateApi.mjs";
 import fs from "node:fs";
 
 const target = new URL("../functions/index.js", import.meta.url);
