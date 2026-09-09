@@ -154,6 +154,14 @@ async function queryRecords(db, field, value, limit = 100) {
   return snapshot.docs.map(serializeDoc);
 }
 
+async function loadSessionPayload(db, sessionId) {
+  const sessionSnap = await db.collection(SESSION_COLLECTION).doc(sessionId).get();
+  if (!sessionSnap.exists) return { session: null, records: [] };
+  const records = await queryRecords(db, "sessionId", sessionId, 200);
+  records.sort((a, b) => String(a.studentName || "").localeCompare(String(b.studentName || "")));
+  return { session: serializeDoc(sessionSnap), records };
+}
+
 function studentSafeParticipationRecord(row = {}) {
   return {
     id: clean(row.id),
@@ -210,6 +218,20 @@ function registerClassParticipationRoutes({ app, db, admin, requireAuth, staffEm
       const sessionId = lessonSessionId({ classId, assignmentId, sessionDate });
       const sessionRef = db.collection(SESSION_COLLECTION).doc(sessionId);
       const previousSession = await sessionRef.get();
+      const previousData = previousSession.exists ? previousSession.data() || {} : {};
+      const currentRevision = clampCount(previousData.revision);
+      const suppliedRevision = payload.baseRevision;
+      if (previousSession.exists && suppliedRevision !== undefined && suppliedRevision !== null) {
+        const baseRevision = clampCount(suppliedRevision);
+        if (baseRevision !== currentRevision) {
+          const conflict = new Error("Participation changed on another device. Refreshing the latest class state.");
+          conflict.status = 409;
+          conflict.code = "participation_conflict";
+          conflict.currentRevision = currentRevision;
+          throw conflict;
+        }
+      }
+      const nextRevision = currentRevision + 1;
 
       const totals = normalizedStudents.reduce((summary, student) => {
         if (student.turns > 0) summary.participatedCount += 1;
@@ -243,6 +265,7 @@ function registerClassParticipationRoutes({ app, db, admin, requireAuth, staffEm
         rosterCount: normalizedStudents.length,
         eligibleCount: Math.max(0, normalizedStudents.length - totals.presenterAbsentCount),
         questionPoolSize: clampCount(payload.questionPoolSize),
+        revision: nextRevision,
         ...totals,
         ...(previousSession.exists ? {} : { createdAt: serverTimestamp() }),
         updatedAt: serverTimestamp(),
@@ -274,6 +297,7 @@ function registerClassParticipationRoutes({ app, db, admin, requireAuth, staffEm
           skipped: student.skipped,
           presenterAbsent: student.presenterAbsent,
           questionResponses: student.questionResponses,
+          revision: nextRevision,
           updatedAt: serverTimestamp(),
         }, { merge: true });
       });
@@ -284,10 +308,33 @@ function registerClassParticipationRoutes({ app, db, admin, requireAuth, staffEm
       });
       await batch.commit();
 
-      return res.json({ ok: true, sessionId, ...totals, rosterCount: normalizedStudents.length });
+      return res.json({ ok: true, sessionId, revision: nextRevision, ...totals, rosterCount: normalizedStudents.length });
     } catch (error) {
       console.error("class_participation_save_failed", { message: error?.message });
-      return res.status(statusFor(error)).json({ ok: false, error: error?.message || "Could not save class participation" });
+      return res.status(statusFor(error)).json({
+        ok: false,
+        error: error?.message || "Could not save class participation",
+        ...(error?.code ? { code: error.code } : {}),
+        ...(Number.isFinite(error?.currentRevision) ? { currentRevision: error.currentRevision } : {}),
+      });
+    }
+  });
+
+  app.get("/class-participation/current", async (req, res) => {
+    try {
+      const user = await requireAuth(req);
+      assertStaff(user, staffEmails);
+      const classId = clean(req.query?.classId);
+      const assignmentId = clean(req.query?.assignmentId || req.query?.lessonId);
+      const sessionDate = clean(req.query?.sessionDate);
+      if (!classId) return res.status(400).json({ ok: false, error: "classId is required" });
+      if (!assignmentId) return res.status(400).json({ ok: false, error: "assignmentId is required" });
+      assertDate(sessionDate);
+      const sessionId = lessonSessionId({ classId, assignmentId, sessionDate });
+      const current = await loadSessionPayload(db, sessionId);
+      return res.json({ ok: true, sessionId, ...current });
+    } catch (error) {
+      return res.status(statusFor(error)).json({ ok: false, error: error?.message || "Could not load current participation" });
     }
   });
 
@@ -314,11 +361,9 @@ function registerClassParticipationRoutes({ app, db, admin, requireAuth, staffEm
       assertStaff(user, staffEmails);
       const sessionId = clean(req.params?.sessionId);
       if (!sessionId) return res.status(400).json({ ok: false, error: "sessionId is required" });
-      const sessionSnap = await db.collection(SESSION_COLLECTION).doc(sessionId).get();
-      if (!sessionSnap.exists) return res.status(404).json({ ok: false, error: "Participation session not found" });
-      const records = await queryRecords(db, "sessionId", sessionId, 200);
-      records.sort((a, b) => String(a.studentName || "").localeCompare(String(b.studentName || "")));
-      return res.json({ ok: true, session: serializeDoc(sessionSnap), records });
+      const current = await loadSessionPayload(db, sessionId);
+      if (!current.session) return res.status(404).json({ ok: false, error: "Participation session not found" });
+      return res.json({ ok: true, sessionId, ...current });
     } catch (error) {
       return res.status(statusFor(error)).json({ ok: false, error: error?.message || "Could not load participation session" });
     }

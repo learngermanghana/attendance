@@ -30,26 +30,44 @@ test("class participation normalizes presenter outcomes without grades or attend
   assert.equal(row.presenterAbsent, true);
 });
 
-test("class participation API has staff session routes and a token-scoped student route", () => {
+test("class participation API exposes current cloud state and revision-safe staff routes", () => {
   const source = read("functions/classParticipationApi.js");
   assert.match(source, /classParticipationSessions/);
   assert.match(source, /classParticipationRecords/);
   assert.match(source, /app\.post\("\/class-participation\/session"/);
+  assert.match(source, /app\.get\("\/class-participation\/current"/);
   assert.match(source, /app\.get\("\/class-participation\/sessions"/);
   assert.match(source, /app\.get\("\/class-participation\/session\/:sessionId"/);
   assert.match(source, /app\.get\("\/class-participation\/me"/);
+  assert.match(source, /baseRevision/);
+  assert.match(source, /participation_conflict/);
+  assert.match(source, /revision: nextRevision/);
   assert.match(source, /verifyIdToken/);
   assert.doesNotMatch(source, /req\.query\?\.studentCode|req\.query\?\.studentId/);
 });
 
-test("presenter persists diagnostic participation and does not write official attendance", () => {
+test("presenter restores participation from cloud before allowing new marks", () => {
   const source = read("src/components/PresenterStudentPicker.jsx");
+  assert.match(source, /getCurrentClassParticipationSession/);
+  assert.match(source, /Restoring participation/);
+  assert.match(source, /hydratedIdentity !== sessionIdentity/);
+  assert.match(source, /baseRevision: cloudRevision/);
+  assert.match(source, /visibilitychange/);
+  assert.match(source, /Cloud saved/);
+  assert.match(source, /Offline · saved on this device/);
   assert.match(source, /saveClassParticipationSession/);
-  assert.match(source, /needsReview/);
   assert.match(source, /presenterAbsent/);
-  assert.match(source, /sessionDate: localDateKey\(\)/);
+  assert.match(source, /sessionDate,/);
   assert.doesNotMatch(source, /attendanceService|saveAttendance|updateAttendance/);
   assert.doesNotMatch(source, /saveScore|gradeService|updateGrade/);
+});
+
+test("presenter can return late students to the random rotation without resetting the class", () => {
+  const source = read("src/components/PresenterStudentPicker.jsx");
+  assert.match(source, /function markJoinedLate/);
+  assert.match(source, /next\.delete\(key\)/);
+  assert.match(source, />Joined late<\/button>/);
+  assert.match(source, /Presenter absent/);
 });
 
 test("admin navigation exposes the Class Participation page", () => {
@@ -91,4 +109,5 @@ test("class participation is included in Firebase deploys and Vercel proxies it 
 
   const service = read("src/services/classParticipationService.js");
   assert.match(service, /fetch\("\/api\/class-participation\/session"/);
+  assert.match(service, /\/api\/class-participation\/current/);
 });
