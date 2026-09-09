@@ -2,6 +2,8 @@ const crypto = require("node:crypto");
 
 const SESSION_COLLECTION = "classParticipationSessions";
 const RECORD_COLLECTION = "classParticipationRecords";
+const MAX_QUESTION_RESPONSES = 60;
+const QUESTION_RESULTS = new Set(["correct", "needs_review", "skipped", "presenter_absent"]);
 
 function clean(value) {
   return String(value || "").trim();
@@ -15,6 +17,10 @@ function clampCount(value) {
   const number = Number(value || 0);
   if (!Number.isFinite(number)) return 0;
   return Math.max(0, Math.round(number));
+}
+
+function safeText(value, max = 500) {
+  return clean(value).slice(0, max);
 }
 
 function stableId(...parts) {
@@ -48,7 +54,31 @@ function studentIdentity(student = {}, index = 0) {
   );
 }
 
+function normalizeQuestionResponse(response = {}, index = 0) {
+  const rawResult = lower(response.result || response.status);
+  const result = rawResult === "needshelp" || rawResult === "needs_help"
+    ? "needs_review"
+    : rawResult === "absent"
+      ? "presenter_absent"
+      : rawResult;
+  if (!QUESTION_RESULTS.has(result)) return null;
+  const question = safeText(response.question || response.questionText, 700);
+  if (!question && result !== "presenter_absent") return null;
+  return {
+    questionId: safeText(response.questionId || `question-${index + 1}`, 160),
+    question,
+    sourceQuestion: safeText(response.sourceQuestion, 700),
+    result,
+    questionContext: safeText(response.questionContext, 120),
+    recordedAt: safeText(response.recordedAt, 80),
+  };
+}
+
 function normalizeStudent(student = {}, index = 0) {
+  const questionResponses = (Array.isArray(student.questionResponses) ? student.questionResponses : [])
+    .slice(-MAX_QUESTION_RESPONSES)
+    .map(normalizeQuestionResponse)
+    .filter(Boolean);
   return {
     studentUid: clean(student.studentUid),
     studentCode: lower(student.studentCode),
@@ -60,6 +90,7 @@ function normalizeStudent(student = {}, index = 0) {
     needsReview: clampCount(student.needsReview ?? student.needsHelp),
     skipped: clampCount(student.skipped),
     presenterAbsent: Boolean(student.presenterAbsent),
+    questionResponses,
     identity: studentIdentity(student, index),
   };
 }
@@ -123,6 +154,35 @@ async function queryRecords(db, field, value, limit = 100) {
   return snapshot.docs.map(serializeDoc);
 }
 
+function studentSafeParticipationRecord(row = {}) {
+  return {
+    id: clean(row.id),
+    sessionId: clean(row.sessionId),
+    classId: clean(row.classId),
+    className: clean(row.className),
+    course: clean(row.course),
+    assignmentId: clean(row.assignmentId),
+    lessonDay: clean(row.lessonDay),
+    lessonTitle: clean(row.lessonTitle),
+    sessionDate: clean(row.sessionDate),
+    turns: clampCount(row.turns),
+    correct: clampCount(row.correct),
+    needsReview: clampCount(row.needsReview),
+    skipped: clampCount(row.skipped),
+    questionResponses: (Array.isArray(row.questionResponses) ? row.questionResponses : [])
+      .map(normalizeQuestionResponse)
+      .filter((response) => response && (response.result === "correct" || response.result === "needs_review"))
+      .map(({ questionId, question, result, questionContext, recordedAt }) => ({
+        questionId,
+        question,
+        result,
+        questionContext,
+        recordedAt,
+      })),
+    updatedAt: row.updatedAt || null,
+  };
+}
+
 function registerClassParticipationRoutes({ app, db, admin, requireAuth, staffEmails = [] }) {
   if (!app?.post || !app?.get || !db?.collection || !admin?.firestore?.FieldValue?.serverTimestamp || typeof requireAuth !== "function") {
     throw new Error("Class participation route dependencies are incomplete");
@@ -156,6 +216,7 @@ function registerClassParticipationRoutes({ app, db, admin, requireAuth, staffEm
         summary.correctCount += student.correct;
         summary.needsReviewCount += student.needsReview;
         summary.skippedCount += student.skipped;
+        summary.questionResponseCount += student.questionResponses.filter((response) => response.result === "correct" || response.result === "needs_review").length;
         if (student.presenterAbsent) summary.presenterAbsentCount += 1;
         return summary;
       }, {
@@ -164,6 +225,7 @@ function registerClassParticipationRoutes({ app, db, admin, requireAuth, staffEm
         needsReviewCount: 0,
         skippedCount: 0,
         presenterAbsentCount: 0,
+        questionResponseCount: 0,
       });
 
       await sessionRef.set({
@@ -180,6 +242,7 @@ function registerClassParticipationRoutes({ app, db, admin, requireAuth, staffEm
         teacherEmail: clean(user.email),
         rosterCount: normalizedStudents.length,
         eligibleCount: Math.max(0, normalizedStudents.length - totals.presenterAbsentCount),
+        questionPoolSize: clampCount(payload.questionPoolSize),
         ...totals,
         ...(previousSession.exists ? {} : { createdAt: serverTimestamp() }),
         updatedAt: serverTimestamp(),
@@ -210,6 +273,7 @@ function registerClassParticipationRoutes({ app, db, admin, requireAuth, staffEm
           needsReview: student.needsReview,
           skipped: student.skipped,
           presenterAbsent: student.presenterAbsent,
+          questionResponses: student.questionResponses,
           updatedAt: serverTimestamp(),
         }, { merge: true });
       });
@@ -269,7 +333,8 @@ function registerClassParticipationRoutes({ app, db, admin, requireAuth, staffEm
       if (uid) rows.push(...await queryRecords(db, "studentUid", uid, 100));
       if (email) rows.push(...await queryRecords(db, "studentEmailNormalized", email, 100));
       const unique = [...new Map(rows.map((row) => [row.id, row])).values()]
-        .sort((a, b) => String(b.sessionDate || b.updatedAt || "").localeCompare(String(a.sessionDate || a.updatedAt || "")));
+        .sort((a, b) => String(b.sessionDate || b.updatedAt || "").localeCompare(String(a.sessionDate || a.updatedAt || "")))
+        .map(studentSafeParticipationRecord);
       return res.json({ ok: true, participation: unique });
     } catch (error) {
       return res.status(statusFor(error)).json({ ok: false, error: error?.message || "Could not load your participation" });
@@ -281,6 +346,8 @@ module.exports = {
   SESSION_COLLECTION,
   RECORD_COLLECTION,
   lessonSessionId,
+  normalizeQuestionResponse,
   normalizeStudent,
+  studentSafeParticipationRecord,
   registerClassParticipationRoutes,
 };

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { buildTeacherSlideSupport } from "../data/teacherSlideSupport.js";
 import { getA1GrammarChecks } from "../data/a1GrammarChecks.js";
+import PresenterStudentPicker from "./PresenterStudentPicker.jsx";
 import "./TeachingSlidePresenter.css";
 
 const FALOWEN_BASE_URL = "https://www.falowen.app";
@@ -79,20 +80,34 @@ function stageList(slide, topicLabel) {
   });
 }
 
-export default function A1GrammarPresenter({ slide, topicLabel, onExit }) {
+export default function A1GrammarPresenter({
+  slide,
+  topicLabel,
+  onExit,
+  nextLessonHref = "",
+  nextLessonLabel = "",
+}) {
   const stages = useMemo(() => stageList(slide, topicLabel), [slide, topicLabel]);
   const [stageIndex, setStageIndex] = useState(0);
   const [itemIndex, setItemIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [participationQuestion, setParticipationQuestion] = useState(null);
   const stage = stages[stageIndex] || stages[0];
 
   const checkMode = stage?.type === "check";
-  const activeCheck = checkMode ? stage.items[itemIndex] : null;
+  const participationCheckMode = stage?.id === "grammar-check";
+  const manualCheckMode = checkMode && !participationCheckMode;
+  const activeCheck = participationCheckMode
+    ? participationQuestion
+    : checkMode
+      ? stage.items[itemIndex]
+      : null;
   const progress = stages.length ? ((stageIndex + 1) / stages.length) * 100 : 0;
 
   function resetQuestionState() {
     setItemIndex(0);
     setShowAnswer(false);
+    setParticipationQuestion(null);
   }
 
   function goTo(index) {
@@ -102,7 +117,7 @@ export default function A1GrammarPresenter({ slide, topicLabel, onExit }) {
   }
 
   function next() {
-    if (checkMode && itemIndex < stage.items.length - 1) {
+    if (manualCheckMode && itemIndex < stage.items.length - 1) {
       setItemIndex((current) => current + 1);
       setShowAnswer(false);
       return;
@@ -111,7 +126,7 @@ export default function A1GrammarPresenter({ slide, topicLabel, onExit }) {
   }
 
   function previous() {
-    if (checkMode && itemIndex > 0) {
+    if (manualCheckMode && itemIndex > 0) {
       setItemIndex((current) => current - 1);
       setShowAnswer(false);
       return;
@@ -126,6 +141,10 @@ export default function A1GrammarPresenter({ slide, topicLabel, onExit }) {
       // Presenter remains usable when fullscreen is blocked.
     }
   }
+
+  useEffect(() => {
+    setShowAnswer(false);
+  }, [participationQuestion?.id]);
 
   useEffect(() => {
     function onKeyDown(event) {
@@ -148,12 +167,12 @@ export default function A1GrammarPresenter({ slide, topicLabel, onExit }) {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [stageIndex, itemIndex, stage?.id, stages.length]);
+  }, [stageIndex, itemIndex, stage?.id, stages.length, manualCheckMode]);
 
   if (!stage) return null;
 
-  const atStart = stageIndex === 0 && (!checkMode || itemIndex === 0);
-  const atEnd = stageIndex === stages.length - 1 && (!checkMode || itemIndex === stage.items.length - 1);
+  const atStart = stageIndex === 0 && (!manualCheckMode || itemIndex === 0);
+  const atEnd = stageIndex === stages.length - 1 && (!manualCheckMode || itemIndex === stage.items.length - 1);
 
   return (
     <div className="presenter-shell" role="dialog" aria-modal="true" aria-label="A1 grammar teaching presenter">
@@ -179,6 +198,14 @@ export default function A1GrammarPresenter({ slide, topicLabel, onExit }) {
           </div>
         </header>
 
+        <PresenterStudentPicker
+          slide={slide}
+          questions={participationCheckMode ? stage.items : []}
+          questionContext={participationCheckMode ? stage.id : ""}
+          onQuestionChange={setParticipationQuestion}
+          renderQuestionExternally
+        />
+
         <main className={`presenter-content presenter-content-${stage.type}`}>
           {stage.type === "intro" ? (
             <>
@@ -188,35 +215,50 @@ export default function A1GrammarPresenter({ slide, topicLabel, onExit }) {
               {stage.duration ? <p className="presenter-duration">{stage.duration}</p> : null}
               <div className="presenter-model-support" style={{ marginTop: 24 }}>
                 <strong>A1 teaching method</strong>
-                <p>Rule → examples → grammar check → error correction → workbook transfer → exit check.</p>
-                <small>No generic speaking-question round. The learner must demonstrate understanding of the form taught today.</small>
+                <p>Rule → examples → concept check → error correction → workbook transfer → exit check.</p>
+                <small>The live concept check gives each learner a unique question. Workbook gap-fill and form drills stay in the workbook.</small>
               </div>
             </>
           ) : stage.type === "check" ? (
             <section className="presenter-question-reveal">
               <div className="presenter-question-counter">
-                Aufgabe {itemIndex + 1} von {stage.items.length}
+                {participationCheckMode
+                  ? activeCheck
+                    ? `Unique question ${activeCheck.poolPosition} of ${activeCheck.poolSize}`
+                    : "Unique class questions"
+                  : `Aufgabe ${itemIndex + 1} von ${stage.items.length}`}
               </div>
               <h1>{stage.title}</h1>
-              <p className="presenter-question">{activeCheck?.questionDe}</p>
-              <div className="presenter-question-actions">
-                <button type="button" onClick={() => setShowAnswer((current) => !current)}>
-                  {showAnswer ? "Antwort ausblenden" : "Antwort anzeigen"}
-                </button>
-              </div>
-              {showAnswer ? (
+              {participationCheckMode && !activeCheck ? (
                 <div className="presenter-model-support">
-                  <strong>Richtige Antwort</strong>
-                  <p>{activeCheck?.answerDe}</p>
-                  {activeCheck?.noteEn ? <small>{activeCheck.noteEn}</small> : null}
+                  <strong>Pick the first student above</strong>
+                  <p>Falowen will match the question pool to the class roster and assign an unused concept question to each learner in this round.</p>
+                  <small>Record Correct, Needs help, Skip or Absent before moving to the next student.</small>
                 </div>
               ) : (
-                <div className="presenter-model-support" style={{ opacity: 0.8 }}>
-                  <strong>{stage.exitCheck ? "Exit rule" : "Teacher instruction"}</strong>
-                  <p>{stage.exitCheck
-                    ? "The student answers first. Reveal only after the answer is complete."
-                    : "Do not reveal the answer immediately. Ask the student to explain why the form is correct."}</p>
-                </div>
+                <>
+                  <p className="presenter-question">{activeCheck?.questionDe}</p>
+                  <div className="presenter-question-actions">
+                    <button type="button" onClick={() => setShowAnswer((current) => !current)} disabled={!activeCheck}>
+                      {showAnswer ? "Antwort ausblenden" : "Antwort anzeigen"}
+                    </button>
+                  </div>
+                  {showAnswer ? (
+                    <div className="presenter-model-support">
+                      <strong>Richtige Antwort / teacher guide</strong>
+                      <p>{activeCheck?.answerDe}</p>
+                      {participationCheckMode ? <small>Accept a short correct explanation or a suitable simple German example. This is a teacher-judged participation check, not an automatic grade.</small> : null}
+                      {activeCheck?.noteEn ? <small>{activeCheck.noteEn}</small> : null}
+                    </div>
+                  ) : (
+                    <div className="presenter-model-support" style={{ opacity: 0.8 }}>
+                      <strong>{stage.exitCheck ? "Exit rule" : "Teacher instruction"}</strong>
+                      <p>{stage.exitCheck
+                        ? "The student answers first. Reveal only after the answer is complete."
+                        : "Let the selected student answer first. Use Correct or Needs help above only after the response."}</p>
+                    </div>
+                  )}
+                </>
               )}
             </section>
           ) : stage.type === "workbook" ? (
@@ -252,8 +294,17 @@ export default function A1GrammarPresenter({ slide, topicLabel, onExit }) {
             <div className="presenter-progress-track"><div className="presenter-progress-bar" style={{ width: `${progress}%` }} /></div>
           </div>
           <button type="button" onClick={next} disabled={atEnd}>
-            {checkMode && itemIndex < stage.items.length - 1 ? "Nächste Aufgabe →" : "Next →"}
+            {manualCheckMode && itemIndex < stage.items.length - 1 ? "Nächste Aufgabe →" : "Next →"}
           </button>
+          {nextLessonHref ? (
+            <a
+              className="presenter-next-lesson"
+              href={nextLessonHref}
+              title={nextLessonLabel || "Open next lesson in Presenter Mode"}
+            >
+              Next lesson{nextLessonLabel ? ` · ${nextLessonLabel}` : ""} →
+            </a>
+          ) : null}
         </footer>
       </div>
     </div>
