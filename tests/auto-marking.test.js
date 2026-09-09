@@ -1,6 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { autoMarkSubmission, checkDeterministicObjectiveAnswers } from "../src/utils/autoMarking.js";
+import { objectiveMarkingRegressions } from "./fixtures/objective-marking-regressions.js";
+
+for (const fixture of objectiveMarkingRegressions) {
+  test(`objective regression: ${fixture.name}`, () => {
+    const result = checkDeterministicObjectiveAnswers(fixture);
+    assert.equal(result.objectiveCorrect, fixture.expectedCorrect);
+    assert.equal(result.objectiveTotal, fixture.expectedTotal);
+    assert.deepEqual(result.wrongAnswers, []);
+  });
+}
 
 test("deterministic parser scores Anzeige A-F-X answers without AI", () => {
   const result = checkDeterministicObjectiveAnswers({
@@ -431,6 +441,88 @@ test("normalizes uploaded A2/B1 dictionary entries with Teil 3 and Teil 4 parts"
   assert.ok(a2.parts.teil4.answerCount > 0);
   assert.ok(b1.parts.teil3.answerCount > 0);
   assert.ok(b1.parts.teil4.answerCount > 0);
+});
+
+test("marking proxy accepts A1 matching options through J", async () => {
+  const { default: handler } = await import("../api/router.js");
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: true, status: 200,
+    text: async () => JSON.stringify({ result: { feedback: "placeholder", parts: [], status: "marked" } }),
+  });
+  const nouns = [
+    ["J", "Der Tisch", "the table"], ["C", "Die Lampe", "the lamp"], ["G", "Das Buch", "the book"],
+    ["E", "Der Stuhl", "the chair"], ["F", "Die Katze", "the cat"], ["H", "Das Auto", "the car"],
+    ["A", "Der Hund", "the dog"], ["B", "Die Blume", "the flower"], ["D", "Das Fenster", "the window"],
+    ["I", "Der Computer", "the computer"],
+  ];
+  const descriptions = ["ist groß", "ist neu", "ist interessant", "ist bequem", "ist süß", "ist schnell", "ist freundlich", "ist schön", "ist offen", "ist teuer"];
+  const actions = ["Ich sehe den Tisch", "Sie kauft die Lampe", "Er liest das Buch", "Wir brauchen den Stuhl", "Du fütterst die Katze", "Ich fahre das Auto", "Sie streichelt den Hund", "Er pflückt die Blume", "Wir putzen das Fenster", "Sie benutzen den Computer"];
+  const answers = [
+    ...nouns.map(([, german, english]) => `${german} – ${english}`),
+    ...nouns.map(([, german], index) => `${german} ${descriptions[index]}`),
+    ...actions,
+  ];
+  const numbered = (values) => values.map((value, index) => `${index + 1}. ${value}`).join("\n");
+  const submissionText = [
+    `Teil 1\n${numbered(nouns.map(([letter,, english]) => `${letter}- ${english}`))}`,
+    `Teil 2\n${numbered(nouns.map(([, german], index) => `${german} ${descriptions[index]}.`))}`,
+    `Teil 3\n${numbered(actions.map((answer) => `${answer}.`))}`,
+  ].join("\n\n");
+  const req = { method: "POST", url: "/marking/ai", headers: { host: "localhost", "content-type": "application/json" }, body: {
+    assignmentKey: "A1-5", level: "A1", submission: { name: "Student", assignmentKey: "A1-5", level: "A1" },
+    referenceEntry: { assignmentKey: "A1-5", level: "A1", format: "objective", parts: { main: { answers: Object.fromEntries(answers.map((answer, index) => [`Answer${index + 1}`, answer])) } } },
+    submissionText,
+  } };
+  let jsonBody;
+  const res = { status() { return this; }, json(body) { jsonBody = body; return body; }, send(body) { jsonBody = body; return body; }, setHeader() {} };
+  try { await handler(req, res); } finally { globalThis.fetch = originalFetch; }
+  assert.equal(jsonBody.result.objectiveCorrect, 30);
+  assert.equal(jsonBody.result.objectiveTotal, 30);
+  assert.equal(jsonBody.result.objectiveScore, 100);
+  assert.deepEqual(jsonBody.result.wrongAnswers, []);
+});
+
+test("flat A1 keys do not repeat Teil 1 answers into an empty Teil 3", async () => {
+  const { default: handler } = await import("../api/router.js");
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: true, status: 200,
+    text: async () => JSON.stringify({ result: { writingScore: 80, feedback: "Writing marked.", parts: [{ partId: "teil2", partType: "writing", result: { score: 80 } }], status: "marked" } }),
+  });
+  const answers = ["Frage 1: Anzeige A", "Frage 2: Anzeige B", "Frage 3: Anzeige B", "Frage 4: Anzeige A", "Frage 5: Anzeige A", "a. Head – Kopf", "b. Arm – Arm", "c. Leg – Bein", "d. Eye – Auge", "e. Nose – Nase", "f. Ear – Ohr", "g. Mouth – Mund", "h. Hand – Hand", "i. Foot – Fuß", "j. Stomach / Belly – Bauch"];
+  const submissionText = `Teil 1.
+Frage1:1. Anzeige A
+Frage2: 2. Anzeige B
+Frage3:2. Anzeige B
+Frage4:1. Anzeige A
+Frage 5: 1. Anzeige A
+
+Teil 2.
+Hallo Felix, vielen Dank für deine Einladung zu deinem Geburtstag. Ich kann leider nicht kommen, weil ich krank bin. Können wir einen anderen Termin vereinbaren?
+
+Liebe Grüße
+Princess
+
+Teil 3`;
+  const referenceEntry = { assignmentKey: "A1-14.1", level: "A1", format: "objective", answers: Object.fromEntries(answers.map((answer, index) => [`Answer${index + 1}`, answer])) };
+  const directResult = checkDeterministicObjectiveAnswers({ referenceEntry, submissionText });
+  assert.deepEqual(directResult.wrongAnswers.map(({ question, student }) => ({ question, student })), [
+    ...Array.from({ length: 10 }, (_, index) => ({ question: index + 6, student: "" })),
+  ]);
+  const req = { method: "POST", url: "/marking/ai", headers: { host: "localhost", "content-type": "application/json" }, body: {
+    assignmentKey: "A1-14.1", level: "A1", submission: { name: "Princess", assignmentKey: "A1-14.1", level: "A1" },
+    referenceEntry: { ...referenceEntry, parts: { main: { answers: referenceEntry.answers } } },
+    submissionText,
+  } };
+  let jsonBody;
+  const res = { status() { return this; }, json(body) { jsonBody = body; return body; }, send(body) { jsonBody = body; return body; }, setHeader() {} };
+  try { await handler(req, res); } finally { globalThis.fetch = originalFetch; }
+  assert.equal(jsonBody.result.objectiveCorrect, 5);
+  assert.equal(jsonBody.result.objectiveTotal, 15);
+  assert.deepEqual(jsonBody.result.wrongAnswers.map(({ question, student }) => ({ question, student })), [
+    ...Array.from({ length: 10 }, (_, index) => ({ question: index + 6, student: "" })),
+  ]);
 });
 
 

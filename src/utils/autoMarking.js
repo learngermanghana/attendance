@@ -1,6 +1,6 @@
 const PART_IDS = ["teil1", "teil2", "teil3", "teil4", "unknown"];
 const WRITING_CONFIDENCE_THRESHOLD = 0.75;
-const OBJECTIVE_OPTION_LETTERS = "ABCDEFX";
+const OBJECTIVE_OPTION_LETTERS = "ABCDEFGHIJX";
 
 
 const WRITING_RUBRICS = {
@@ -34,7 +34,7 @@ function normalizeAnswer(value) {
   if (["true", "r", "richtig", "wahr", "yes", "ja"].includes(normalized)) return "R";
   if (["false", "f", "falsch", "nein", "no"].includes(normalized)) return "F";
 
-  const option = String(value || "").trim().match(/^([A-FX])\s*[).:-]?$/i);
+  const option = String(value || "").trim().match(new RegExp(`^([${OBJECTIVE_OPTION_LETTERS}])\\s*[).:-]?$`, "i"));
   if (option) return option[1].toUpperCase();
 
   return normalized;
@@ -42,7 +42,7 @@ function normalizeAnswer(value) {
 
 function extractOptionLetter(value) {
   const trimmed = String(value || "").trim();
-  const match = trimmed.match(/^([A-FX])(?:\s*[).:/-]|\s+|$)/i);
+  const match = trimmed.match(new RegExp(`^([${OBJECTIVE_OPTION_LETTERS}])(?:\\s*[).:/-]|\\s+|$)`, "i"));
   return match ? match[1].toUpperCase() : "";
 }
 
@@ -166,6 +166,14 @@ function parseNumberedObjectiveLine(line = "") {
   const trimmed = String(line || "").trim();
   if (!trimmed) return null;
 
+  // Some students repeat the local option number after the question label,
+  // for example "Frage3:2. Anzeige B". The outer Frage number identifies
+  // the question; the repeated number must not become part of the answer.
+  const nestedAnzeige = trimmed.match(new RegExp(`^(?:answer|antwort|frage|aufgabe|task|exercise|nr\\.?|q)\\s*(\\d{1,3})\\s*[).:-]?\\s*\\d{1,3}\\s*[).:-]\\s*anzeige\\s*[).:-]?\\s*([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
+  if (nestedAnzeige) {
+    return { question: Number.parseInt(nestedAnzeige[1], 10), answer: nestedAnzeige[2].toUpperCase() };
+  }
+
   const numbered = trimmed.match(new RegExp(`^(?:answer|antwort|frage|aufgabe|task|exercise|nr\\.?|q)?\\s*(\\d{1,3})\\s*[).:-]?\\s*(?:anzeige\\s*[).:-]?\\s*)?([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
   if (numbered) {
     return { question: Number.parseInt(numbered[1], 10), answer: numbered[2].toUpperCase() };
@@ -225,7 +233,7 @@ function parsePrefixedObjectiveAnswer(line = "") {
 
 function isObjectiveOptionAnswer(answer = "") {
   const normalized = normalizeAnswer(answer);
-  return /^[A-FX]$/.test(normalized) || normalized === "R" || normalized === "F";
+  return new RegExp(`^[${OBJECTIVE_OPTION_LETTERS}]$`).test(normalized) || normalized === "R" || normalized === "F";
 }
 
 function countObjectiveAnswerEvidence(text = "") {
@@ -237,7 +245,7 @@ function countObjectiveAnswerEvidence(text = "") {
     if (numbered && isObjectiveOptionAnswer(numbered.answer)) return count + 1;
 
     const optionOnly = token.match(new RegExp(`^(?:anzeige\\s*[).:-]?\\s*)?([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
-    if (optionOnly && (/^anzeige\b/i.test(token) || token.length <= 2 || /^[A-FX]\s*[).:-]/i.test(token))) return count + 1;
+    if (optionOnly && (/^anzeige\b/i.test(token) || token.length <= 2 || new RegExp(`^[${OBJECTIVE_OPTION_LETTERS}]\\s*[).:-]`, "i").test(token))) return count + 1;
 
     return isObjectiveOptionAnswer(token) ? count + 1 : count;
   }, 0);
@@ -274,7 +282,7 @@ function parseStudentObjectiveAnswerTokens(tokens = [], { questionOffset = 0 } =
     }
 
     const anzeigeOnly = trimmed.match(new RegExp(`^(?:anzeige\\s*[).:-]?\\s*)?([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
-    if (anzeigeOnly && (/^anzeige\b/i.test(trimmed) || trimmed.length <= 2 || /^[A-FX]\s*[).:-]/i.test(trimmed))) {
+    if (anzeigeOnly && (/^anzeige\b/i.test(trimmed) || trimmed.length <= 2 || new RegExp(`^[${OBJECTIVE_OPTION_LETTERS}]\\s*[).:-]`, "i").test(trimmed))) {
       orderedQuestion += 1;
       map.set(questionOffset + orderedQuestion, anzeigeOnly[1].toUpperCase());
       pendingQuestion = null;
@@ -384,7 +392,7 @@ function parseObjectiveReferenceText(text = "") {
     }
 
     const anzeigeOnly = trimmed.match(new RegExp(`^(?:anzeige\\s*[).:-]?\\s*)?([${OBJECTIVE_OPTION_LETTERS}])(?:\\b|\\s|[).:-]|$)`, "i"));
-    if (anzeigeOnly && (/^anzeige\b/i.test(trimmed) || trimmed.length <= 2 || /^[A-FX]\s*[).:-]/i.test(trimmed))) {
+    if (anzeigeOnly && (/^anzeige\b/i.test(trimmed) || trimmed.length <= 2 || new RegExp(`^[${OBJECTIVE_OPTION_LETTERS}]\\s*[).:-]`, "i").test(trimmed))) {
       orderedQuestion += 1;
       entries.push({ key: `Answer${orderedQuestion}`, value: anzeigeOnly[1].toUpperCase() });
     }
@@ -518,7 +526,9 @@ function expectedMetadata(expectedRaw) {
       raw: vocabularyPair?.german || expectedRaw.rawCorrectAnswer || expectedRaw.raw || expectedRaw.correctText || expectedRaw.correctLetter || "",
       correctLetter: vocabularyPair ? "" : String(expectedRaw.correctLetter || "").toUpperCase(),
       correctText: vocabularyPair?.german || expectedRaw.correctText || extractOptionText(expectedRaw.rawCorrectAnswer || expectedRaw.raw || ""),
-      acceptedAnswers: vocabularyPair ? [vocabularyPair.german] : expectedRaw.acceptedAnswers || [],
+      acceptedAnswers: vocabularyPair
+        ? [vocabularyPair.german, ...vocabularyPair.english.split("/").map((value) => value.trim())]
+        : expectedRaw.acceptedAnswers || [],
       questionNumber: expectedRaw.questionNumber,
       vocabularyKey: vocabularyPair?.vocabularyKey || "",
       isVocabulary: Boolean(vocabularyPair),
@@ -530,7 +540,9 @@ function expectedMetadata(expectedRaw) {
     raw: vocabularyPair?.german || raw,
     correctLetter: letter,
     correctText: vocabularyPair?.german || extractOptionText(raw),
-    acceptedAnswers: vocabularyPair ? [vocabularyPair.german] : [],
+    acceptedAnswers: vocabularyPair
+      ? [vocabularyPair.german, ...vocabularyPair.english.split("/").map((value) => value.trim())]
+      : [],
     questionNumber: "",
     vocabularyKey: vocabularyPair?.vocabularyKey || "",
     isVocabulary: Boolean(vocabularyPair),
@@ -557,6 +569,11 @@ function valuesMatch(expectedRaw, studentRaw) {
   const student = normalizeAnswer(studentRaw);
   if (!expected || !student) return { status: "wrong" };
   if (expected === student) return { status: "correct", reason: "Exact answer match" };
+
+  const acceptedVocabularyMatch = meta.isVocabulary && meta.acceptedAnswers.some(
+    (answer) => normalizeForCompare(answer) === normalizeForCompare(studentRaw),
+  );
+  if (acceptedVocabularyMatch) return { status: "correct", reason: "Accepted vocabulary language" };
   if (meta.isVocabulary) return { status: "wrong" };
 
   const expectedLetter = meta.correctLetter || extractOptionLetter(meta.raw);

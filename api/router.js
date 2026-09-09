@@ -5,7 +5,9 @@ import { autoMarkSubmission } from "../src/utils/autoMarking.js";
 
 const OBJECTIVE_WEIGHT = 0.5;
 const WRITING_WEIGHT = 0.5;
-const OBJECTIVE_OPTION_LETTERS = "ABCDEFX";
+// Matching exercises can use more than the usual A–F multiple-choice range.
+// Keep X for "no matching option", which is used by some Goethe exercises.
+const OBJECTIVE_OPTION_LETTERS = "ABCDEFGHIJX";
 const VALID_PART_IDS = new Set(["main", "teil1", "teil2", "teil3", "teil4"]);
 
 const FALOWEN_FUNCTION_BASE_URL =
