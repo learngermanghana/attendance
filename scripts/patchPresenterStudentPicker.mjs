@@ -94,12 +94,87 @@ if (!pageSource.includes(standardCallUpdated)) {
 
 fs.writeFileSync(pagePath, pageSource);
 
+const pickerPath = new URL("../src/components/PresenterStudentPicker.jsx", import.meta.url);
+let pickerSource = fs.readFileSync(pickerPath, "utf8");
+
+const classMetricsMarker = "const classParticipatedCount = eligible.filter";
+if (!pickerSource.includes(classMetricsMarker)) {
+  const metricsAnchor = [
+    "  const participatedKeys = new Set(Object.keys(stats).filter((key) => Number(stats[key]?.turns || 0) > 0));",
+    "  const correctCount = Object.values(stats).reduce((sum, row) => sum + Number(row?.correct || 0), 0);",
+    "  const helpCount = Object.values(stats).reduce((sum, row) => sum + Number(row?.needsHelp || row?.needsReview || 0), 0);",
+  ].join("\n");
+  const metricsReplacement = [
+    "  const classParticipatedCount = eligible.filter((entry) => Number(stats[entry.key]?.turns || 0) > 0).length;",
+    "  const classParticipationPercent = eligible.length ? Math.round((classParticipatedCount / eligible.length) * 100) : 0;",
+    "  const currentParticipation = current ? stats[current.key] || {} : {};",
+    "  const currentTurns = Number(currentParticipation.turns || 0);",
+    "  const currentCorrect = Number(currentParticipation.correct || 0);",
+    "  const currentNeedsHelp = Number(currentParticipation.needsHelp || currentParticipation.needsReview || 0);",
+    "  const correctCount = Object.values(stats).reduce((sum, row) => sum + Number(row?.correct || 0), 0);",
+    "  const helpCount = Object.values(stats).reduce((sum, row) => sum + Number(row?.needsHelp || row?.needsReview || 0), 0);",
+  ].join("\n");
+  if (!pickerSource.includes(metricsAnchor)) {
+    throw new Error("Presenter class participation metrics anchor missing.");
+  }
+  pickerSource = pickerSource.replace(metricsAnchor, metricsReplacement);
+}
+
+if (!pickerSource.includes('className="presenter-student-current-stats"')) {
+  const currentStudentAnchor = [
+    '          <strong>{current?.name || (students.length ? `${students.length} ready` : "Select class")}</strong>',
+    "        </div>",
+  ].join("\n");
+  const currentStudentReplacement = [
+    '          <strong>{current?.name || (students.length ? `${students.length} ready` : "Select class")}</strong>',
+    "          {current ? (",
+    '            <small className="presenter-student-current-stats">',
+    '              Participated {currentTurns} {currentTurns === 1 ? "time" : "times"} · Correct {currentCorrect} · Needs help {currentNeedsHelp}',
+    "            </small>",
+    "          ) : null}",
+    "        </div>",
+  ].join("\n");
+  if (!pickerSource.includes(currentStudentAnchor)) {
+    throw new Error("Presenter current student summary anchor missing.");
+  }
+  pickerSource = pickerSource.replace(currentStudentAnchor, currentStudentReplacement);
+}
+
+const participationDetailsAnchor = "            <p>Participated {participatedKeys.size}/{eligible.length} · Correct {correctCount} · Needs review {helpCount} · Presenter absent {absentKeys.size}</p>";
+const participationDetailsReplacement = "            <p>Class participation {classParticipatedCount}/{eligible.length} ({classParticipationPercent}%) · Correct {correctCount} · Needs review {helpCount} · Presenter absent {absentKeys.size}</p>";
+if (!pickerSource.includes(participationDetailsReplacement)) {
+  if (!pickerSource.includes(participationDetailsAnchor)) {
+    throw new Error("Presenter participation details anchor missing.");
+  }
+  pickerSource = pickerSource.replace(participationDetailsAnchor, participationDetailsReplacement);
+}
+
+const participationStatusAnchor = "        <span>Participation {participatedKeys.size}/{eligible.length} · {correctCount} correct · {helpCount} need review</span>";
+const participationStatusReplacement = '        <span aria-label="Class participation summary">Class participation {classParticipatedCount}/{eligible.length} ({classParticipationPercent}%) · {correctCount} correct · {helpCount} need review</span>';
+if (!pickerSource.includes(participationStatusReplacement)) {
+  if (!pickerSource.includes(participationStatusAnchor)) {
+    throw new Error("Presenter participation status anchor missing.");
+  }
+  pickerSource = pickerSource.replace(participationStatusAnchor, participationStatusReplacement);
+}
+
+fs.writeFileSync(pickerPath, pickerSource);
+
 const pickerCssPath = new URL("../src/components/PresenterStudentPicker.css", import.meta.url);
 let pickerCss = fs.readFileSync(pickerCssPath, "utf8");
+let pickerCssChanged = false;
 const footerPolishMarker = "/* presenter-next-lesson-footer-polish */";
 if (!pickerCss.includes(footerPolishMarker)) {
   pickerCss += `\n${footerPolishMarker}\n.presenter-stage > .presenter-footer > button:last-of-type {\n  border-color: #1d4ed8;\n  background: #1d4ed8;\n  color: #fff;\n}\n\n.presenter-stage > .presenter-footer > .presenter-next-lesson {\n  margin-left: -0.35rem;\n}\n`;
-  fs.writeFileSync(pickerCssPath, pickerCss);
+  pickerCssChanged = true;
 }
 
-console.log("Random student toolbar, A1 unique questions, and next-lesson navigation are build-safe.");
+const participationClarityMarker = "/* class-participation-metric-clarity */";
+if (!pickerCss.includes(participationClarityMarker)) {
+  pickerCss += `\n${participationClarityMarker}\n.presenter-student-current-stats {\n  overflow: hidden;\n  color: #475569;\n  font-size: 0.66rem;\n  font-weight: 750;\n  line-height: 1.15;\n  text-overflow: ellipsis;\n  white-space: nowrap;\n}\n\n.presenter-student-status-line > span:first-child {\n  color: #334155;\n  font-weight: 750;\n}\n`;
+  pickerCssChanged = true;
+}
+
+if (pickerCssChanged) fs.writeFileSync(pickerCssPath, pickerCss);
+
+console.log("Random student toolbar, class/student participation clarity, A1 unique questions, and next-lesson navigation are build-safe.");
