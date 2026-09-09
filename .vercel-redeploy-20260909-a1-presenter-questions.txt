@@ -1,0 +1,1 @@
+Production redeploy trigger for the merged A1 Presenter Mode unique-question pool and class-participation updates (PRs #638 and #639). Triggered 2026-09-09.
