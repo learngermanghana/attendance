@@ -1,0 +1,138 @@
+.presenter-student-picker {
+  display: grid;
+  gap: 0.5rem;
+  border-bottom: 1px solid #dbe4f0;
+  background: #f8fafc;
+  padding: 0.65rem 1rem;
+}
+
+.presenter-student-picker-row,
+.presenter-student-actions,
+.presenter-student-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.presenter-student-class-select {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 190px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #64748b;
+}
+
+.presenter-student-class-select select {
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #fff;
+  color: #0f172a;
+  padding: 0.45rem 0.55rem;
+  font: inherit;
+  font-weight: 750;
+}
+
+.presenter-student-current {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 180px;
+}
+
+.presenter-student-current span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #64748b;
+}
+
+.presenter-student-current strong {
+  font-size: 1.05rem;
+  color: #0f172a;
+}
+
+.presenter-pick-student,
+.presenter-student-actions button,
+.presenter-student-summary button {
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #fff;
+  color: #0f172a;
+  padding: 0.45rem 0.7rem;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.presenter-pick-student {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #fff;
+}
+
+.presenter-pick-student:disabled,
+.presenter-student-actions button:disabled,
+.presenter-student-summary button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.presenter-student-actions {
+  padding-top: 0.1rem;
+}
+
+.presenter-student-marked {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #166534;
+}
+
+.presenter-student-summary {
+  font-size: 0.78rem;
+  color: #475569;
+}
+
+.presenter-student-summary span {
+  border-radius: 999px;
+  background: #e2e8f0;
+  padding: 0.25rem 0.5rem;
+  font-weight: 750;
+}
+
+.presenter-student-summary button {
+  margin-left: auto;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.75rem;
+}
+
+.presenter-student-note,
+.presenter-student-error {
+  font-size: 0.72rem;
+}
+
+.presenter-student-note {
+  color: #64748b;
+}
+
+.presenter-student-error {
+  color: #b91c1c;
+  font-weight: 750;
+}
+
+@media (max-width: 700px) {
+  .presenter-student-picker-row,
+  .presenter-student-actions,
+  .presenter-student-summary {
+    align-items: stretch;
+  }
+
+  .presenter-student-class-select,
+  .presenter-student-current,
+  .presenter-pick-student {
+    width: 100%;
+  }
+
+  .presenter-student-summary button {
+    margin-left: 0;
+  }
+}
