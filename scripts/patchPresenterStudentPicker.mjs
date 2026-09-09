@@ -1,14 +1,23 @@
 import fs from "node:fs";
 
 const presenterPaths = [
-  new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url),
-  new URL("../src/components/A1GrammarPresenter.jsx", import.meta.url),
+  {
+    path: new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url),
+    signature: "export default function TeachingSlidePresenter({ slide, topicLabel, onExit })",
+    nextSignature: "export default function TeachingSlidePresenter({ slide, topicLabel, onExit, nextLessonHref = \"\", nextLessonLabel = \"\" })",
+  },
+  {
+    path: new URL("../src/components/A1GrammarPresenter.jsx", import.meta.url),
+    signature: "export default function A1GrammarPresenter({ slide, topicLabel, onExit })",
+    nextSignature: "export default function A1GrammarPresenter({ slide, topicLabel, onExit, nextLessonHref = \"\", nextLessonLabel = \"\" })",
+  },
 ];
 
 const importAnchor = 'import "./TeachingSlidePresenter.css";';
 const importLine = 'import PresenterStudentPicker from "./PresenterStudentPicker.jsx";';
+const pickerRender = "<PresenterStudentPicker slide={slide} />";
 
-for (const path of presenterPaths) {
+for (const { path, signature, nextSignature } of presenterPaths) {
   let source = fs.readFileSync(path, "utf8");
 
   if (!source.includes(importLine)) {
@@ -18,18 +27,66 @@ for (const path of presenterPaths) {
     source = source.replace(importAnchor, `${importAnchor}\n${importLine}`);
   }
 
-  if (!source.includes("<PresenterStudentPicker slide={slide} />")) {
+  if (!source.includes(pickerRender)) {
     const mainAnchor = "        <main className={`presenter-content presenter-content-${stage.type}`}>";
     if (!source.includes(mainAnchor)) {
       throw new Error(`Presenter student picker render anchor missing in ${path.pathname}`);
     }
     source = source.replace(
       mainAnchor,
-      `        <PresenterStudentPicker slide={slide} />\n\n${mainAnchor}`,
+      `        ${pickerRender}\n\n${mainAnchor}`,
+    );
+  }
+
+  if (!source.includes("nextLessonHref")) {
+    if (!source.includes(signature)) {
+      throw new Error(`Next lesson presenter signature anchor missing in ${path.pathname}`);
+    }
+    source = source.replace(signature, nextSignature);
+  }
+
+  if (!source.includes('className="presenter-next-lesson"')) {
+    const footerAnchor = "          </button>\n        </footer>";
+    if (!source.includes(footerAnchor)) {
+      throw new Error(`Next lesson footer anchor missing in ${path.pathname}`);
+    }
+    source = source.replace(
+      footerAnchor,
+      `          </button>\n          {nextLessonHref ? (\n            <a\n              className="presenter-next-lesson"\n              href={nextLessonHref}\n              title={nextLessonLabel || "Open next lesson in Presenter Mode"}\n            >\n              Next lesson{nextLessonLabel ? \` · \${nextLessonLabel}\` : ""} →\n            </a>\n          ) : null}\n        </footer>`,
     );
   }
 
   fs.writeFileSync(path, source);
 }
 
-console.log("Random student participation picker patched into A1-C1 presenter modes.");
+const pagePath = new URL("../src/pages/TeachingSlidesPage.jsx", import.meta.url);
+let pageSource = fs.readFileSync(pagePath, "utf8");
+
+if (!pageSource.includes("const nextLessonHref = next ?")) {
+  const navigationAnchor = "  const { previous, next } = getSlideNavigation(slide.id, courseId);";
+  if (!pageSource.includes(navigationAnchor)) {
+    throw new Error("Teaching Slides next lesson navigation anchor missing.");
+  }
+  pageSource = pageSource.replace(
+    navigationAnchor,
+    `${navigationAnchor}\n  const nextLessonHref = next ? \`/teaching-slides/course/\${courseId}/\${next.id}?present=1\` : "";\n  const nextLessonLabel = next?.day || "";`,
+  );
+}
+
+const a1Call = "      return <A1GrammarPresenter slide={slide} topicLabel={topicLabel} onExit={() => setPresenterMode(false)} />;";
+const a1CallUpdated = "      return <A1GrammarPresenter slide={slide} topicLabel={topicLabel} onExit={() => setPresenterMode(false)} nextLessonHref={nextLessonHref} nextLessonLabel={nextLessonLabel} />;";
+if (!pageSource.includes(a1CallUpdated)) {
+  if (!pageSource.includes(a1Call)) throw new Error("A1 presenter next lesson call anchor missing.");
+  pageSource = pageSource.replace(a1Call, a1CallUpdated);
+}
+
+const standardCall = "    return <TeachingSlidePresenter slide={slide} topicLabel={topicLabel} onExit={() => setPresenterMode(false)} />;";
+const standardCallUpdated = "    return <TeachingSlidePresenter slide={slide} topicLabel={topicLabel} onExit={() => setPresenterMode(false)} nextLessonHref={nextLessonHref} nextLessonLabel={nextLessonLabel} />;";
+if (!pageSource.includes(standardCallUpdated)) {
+  if (!pageSource.includes(standardCall)) throw new Error("Teaching presenter next lesson call anchor missing.");
+  pageSource = pageSource.replace(standardCall, standardCallUpdated);
+}
+
+fs.writeFileSync(pagePath, pageSource);
+
+console.log("Random student toolbar and next-lesson navigation patched into A1-C1 presenter modes.");
