@@ -23,6 +23,7 @@ const CommunicationHubPage = lazy(() => import("./pages/CommunicationHubPage.jsx
 const GrammarIssueReportsPage = lazy(() => import("./pages/GrammarIssueReportsPage"));
 const WhatsAppRemindersPage = lazy(() => import("./pages/WhatsAppRemindersPage"));
 const TeachingSlidesPage = lazy(() => import("./pages/TeachingSlidesPage"));
+const ClassParticipationPage = lazy(() => import("./pages/ClassParticipationPage.jsx"));
 const StudentHubPage = lazy(() => import("./pages/StudentHubPage.jsx"));
 const SocialMediaPage = lazy(() => import("./pages/SocialMediaPage.jsx"));
 const WritingSubmissionTrackerPage = lazy(() => import("./pages/WritingSubmissionTrackerPage"));
@@ -72,6 +73,7 @@ function TopBar() {
                 <Link to="/students" onClick={() => setMenuOpen(false)}>Students</Link>
                 <Link to="/live-classes" onClick={() => setMenuOpen(false)}>Live Classes</Link>
                 <Link to="/attendance" onClick={() => setMenuOpen(false)}>Attendance</Link>
+                <Link to="/class-participation" onClick={() => setMenuOpen(false)}>Participation</Link>
                 <Link to="/class-operations" onClick={() => setMenuOpen(false)}>Class Operations</Link>
               </>
             ) : (
@@ -88,6 +90,7 @@ function TopBar() {
                 <Link to="/examTutorReviewQueue" onClick={() => setMenuOpen(false)}>Exam Review</Link>
                 <Link to="/communication" onClick={() => setMenuOpen(false)}>Communication</Link>
                 <Link to="/teaching-slides" onClick={() => setMenuOpen(false)}>Slides</Link>
+                <Link to="/class-participation" onClick={() => setMenuOpen(false)}>Participation</Link>
                 <Link to="/holiday-calendar" onClick={() => setMenuOpen(false)}>Holidays</Link>
               </>
             )}
@@ -159,6 +162,7 @@ export default function App() {
           <Route path="/attendance" element={<ProtectedRoute allowStaff={false}><AttendanceOverviewPage /></ProtectedRoute>} />
           <Route path="/attendance/session/:classId" element={<ProtectedRoute><CurrentAttendanceRoute /></ProtectedRoute>} />
           <Route path="/attendance/:classId" element={<ProtectedRoute allowStaff={false}><AttendancePage /></ProtectedRoute>} />
+          <Route path="/class-participation" element={<ProtectedRoute><ClassParticipationPage /></ProtectedRoute>} />
           <Route path="/course-schedule" element={<ProtectedRoute allowStaff={false}><CourseSchedulePage /></ProtectedRoute>} />
           <Route path="/course-schedule/public" element={<PublicCourseSchedulePage />} />
           <Route path="/marking" element={<MarkingRoute />} />
