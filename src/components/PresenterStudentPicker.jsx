@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { listClasses } from "../services/classesService.js";
 import { listStudentsByClass } from "../services/studentsService.js";
+import { saveClassParticipationSession } from "../services/classParticipationService.js";
 import "./PresenterStudentPicker.css";
 
 const LAST_CLASS_KEY = "falowen:presenter:last-class";
@@ -25,6 +26,13 @@ function normalize(value) {
   return String(value || "").trim();
 }
 
+function localDateKey(now = new Date()) {
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function studentKey(student = {}, index = 0) {
   return normalize(student.studentCode || student.studentcode || student.uid || student.email || student.id || `${student.name}-${index}`)
     .toLowerCase();
@@ -32,6 +40,18 @@ function studentKey(student = {}, index = 0) {
 
 function studentName(student = {}) {
   return normalize(student.name || student.fullName || student.displayName || student.email || "Student");
+}
+
+function studentCode(student = {}) {
+  return normalize(student.studentCode || student.studentcode || student.student_code || student.code).toLowerCase();
+}
+
+function studentEmail(student = {}) {
+  return normalize(student.email || student.studentEmail || student.emailAddress);
+}
+
+function studentUid(student = {}) {
+  return normalize(student.uid || student.firebaseUid || student.firebaseUID || student.authUid);
 }
 
 function classIdOf(entry = {}) {
@@ -84,6 +104,8 @@ export default function PresenterStudentPicker({ slide }) {
   const [absentKeys, setAbsentKeys] = useState(() => new Set());
   const [stats, setStats] = useState({});
   const [lastMarked, setLastMarked] = useState("");
+  const [saveState, setSaveState] = useState("idle");
+  const saveSequence = useRef(0);
 
   const course = normalize(slide?.course).toUpperCase();
   const activeClasses = useMemo(() => classOptions.filter((entry) => !entry.archived && entry.status !== "archived"), [classOptions]);
@@ -91,6 +113,10 @@ export default function PresenterStudentPicker({ slide }) {
     const matches = activeClasses.filter((entry) => classMatchesCourse(entry, course));
     return matches.length ? matches : activeClasses;
   }, [activeClasses, course]);
+  const selectedClass = useMemo(
+    () => matchingClasses.find((entry) => classIdOf(entry) === selectedClassId) || null,
+    [matchingClasses, selectedClassId],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -125,6 +151,7 @@ export default function PresenterStudentPicker({ slide }) {
     safeStorageSet(LAST_CLASS_KEY, selectedClassId);
     setLoadingStudents(true);
     setError("");
+    setSaveState("idle");
     setCurrentKey("");
     setLastMarked("");
     setRoundPicked(new Set());
@@ -136,7 +163,6 @@ export default function PresenterStudentPicker({ slide }) {
 
     (async () => {
       try {
-        const selectedClass = matchingClasses.find((entry) => classIdOf(entry) === selectedClassId);
         const roster = await listStudentsByClass(selectedClassId, { className: selectedClass?.name || selectedClassId });
         if (!cancelled) setStudents(Array.isArray(roster) ? roster : []);
       } catch {
@@ -150,7 +176,7 @@ export default function PresenterStudentPicker({ slide }) {
     })();
 
     return () => { cancelled = true; };
-  }, [selectedClassId, matchingClasses, slide]);
+  }, [selectedClassId, selectedClass, slide]);
 
   useEffect(() => {
     if (!selectedClassId) return;
@@ -166,11 +192,54 @@ export default function PresenterStudentPicker({ slide }) {
     name: studentName(student),
   })), [students]);
 
+  useEffect(() => {
+    if (!selectedClassId || loadingStudents || !roster.length) return undefined;
+    const sequence = saveSequence.current + 1;
+    saveSequence.current = sequence;
+    setSaveState("pending");
+
+    const timer = window.setTimeout(async () => {
+      try {
+        setSaveState("saving");
+        await saveClassParticipationSession({
+          classId: selectedClassId,
+          className: selectedClass?.name || selectedClassId,
+          course,
+          assignmentId: normalize(slide?.assignmentId || slide?.id),
+          lessonId: normalize(slide?.id || slide?.assignmentId),
+          lessonDay: normalize(slide?.day),
+          lessonTitle: normalize(slide?.title || slide?.topic),
+          sessionDate: localDateKey(),
+          students: roster.map(({ student, key, name }) => {
+            const row = stats[key] || {};
+            return {
+              studentUid: studentUid(student),
+              studentCode: studentCode(student),
+              studentEmail: studentEmail(student),
+              studentName: name,
+              turns: Number(row.turns || 0),
+              correct: Number(row.correct || 0),
+              needsReview: Number(row.needsHelp || row.needsReview || 0),
+              skipped: Number(row.skipped || 0),
+              presenterAbsent: absentKeys.has(key),
+            };
+          }),
+        });
+        if (saveSequence.current === sequence) setSaveState("saved");
+      } catch (saveError) {
+        console.error("class participation save failed", saveError);
+        if (saveSequence.current === sequence) setSaveState("failed");
+      }
+    }, 800);
+
+    return () => window.clearTimeout(timer);
+  }, [stats, absentKeys, selectedClassId, selectedClass, course, slide, roster, loadingStudents]);
+
   const current = roster.find((entry) => entry.key === currentKey) || null;
   const eligible = roster.filter((entry) => !absentKeys.has(entry.key));
   const participatedKeys = new Set(Object.keys(stats).filter((key) => Number(stats[key]?.turns || 0) > 0));
   const correctCount = Object.values(stats).reduce((sum, row) => sum + Number(row?.correct || 0), 0);
-  const helpCount = Object.values(stats).reduce((sum, row) => sum + Number(row?.needsHelp || 0), 0);
+  const helpCount = Object.values(stats).reduce((sum, row) => sum + Number(row?.needsHelp || row?.needsReview || 0), 0);
 
   function pickStudent() {
     if (!eligible.length) {
@@ -224,6 +293,14 @@ export default function PresenterStudentPicker({ slide }) {
     setLastMarked("");
   }
 
+  const saveLabel = saveState === "saving" || saveState === "pending"
+    ? "Saving…"
+    : saveState === "saved"
+      ? "Saved"
+      : saveState === "failed"
+        ? "Save failed"
+        : "";
+
   return (
     <section className="presenter-student-picker" aria-label="Random student participation">
       <div className="presenter-student-toolbar">
@@ -272,16 +349,17 @@ export default function PresenterStudentPicker({ slide }) {
           <summary aria-label="Participation details">•••</summary>
           <div className="presenter-student-more-panel">
             <strong>Lesson participation</strong>
-            <p>Participated {participatedKeys.size}/{eligible.length} · Correct {correctCount} · Needs help {helpCount} · Presenter absent {absentKeys.size}</p>
-            <small>“Absent” only removes a learner from this presenter rotation. It does not change official attendance.</small>
+            <p>Participated {participatedKeys.size}/{eligible.length} · Correct {correctCount} · Needs review {helpCount} · Presenter absent {absentKeys.size}</p>
+            <small>Saved to Class Participation. “Absent” only removes a learner from this presenter rotation and never changes official attendance or grades.</small>
             <button type="button" onClick={resetLessonParticipation} disabled={!students.length}>Reset participation</button>
           </div>
         </details>
       </div>
 
       <div className="presenter-student-status-line" aria-live="polite">
-        <span>Participation {participatedKeys.size}/{eligible.length} · {correctCount} correct · {helpCount} need help</span>
+        <span>Participation {participatedKeys.size}/{eligible.length} · {correctCount} correct · {helpCount} need review</span>
         {lastMarked ? <strong>Recorded: {markedLabel(lastMarked)}</strong> : null}
+        {saveLabel ? <strong className={`presenter-student-save-state is-${saveState}`}>{saveLabel}</strong> : null}
         {error ? <strong className="presenter-student-error">{error}</strong> : null}
       </div>
     </section>
