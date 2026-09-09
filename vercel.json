@@ -20,6 +20,10 @@
       "destination": "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/attendance-confirmation-emails/retry-failed"
     },
     {
+      "source": "/api/class-participation/(.*)",
+      "destination": "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/class-participation/$1"
+    },
+    {
       "source": "/api/calendar/(.*)",
       "destination": "https://us-central1-falowen-examiner-trainer.cloudfunctions.net/api/calendar/$1"
     },
