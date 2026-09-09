@@ -1,0 +1,89 @@
+name: Deploy Class Participation API
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'functions/classParticipationApi.js'
+      - 'functions/presenterConceptLabels.js'
+      - 'scripts/patchClassParticipationApi.mjs'
+      - 'scripts/patchPresenterConceptLabels.mjs'
+      - 'firebase.json'
+      - '.github/workflows/deploy-class-participation-api.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: falowenadmin-class-participation-api-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      FIREBASE_PROJECT_ID: falowen-examiner-trainer
+      GOOGLE_CLOUD_PROJECT: falowen-examiner-trainer
+      GCLOUD_PROJECT: falowen-examiner-trainer
+      CLOUD_RUNTIME_CONFIG: ${{ secrets.FALOWEN_ADMIN_CLOUD_RUNTIME_CONFIG || '{}' }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - name: Validate participation patches
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check scripts/patchClassParticipationApi.mjs
+          node --check scripts/patchPresenterConceptLabels.mjs
+          node scripts/patchClassParticipationApi.mjs
+          node scripts/patchPresenterConceptLabels.mjs
+          node --check functions/classParticipationApi.js
+          node --check functions/presenterConceptLabels.js
+          node --check functions/index.js
+          grep -F 'reviewRecommendation' functions/classParticipationApi.js
+          grep -F 'conceptLabel' functions/classParticipationApi.js
+
+      - name: Restore clean deployment source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git reset --hard "$GITHUB_SHA"
+          git clean -fd
+
+      - name: Install functions dependencies
+        working-directory: functions
+        run: npm ci
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_FALOWEN }}'
+
+      - name: Deploy participation API only
+        shell: bash
+        run: |
+          set -o pipefail
+          firebase deploy --project "$FIREBASE_PROJECT_ID" --only functions:falowenadmin:api --force --debug 2>&1 | tee firebase-participation-deploy.log
+
+      - name: Upload Firebase failure log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: firebase-participation-deploy-log-${{ github.sha }}
+          path: |
+            firebase-participation-deploy.log
+            firebase-debug.log
+          if-no-files-found: warn
+          retention-days: 3
