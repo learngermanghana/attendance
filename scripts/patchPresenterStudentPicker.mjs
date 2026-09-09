@@ -6,19 +6,20 @@ const presenterPaths = [
     path: new URL("../src/components/TeachingSlidePresenter.jsx", import.meta.url),
     signature: "export default function TeachingSlidePresenter({ slide, topicLabel, onExit })",
     nextSignature: "export default function TeachingSlidePresenter({ slide, topicLabel, onExit, nextLessonHref = \"\", nextLessonLabel = \"\" })",
+    fallbackPicker: "<PresenterStudentPicker slide={slide} />",
   },
   {
     path: new URL("../src/components/A1GrammarPresenter.jsx", import.meta.url),
     signature: "export default function A1GrammarPresenter({ slide, topicLabel, onExit })",
     nextSignature: "export default function A1GrammarPresenter({ slide, topicLabel, onExit, nextLessonHref = \"\", nextLessonLabel = \"\" })",
+    fallbackPicker: '<PresenterStudentPicker slide={slide} questions={stage?.id === "grammar-check" ? stage.items : []} questionContext={stage?.id === "grammar-check" ? stage.id : ""} />',
   },
 ];
 
 const importAnchor = 'import "./TeachingSlidePresenter.css";';
 const importLine = 'import PresenterStudentPicker from "./PresenterStudentPicker.jsx";';
-const pickerRender = "<PresenterStudentPicker slide={slide} />";
 
-for (const { path, signature, nextSignature } of presenterPaths) {
+for (const { path, signature, nextSignature, fallbackPicker } of presenterPaths) {
   let source = fs.readFileSync(path, "utf8");
 
   if (!source.includes(importLine)) {
@@ -28,14 +29,17 @@ for (const { path, signature, nextSignature } of presenterPaths) {
     source = source.replace(importAnchor, `${importAnchor}\n${importLine}`);
   }
 
-  if (!source.includes(pickerRender)) {
+  // A1 now owns a richer roster-sized question integration directly in the
+  // component. Treat any existing PresenterStudentPicker render as authoritative
+  // so prebuild never inserts a second toolbar over concurrent source updates.
+  if (!source.includes("<PresenterStudentPicker")) {
     const mainAnchor = "        <main className={`presenter-content presenter-content-${stage.type}`}>";
     if (!source.includes(mainAnchor)) {
       throw new Error(`Presenter student picker render anchor missing in ${path.pathname}`);
     }
     source = source.replace(
       mainAnchor,
-      `        ${pickerRender}\n\n${mainAnchor}`,
+      `        ${fallbackPicker}\n\n${mainAnchor}`,
     );
   }
 
@@ -98,4 +102,4 @@ if (!pickerCss.includes(footerPolishMarker)) {
   fs.writeFileSync(pickerCssPath, pickerCss);
 }
 
-console.log("Random student toolbar and next-lesson navigation patched into A1-C1 presenter modes.");
+console.log("Random student toolbar, A1 unique questions, and next-lesson navigation are build-safe.");
