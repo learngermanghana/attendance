@@ -66,6 +66,12 @@ function randomItem(items = []) {
   return items[Math.floor(Math.random() * items.length)] || null;
 }
 
+function markedLabel(value = "") {
+  if (value === "needsHelp") return "Needs help";
+  if (!value) return "";
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 export default function PresenterStudentPicker({ slide }) {
   const [classOptions, setClassOptions] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState(() => safeStorageGet(LAST_CLASS_KEY));
@@ -220,7 +226,7 @@ export default function PresenterStudentPicker({ slide }) {
 
   return (
     <section className="presenter-student-picker" aria-label="Random student participation">
-      <div className="presenter-student-picker-row">
+      <div className="presenter-student-toolbar">
         <label className="presenter-student-class-select">
           <span>Class</span>
           <select
@@ -236,35 +242,48 @@ export default function PresenterStudentPicker({ slide }) {
           </select>
         </label>
 
-        <div className="presenter-student-current">
-          <span>{loadingStudents ? "Loading roster…" : current ? "Student" : "Random student"}</span>
-          <strong>{current?.name || (students.length ? `${students.length} students ready` : "Select a class")}</strong>
+        <div className={`presenter-student-current ${current ? "is-active" : ""}`}>
+          <span>{loadingStudents ? "Loading roster…" : current ? "Current student" : "Students"}</span>
+          <strong>{current?.name || (students.length ? `${students.length} ready` : "Select class")}</strong>
         </div>
+
+        {current ? (
+          <div className="presenter-student-actions" role="group" aria-label="Record student response">
+            <button type="button" className="is-correct" onClick={() => markCurrent("correct")} disabled={Boolean(lastMarked)}>Correct</button>
+            <button type="button" className="is-help" onClick={() => markCurrent("needsHelp")} disabled={Boolean(lastMarked)}>Needs help</button>
+            <button type="button" className="is-quiet" onClick={() => markCurrent("skip")} disabled={Boolean(lastMarked)}>Skip</button>
+            <button
+              type="button"
+              className="is-quiet"
+              title="Removes this learner from the presenter rotation only; official attendance is unchanged."
+              onClick={() => markCurrent("absent")}
+              disabled={Boolean(lastMarked)}
+            >
+              Absent
+            </button>
+          </div>
+        ) : null}
 
         <button type="button" className="presenter-pick-student" onClick={pickStudent} disabled={loadingStudents || !eligible.length}>
-          {current ? "Next student" : "Pick student"}
+          {current ? "Next student →" : "Pick student"}
         </button>
+
+        <details className="presenter-student-more">
+          <summary aria-label="Participation details">•••</summary>
+          <div className="presenter-student-more-panel">
+            <strong>Lesson participation</strong>
+            <p>Participated {participatedKeys.size}/{eligible.length} · Correct {correctCount} · Needs help {helpCount} · Presenter absent {absentKeys.size}</p>
+            <small>“Absent” only removes a learner from this presenter rotation. It does not change official attendance.</small>
+            <button type="button" onClick={resetLessonParticipation} disabled={!students.length}>Reset participation</button>
+          </div>
+        </details>
       </div>
 
-      {current ? (
-        <div className="presenter-student-actions">
-          <button type="button" onClick={() => markCurrent("correct")} disabled={Boolean(lastMarked)}>Correct</button>
-          <button type="button" onClick={() => markCurrent("needsHelp")} disabled={Boolean(lastMarked)}>Needs help</button>
-          <button type="button" onClick={() => markCurrent("skip")} disabled={Boolean(lastMarked)}>Skip</button>
-          <button type="button" onClick={() => markCurrent("absent")} disabled={Boolean(lastMarked)}>Absent</button>
-          {lastMarked ? <span className="presenter-student-marked">Recorded: {lastMarked === "needsHelp" ? "Needs help" : lastMarked}</span> : null}
-        </div>
-      ) : null}
-
-      <div className="presenter-student-summary">
-        <span>Participated {participatedKeys.size}/{eligible.length}</span>
-        <span>Correct {correctCount}</span>
-        <span>Needs help {helpCount}</span>
-        <span>Presenter absent {absentKeys.size}</span>
-        <button type="button" onClick={resetLessonParticipation} disabled={!students.length}>Reset</button>
+      <div className="presenter-student-status-line" aria-live="polite">
+        <span>Participation {participatedKeys.size}/{eligible.length} · {correctCount} correct · {helpCount} need help</span>
+        {lastMarked ? <strong>Recorded: {markedLabel(lastMarked)}</strong> : null}
+        {error ? <strong className="presenter-student-error">{error}</strong> : null}
       </div>
-      <small className="presenter-student-note">Participation is for this presenter lesson only. “Absent” does not change official attendance.</small>
-      {error ? <small className="presenter-student-error">{error}</small> : null}
     </section>
   );
 }
