@@ -18,6 +18,7 @@
         "node scripts/patchStudentPaymentContractLifecycle.mjs",
         "node scripts/patchStudentUpgradePaymentDriven.mjs",
         "node scripts/patchStudentProfileUpdateApi.mjs",
+        "node scripts/patchClassParticipationApi.mjs",
         "node scripts/patchStudentPaymentUpdateEmails.mjs",
         "node scripts/patchAutomaticOrientationSync.mjs",
         "node scripts/patchStructuredWritingEvidence.mjs",
