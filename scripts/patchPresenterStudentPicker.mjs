@@ -89,4 +89,12 @@ if (!pageSource.includes(standardCallUpdated)) {
 
 fs.writeFileSync(pagePath, pageSource);
 
+const pickerCssPath = new URL("../src/components/PresenterStudentPicker.css", import.meta.url);
+let pickerCss = fs.readFileSync(pickerCssPath, "utf8");
+const footerPolishMarker = "/* presenter-next-lesson-footer-polish */";
+if (!pickerCss.includes(footerPolishMarker)) {
+  pickerCss += `\n${footerPolishMarker}\n.presenter-stage > .presenter-footer > button:last-of-type {\n  border-color: #1d4ed8;\n  background: #1d4ed8;\n  color: #fff;\n}\n\n.presenter-stage > .presenter-footer > .presenter-next-lesson {\n  margin-left: -0.35rem;\n}\n`;
+  fs.writeFileSync(pickerCssPath, pickerCss);
+}
+
 console.log("Random student toolbar and next-lesson navigation patched into A1-C1 presenter modes.");
