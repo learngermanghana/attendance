@@ -27,6 +27,12 @@ function formatDate(value = "") {
   return parsed.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
 }
 
+function latestLearningResponse(record = {}) {
+  const rows = (Array.isArray(record.questionResponses) ? record.questionResponses : [])
+    .filter((response) => response?.result === "correct" || response?.result === "needs_review");
+  return rows[rows.length - 1] || null;
+}
+
 export default function ClassParticipationPage() {
   const [classes, setClasses] = useState([]);
   const [classId, setClassId] = useState("");
@@ -188,21 +194,31 @@ export default function ClassParticipationPage() {
                     <th>Turns</th>
                     <th>Correct</th>
                     <th>Needs review</th>
-                    <th>Skipped</th>
+                    <th>Latest question</th>
                     <th>Presenter status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {records.map((record) => (
-                    <tr key={record.id}>
-                      <td><strong>{record.studentName || record.studentCode || "Student"}</strong></td>
-                      <td>{record.turns || 0}</td>
-                      <td>{record.correct || 0}</td>
-                      <td>{record.needsReview || 0}</td>
-                      <td>{record.skipped || 0}</td>
-                      <td>{record.presenterAbsent ? "Not in presenter rotation" : Number(record.turns || 0) > 0 ? "Participated" : "Not selected yet"}</td>
-                    </tr>
-                  ))}
+                  {records.map((record) => {
+                    const latest = latestLearningResponse(record);
+                    return (
+                      <tr key={record.id}>
+                        <td><strong>{record.studentName || record.studentCode || "Student"}</strong></td>
+                        <td>{record.turns || 0}</td>
+                        <td>{record.correct || 0}</td>
+                        <td>{record.needsReview || 0}</td>
+                        <td>
+                          {latest ? (
+                            <div className="class-participation-question-evidence">
+                              <span>{latest.question}</span>
+                              <strong>{latest.result === "correct" ? "Correct" : "Needs review"}</strong>
+                            </div>
+                          ) : "—"}
+                        </td>
+                        <td>{record.presenterAbsent ? "Not in presenter rotation" : Number(record.turns || 0) > 0 ? "Participated" : "Not selected yet"}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -212,7 +228,7 @@ export default function ClassParticipationPage() {
 
       <aside className="class-participation-note">
         <strong>How to use this data</strong>
-        <p>Use “Needs review” to decide what to revisit in the next lesson. A learner’s participation count is not an academic score, and presenter absence is not the official attendance record.</p>
+        <p>Use “Needs review” and the saved question evidence to decide what to revisit in the next lesson. A learner’s participation count is not an academic score, and presenter absence is not the official attendance record.</p>
       </aside>
     </section>
   );
