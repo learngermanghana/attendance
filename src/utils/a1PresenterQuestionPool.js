@@ -1,3 +1,5 @@
+import { presenterConceptLabel } from "./presenterConceptLabels.js";
+
 const VARIANTS = [
   (question) => question,
   (question) => `Explain this in your own words: ${question}`,
@@ -21,6 +23,7 @@ function normalizeQuestion(question = {}, index = 0) {
     questionDe: questionText,
     answerDe: clean(question.answerDe || question.answer || question.modelAnswer),
     noteEn: clean(question.noteEn || question.note || ""),
+    conceptLabel: clean(question.conceptLabel) || presenterConceptLabel(questionText),
   };
 }
 
@@ -56,6 +59,7 @@ export function buildA1PresenterQuestionPool(baseQuestions = [], targetSize = 0,
         answerDe: base.answerDe,
         noteEn: base.noteEn,
         sourceQuestion: base.questionDe,
+        conceptLabel: base.conceptLabel,
         sourceIndex,
         variantIndex,
       });
