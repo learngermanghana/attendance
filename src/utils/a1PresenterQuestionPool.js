@@ -10,6 +10,8 @@ const VARIANTS = [
 ];
 
 const clean = (value) => String(value ?? "").trim();
+const MIN_A1_PRESENTER_QUESTIONS = 10;
+const MAX_A1_PRESENTER_QUESTIONS = 150;
 
 function normalizeQuestion(question = {}, index = 0) {
   const questionText = clean(question.questionDe || question.question || question.prompt);
@@ -24,6 +26,8 @@ function normalizeQuestion(question = {}, index = 0) {
 
 /**
  * Expand the small curated A1 concept bank into a roster-sized live-class pool.
+ * Always keep at least 10 questions available, then grow with the selected class
+ * roster so each learner can receive one unused question per round.
  * Variants deliberately stay concept-first: no gap-fill or workbook duplication.
  */
 export function buildA1PresenterQuestionPool(baseQuestions = [], targetSize = 0, seedPrefix = "a1") {
@@ -32,7 +36,10 @@ export function buildA1PresenterQuestionPool(baseQuestions = [], targetSize = 0,
     .filter(Boolean);
   if (!normalized.length) return [];
 
-  const requested = Math.max(1, Math.min(Number(targetSize) || normalized.length, 150));
+  const requested = Math.min(
+    Math.max(MIN_A1_PRESENTER_QUESTIONS, Number(targetSize) || normalized.length),
+    MAX_A1_PRESENTER_QUESTIONS,
+  );
   const pool = [];
   let cycle = 0;
 
