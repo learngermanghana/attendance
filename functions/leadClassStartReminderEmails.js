@@ -262,7 +262,9 @@ function resolveLeadReminderConfig(runtimeConfig = {}, env = process.env) {
 function leadIsBlocked(lead = {}) {
   return BLOCKED_LEAD_STATUSES.has(comparable(lead.status))
     || BLOCKED_PAYMENT_STATUSES.has(comparable(lead.paymentStatus))
-    || Boolean(text(lead.studentCode));
+    || Boolean(text(lead.studentCode))
+    || Number(lead.followUpCount || 0) >= 1
+    || Boolean(text(lead.lastFollowUpAt));
 }
 
 function dueDedupeKey(item = {}) {
