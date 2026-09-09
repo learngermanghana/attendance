@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { listClasses } from "../services/classesService.js";
 import { listStudentsByClass } from "../services/studentsService.js";
 import { saveClassParticipationSession } from "../services/classParticipationService.js";
+import { buildA1PresenterQuestionPool, resultLabel } from "../utils/a1PresenterQuestionPool.js";
 import "./PresenterStudentPicker.css";
 
 const LAST_CLASS_KEY = "falowen:presenter:last-class";
@@ -86,13 +87,19 @@ function randomItem(items = []) {
   return items[Math.floor(Math.random() * items.length)] || null;
 }
 
-function markedLabel(value = "") {
-  if (value === "needsHelp") return "Needs help";
-  if (!value) return "";
-  return value.charAt(0).toUpperCase() + value.slice(1);
+function recordedResult(status = "") {
+  if (status === "needsHelp") return "needs_review";
+  if (status === "absent") return "presenter_absent";
+  return status;
 }
 
-export default function PresenterStudentPicker({ slide }) {
+export default function PresenterStudentPicker({
+  slide,
+  questions = [],
+  questionContext = "",
+  onQuestionChange,
+  renderQuestionExternally = false,
+}) {
   const [classOptions, setClassOptions] = useState([]);
   const [selectedClassId, setSelectedClassId] = useState(() => safeStorageGet(LAST_CLASS_KEY));
   const [students, setStudents] = useState([]);
@@ -101,6 +108,9 @@ export default function PresenterStudentPicker({ slide }) {
   const [error, setError] = useState("");
   const [currentKey, setCurrentKey] = useState("");
   const [roundPicked, setRoundPicked] = useState(() => new Set());
+  const [roundQuestionIds, setRoundQuestionIds] = useState(() => new Set());
+  const [currentQuestionId, setCurrentQuestionId] = useState("");
+  const [showQuestionAnswer, setShowQuestionAnswer] = useState(false);
   const [absentKeys, setAbsentKeys] = useState(() => new Set());
   const [stats, setStats] = useState({});
   const [lastMarked, setLastMarked] = useState("");
@@ -117,6 +127,21 @@ export default function PresenterStudentPicker({ slide }) {
     () => matchingClasses.find((entry) => classIdOf(entry) === selectedClassId) || null,
     [matchingClasses, selectedClassId],
   );
+  const roster = useMemo(() => students.map((student, index) => ({
+    student,
+    key: studentKey(student, index),
+    name: studentName(student),
+  })), [students]);
+  const hasQuestionMode = Array.isArray(questions) && questions.length > 0;
+  const questionSignature = useMemo(
+    () => (Array.isArray(questions) ? questions : []).map((question) => `${normalize(question?.questionDe || question?.question)}|${normalize(question?.answerDe || question?.answer)}`).join("||"),
+    [questions],
+  );
+  const questionPool = useMemo(() => buildA1PresenterQuestionPool(
+    questions,
+    Math.max(roster.length, questions.length || 0),
+    `${normalize(slide?.assignmentId || slide?.id || "a1")}-${normalize(questionContext || "class-check")}`,
+  ), [questions, roster.length, slide?.assignmentId, slide?.id, questionContext]);
 
   useEffect(() => {
     let cancelled = false;
@@ -153,8 +178,12 @@ export default function PresenterStudentPicker({ slide }) {
     setError("");
     setSaveState("idle");
     setCurrentKey("");
+    setCurrentQuestionId("");
+    setShowQuestionAnswer(false);
     setLastMarked("");
     setRoundPicked(new Set());
+    setRoundQuestionIds(new Set());
+    onQuestionChange?.(null);
 
     const storageKey = participationStorageKey(slide, selectedClassId);
     const saved = readParticipation(storageKey);
@@ -163,8 +192,8 @@ export default function PresenterStudentPicker({ slide }) {
 
     (async () => {
       try {
-        const roster = await listStudentsByClass(selectedClassId, { className: selectedClass?.name || selectedClassId });
-        if (!cancelled) setStudents(Array.isArray(roster) ? roster : []);
+        const rosterRows = await listStudentsByClass(selectedClassId, { className: selectedClass?.name || selectedClassId });
+        if (!cancelled) setStudents(Array.isArray(rosterRows) ? rosterRows : []);
       } catch {
         if (!cancelled) {
           setStudents([]);
@@ -176,7 +205,17 @@ export default function PresenterStudentPicker({ slide }) {
     })();
 
     return () => { cancelled = true; };
-  }, [selectedClassId, selectedClass, slide]);
+  }, [selectedClassId, selectedClass, slide, onQuestionChange]);
+
+  useEffect(() => {
+    setCurrentKey("");
+    setCurrentQuestionId("");
+    setShowQuestionAnswer(false);
+    setLastMarked("");
+    setRoundPicked(new Set());
+    setRoundQuestionIds(new Set());
+    onQuestionChange?.(null);
+  }, [questionContext, questionSignature, onQuestionChange]);
 
   useEffect(() => {
     if (!selectedClassId) return;
@@ -185,12 +224,6 @@ export default function PresenterStudentPicker({ slide }) {
       JSON.stringify({ stats, absentKeys: [...absentKeys] }),
     );
   }, [stats, absentKeys, selectedClassId, slide]);
-
-  const roster = useMemo(() => students.map((student, index) => ({
-    student,
-    key: studentKey(student, index),
-    name: studentName(student),
-  })), [students]);
 
   useEffect(() => {
     if (!selectedClassId || loadingStudents || !roster.length) return undefined;
@@ -210,6 +243,7 @@ export default function PresenterStudentPicker({ slide }) {
           lessonDay: normalize(slide?.day),
           lessonTitle: normalize(slide?.title || slide?.topic),
           sessionDate: localDateKey(),
+          questionPoolSize: questionPool.length,
           students: roster.map(({ student, key, name }) => {
             const row = stats[key] || {};
             return {
@@ -222,6 +256,7 @@ export default function PresenterStudentPicker({ slide }) {
               needsReview: Number(row.needsHelp || row.needsReview || 0),
               skipped: Number(row.skipped || 0),
               presenterAbsent: absentKeys.has(key),
+              questionResponses: Array.isArray(row.responses) ? row.responses : [],
             };
           }),
         });
@@ -233,40 +268,88 @@ export default function PresenterStudentPicker({ slide }) {
     }, 800);
 
     return () => window.clearTimeout(timer);
-  }, [stats, absentKeys, selectedClassId, selectedClass, course, slide, roster, loadingStudents]);
+  }, [stats, absentKeys, selectedClassId, selectedClass, course, slide, roster, loadingStudents, questionPool.length]);
 
   const current = roster.find((entry) => entry.key === currentKey) || null;
   const eligible = roster.filter((entry) => !absentKeys.has(entry.key));
+  const currentQuestion = questionPool.find((question) => question.id === currentQuestionId) || null;
   const participatedKeys = new Set(Object.keys(stats).filter((key) => Number(stats[key]?.turns || 0) > 0));
   const correctCount = Object.values(stats).reduce((sum, row) => sum + Number(row?.correct || 0), 0);
   const helpCount = Object.values(stats).reduce((sum, row) => sum + Number(row?.needsHelp || row?.needsReview || 0), 0);
+  const availableQuestionCount = Math.max(0, questionPool.length - roundQuestionIds.size);
+
+  function publishQuestion(question) {
+    if (!question) {
+      onQuestionChange?.(null);
+      return;
+    }
+    const poolPosition = questionPool.findIndex((candidate) => candidate.id === question.id) + 1;
+    onQuestionChange?.({ ...question, poolPosition, poolSize: questionPool.length });
+  }
 
   function pickStudent() {
     if (!eligible.length) {
       setCurrentKey("");
+      setCurrentQuestionId("");
+      publishQuestion(null);
       return;
     }
 
-    let available = eligible.filter((entry) => !roundPicked.has(entry.key));
-    let nextRound = new Set(roundPicked);
-    if (!available.length) {
-      nextRound = new Set();
-      available = eligible;
+    let availableStudents = eligible.filter((entry) => !roundPicked.has(entry.key));
+    let nextRoundPicked = new Set(roundPicked);
+    let nextRoundQuestionIds = new Set(roundQuestionIds);
+    if (!availableStudents.length) {
+      nextRoundPicked = new Set();
+      nextRoundQuestionIds = new Set();
+      availableStudents = eligible;
     }
 
-    const picked = randomItem(available);
+    const picked = randomItem(availableStudents);
     if (!picked) return;
-    nextRound.add(picked.key);
-    setRoundPicked(nextRound);
+    nextRoundPicked.add(picked.key);
+
+    let assignedQuestion = null;
+    if (hasQuestionMode && questionPool.length) {
+      let availableQuestions = questionPool.filter((question) => !nextRoundQuestionIds.has(question.id));
+      if (!availableQuestions.length) {
+        nextRoundQuestionIds = new Set();
+        availableQuestions = questionPool;
+      }
+      const previousQuestionIds = new Set(
+        (Array.isArray(stats[picked.key]?.responses) ? stats[picked.key].responses : [])
+          .map((response) => normalize(response?.questionId))
+          .filter(Boolean),
+      );
+      const unseenForStudent = availableQuestions.filter((question) => !previousQuestionIds.has(question.id));
+      assignedQuestion = randomItem(unseenForStudent.length ? unseenForStudent : availableQuestions);
+      if (assignedQuestion) nextRoundQuestionIds.add(assignedQuestion.id);
+    }
+
+    setRoundPicked(nextRoundPicked);
+    setRoundQuestionIds(nextRoundQuestionIds);
     setCurrentKey(picked.key);
+    setCurrentQuestionId(assignedQuestion?.id || "");
+    setShowQuestionAnswer(false);
     setLastMarked("");
+    publishQuestion(assignedQuestion);
   }
 
   function markCurrent(status) {
     if (!current || lastMarked) return;
+    if (hasQuestionMode && !currentQuestion) return;
+    const result = recordedResult(status);
+    const response = currentQuestion ? {
+      questionId: currentQuestion.id,
+      question: currentQuestion.questionDe,
+      sourceQuestion: currentQuestion.sourceQuestion || currentQuestion.questionDe,
+      result,
+      questionContext: normalize(questionContext),
+      recordedAt: new Date().toISOString(),
+    } : null;
+
     setStats((currentStats) => {
-      const previous = currentStats[current.key] || { name: current.name, turns: 0, correct: 0, needsHelp: 0, skipped: 0 };
-      const next = { ...previous, name: current.name };
+      const previous = currentStats[current.key] || { name: current.name, turns: 0, correct: 0, needsHelp: 0, skipped: 0, responses: [] };
+      const next = { ...previous, name: current.name, responses: Array.isArray(previous.responses) ? [...previous.responses] : [] };
       if (status === "correct") {
         next.turns += 1;
         next.correct += 1;
@@ -276,6 +359,7 @@ export default function PresenterStudentPicker({ slide }) {
       } else if (status === "skip") {
         next.skipped += 1;
       }
+      if (response) next.responses.push(response);
       return { ...currentStats, [current.key]: next };
     });
 
@@ -287,10 +371,14 @@ export default function PresenterStudentPicker({ slide }) {
 
   function resetLessonParticipation() {
     setCurrentKey("");
+    setCurrentQuestionId("");
+    setShowQuestionAnswer(false);
     setRoundPicked(new Set());
+    setRoundQuestionIds(new Set());
     setAbsentKeys(new Set());
     setStats({});
     setLastMarked("");
+    publishQuestion(null);
   }
 
   const saveLabel = saveState === "saving" || saveState === "pending"
@@ -300,6 +388,8 @@ export default function PresenterStudentPicker({ slide }) {
       : saveState === "failed"
         ? "Save failed"
         : "";
+  const resultText = lastMarked ? resultLabel(recordedResult(lastMarked)) : "";
+  const mustRecordBeforeNext = Boolean(hasQuestionMode && current && currentQuestion && !lastMarked);
 
   return (
     <section className="presenter-student-picker" aria-label="Random student participation">
@@ -326,23 +416,29 @@ export default function PresenterStudentPicker({ slide }) {
 
         {current ? (
           <div className="presenter-student-actions" role="group" aria-label="Record student response">
-            <button type="button" className="is-correct" onClick={() => markCurrent("correct")} disabled={Boolean(lastMarked)}>Correct</button>
-            <button type="button" className="is-help" onClick={() => markCurrent("needsHelp")} disabled={Boolean(lastMarked)}>Needs help</button>
-            <button type="button" className="is-quiet" onClick={() => markCurrent("skip")} disabled={Boolean(lastMarked)}>Skip</button>
+            <button type="button" className="is-correct" onClick={() => markCurrent("correct")} disabled={Boolean(lastMarked) || (hasQuestionMode && !currentQuestion)}>Correct</button>
+            <button type="button" className="is-help" onClick={() => markCurrent("needsHelp")} disabled={Boolean(lastMarked) || (hasQuestionMode && !currentQuestion)}>Needs help</button>
+            <button type="button" className="is-quiet" onClick={() => markCurrent("skip")} disabled={Boolean(lastMarked) || (hasQuestionMode && !currentQuestion)}>Skip</button>
             <button
               type="button"
               className="is-quiet"
               title="Removes this learner from the presenter rotation only; official attendance is unchanged."
               onClick={() => markCurrent("absent")}
-              disabled={Boolean(lastMarked)}
+              disabled={Boolean(lastMarked) || (hasQuestionMode && !currentQuestion)}
             >
               Absent
             </button>
           </div>
         ) : null}
 
-        <button type="button" className="presenter-pick-student" onClick={pickStudent} disabled={loadingStudents || !eligible.length}>
-          {current ? "Next student →" : "Pick student"}
+        <button
+          type="button"
+          className="presenter-pick-student"
+          onClick={pickStudent}
+          disabled={loadingStudents || !eligible.length || mustRecordBeforeNext}
+          title={mustRecordBeforeNext ? "Record Correct, Needs help, Skip or Absent before moving to another student." : ""}
+        >
+          {mustRecordBeforeNext ? "Record result first" : current ? "Next student →" : "Pick student"}
         </button>
 
         <details className="presenter-student-more">
@@ -350,15 +446,32 @@ export default function PresenterStudentPicker({ slide }) {
           <div className="presenter-student-more-panel">
             <strong>Lesson participation</strong>
             <p>Participated {participatedKeys.size}/{eligible.length} · Correct {correctCount} · Needs review {helpCount} · Presenter absent {absentKeys.size}</p>
+            {hasQuestionMode ? <p>Unique questions {questionPool.length} · {availableQuestionCount} still unused in this round.</p> : null}
             <small>Saved to Class Participation. “Absent” only removes a learner from this presenter rotation and never changes official attendance or grades.</small>
             <button type="button" onClick={resetLessonParticipation} disabled={!students.length}>Reset participation</button>
           </div>
         </details>
       </div>
 
+      {hasQuestionMode && !renderQuestionExternally ? (
+        <div className="presenter-student-question-card">
+          <div>
+            <span>Unique A1 concept question</span>
+            <strong>{currentQuestion?.questionDe || "Pick a student to assign a question."}</strong>
+          </div>
+          {currentQuestion ? (
+            <button type="button" onClick={() => setShowQuestionAnswer((currentValue) => !currentValue)}>
+              {showQuestionAnswer ? "Hide answer" : "Reveal answer"}
+            </button>
+          ) : null}
+          {showQuestionAnswer && currentQuestion ? <p>{currentQuestion.answerDe}</p> : null}
+        </div>
+      ) : null}
+
       <div className="presenter-student-status-line" aria-live="polite">
         <span>Participation {participatedKeys.size}/{eligible.length} · {correctCount} correct · {helpCount} need review</span>
-        {lastMarked ? <strong>Recorded: {markedLabel(lastMarked)}</strong> : null}
+        {hasQuestionMode ? <span>Questions {questionPool.length} · {availableQuestionCount} available</span> : null}
+        {resultText ? <strong>Recorded: {resultText}</strong> : null}
         {saveLabel ? <strong className={`presenter-student-save-state is-${saveState}`}>{saveLabel}</strong> : null}
         {error ? <strong className="presenter-student-error">{error}</strong> : null}
       </div>
