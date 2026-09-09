@@ -187,6 +187,28 @@
   text-transform: uppercase;
 }
 
+.class-participation-question-evidence {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 240px;
+  max-width: 360px;
+  white-space: normal;
+}
+
+.class-participation-question-evidence span {
+  color: #334155;
+  line-height: 1.35;
+}
+
+.class-participation-question-evidence strong {
+  width: fit-content;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.72rem;
+}
+
 .class-participation-empty,
 .class-participation-error {
   margin: 0;
