@@ -6,10 +6,13 @@ on:
       - 'src/utils/objectiveMarking.js'
       - 'src/utils/autoMarking.js'
       - 'scripts/patchA1WritingPlaceholderReferences.mjs'
+      - 'scripts/patchObjectiveAnswerTimeParsing.mjs'
+      - 'scripts/patchA1TimeRestartedPartParsing.mjs'
       - 'scripts/patchMultipartObjectiveAnswerBlocks.mjs'
       - 'scripts/patchQSectionAliasHeadings.mjs'
       - 'tests/objective-adjacent-choice-answers.test.js'
       - 'tests/compact-objective-paste.test.js'
+      - 'tests/a1-7-restarted-teil-numbering.test.js'
       - 'tests/a1-11-labelled-reference-answer.test.js'
       - 'tests/auto-marking.test.js'
       - '.github/workflows/compact-objective-regressions.yml'
@@ -20,10 +23,13 @@ on:
       - 'src/utils/objectiveMarking.js'
       - 'src/utils/autoMarking.js'
       - 'scripts/patchA1WritingPlaceholderReferences.mjs'
+      - 'scripts/patchObjectiveAnswerTimeParsing.mjs'
+      - 'scripts/patchA1TimeRestartedPartParsing.mjs'
       - 'scripts/patchMultipartObjectiveAnswerBlocks.mjs'
       - 'scripts/patchQSectionAliasHeadings.mjs'
       - 'tests/objective-adjacent-choice-answers.test.js'
       - 'tests/compact-objective-paste.test.js'
+      - 'tests/a1-7-restarted-teil-numbering.test.js'
       - 'tests/a1-11-labelled-reference-answer.test.js'
       - 'tests/auto-marking.test.js'
       - '.github/workflows/compact-objective-regressions.yml'
@@ -37,13 +43,17 @@ jobs:
         with:
           node-version: 22
       - name: Apply committed marking compatibility patches
-        run: node scripts/patchA1WritingPlaceholderReferences.mjs
+        run: |
+          node scripts/patchA1WritingPlaceholderReferences.mjs
+          node scripts/patchObjectiveAnswerTimeParsing.mjs
       - name: Validate parser syntax
         run: |
           node --check src/utils/objectiveMarking.js
           node --check src/utils/autoMarking.js
           node --check scripts/patchA1WritingPlaceholderReferences.mjs
+          node --check scripts/patchObjectiveAnswerTimeParsing.mjs
+          node --check scripts/patchA1TimeRestartedPartParsing.mjs
           node --check scripts/patchMultipartObjectiveAnswerBlocks.mjs
           node --check scripts/patchQSectionAliasHeadings.mjs
       - name: Run compact objective regressions
-        run: node --test tests/objective-adjacent-choice-answers.test.js tests/compact-objective-paste.test.js tests/a1-11-labelled-reference-answer.test.js tests/auto-marking.test.js
+        run: node --test tests/objective-adjacent-choice-answers.test.js tests/compact-objective-paste.test.js tests/a1-7-restarted-teil-numbering.test.js tests/a1-11-labelled-reference-answer.test.js tests/auto-marking.test.js
