@@ -29,3 +29,4 @@ if (feedbackSource.includes(legacyDescription)) {
 
 fs.writeFileSync(feedbackTarget, feedbackSource);
 console.log("Objective parsing now preserves clock times and labels multipart review questions clearly.");
+await import("./patchA1TimeRestartedPartParsing.mjs");
