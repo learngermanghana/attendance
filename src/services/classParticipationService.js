@@ -22,7 +22,10 @@ async function parseResponse(response) {
   }
   if (!response.ok || data?.ok === false) {
     const safeText = text && !/^\s*</.test(text) ? text.slice(0, 500) : "";
-    throw new Error(String(data?.error || data?.message || safeText || `Participation request failed (${response.status}).`));
+    const error = new Error(String(data?.error || data?.message || safeText || `Participation request failed (${response.status}).`));
+    error.status = response.status;
+    error.data = data;
+    throw error;
   }
   return data;
 }
@@ -32,6 +35,15 @@ export async function saveClassParticipationSession(payload = {}) {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify(payload),
+  });
+  return parseResponse(response);
+}
+
+export async function getCurrentClassParticipationSession({ classId = "", assignmentId = "", sessionDate = "" } = {}) {
+  const query = new URLSearchParams({ classId, assignmentId, sessionDate }).toString();
+  const response = await fetch(`/api/class-participation/current?${query}`, {
+    method: "GET",
+    headers: await authHeaders(),
   });
   return parseResponse(response);
 }
