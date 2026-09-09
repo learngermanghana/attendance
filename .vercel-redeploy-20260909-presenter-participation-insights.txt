@@ -1,0 +1,1 @@
+Production redeploy trigger for fair-pick presenter rotation, end-of-class summary, needs-follow-up detection, reteach recommendations, and Class Participation teaching insights. Triggered 2026-09-09.
