@@ -24,6 +24,23 @@ test("every real A1 lesson has a dedicated four-item grammar or language mastery
   assert.equal(Object.keys(A1_GRAMMAR_CHECKS).length, 28);
 });
 
+test("A1 mastery checks test concepts instead of repeating workbook gap-fill drills", () => {
+  const workbookDrillPattern = /\b(?:ergänze|konjugiere|setze|ordne|schreibe|bilde)\b|___/i;
+  for (const [assignmentId, checks] of Object.entries(A1_GRAMMAR_CHECKS)) {
+    for (const item of checks) {
+      assert.doesNotMatch(
+        String(item.questionDe || ""),
+        workbookDrillPattern,
+        `${assignmentId} should ask a concept question rather than a workbook-style drill`,
+      );
+    }
+  }
+
+  assert.match(A1_GRAMMAR_CHECKS["A1-1.1-PRACTICE"][0].questionDe, /concept behind W-Wörter/i);
+  assert.match(A1_GRAMMAR_CHECKS["A1-9"][0].questionDe, /difference between kein and nicht/i);
+  assert.match(A1_GRAMMAR_CHECKS["A1-12.1"][0].questionDe, /concept behind two-way prepositions/i);
+});
+
 test("A1 presenter is routed separately from A2-C1 and does not depend on speaking questions", () => {
   const page = fs.readFileSync(new URL("../src/pages/TeachingSlidesPage.jsx", import.meta.url), "utf8");
   const presenter = fs.readFileSync(new URL("../src/components/A1GrammarPresenter.jsx", import.meta.url), "utf8");
