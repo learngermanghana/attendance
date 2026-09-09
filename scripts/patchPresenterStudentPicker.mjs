@@ -1,3 +1,4 @@
+import "./patchClassParticipationApi.mjs";
 import fs from "node:fs";
 
 const presenterPaths = [
