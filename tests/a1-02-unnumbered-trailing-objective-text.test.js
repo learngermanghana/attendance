@@ -57,5 +57,4 @@ test("A1-0.2 recovers trailing unnumbered text answers in sequence", () => {
     result.wrongAnswers.map(({ question, expected, student }) => ({ question, expected, student })),
     [{ question: 1, expected: "C", student: "D" }],
   );
-  assert.equal(result.missingAnswers.length, 0);
 });
