@@ -28,9 +28,12 @@ replaceAny(
   "part heading parser",
 );
 
-replaceOnce(
-  'const textAnswer = trimmed.match(/^(?:answer|antwort|frage|aufgabe|task|exercise|nr\\.?|q)?\\s*(\\d{1,3})\\s*[).:–-]\\s*(.+)$/i);',
-  'const textAnswer = trimmed.match(/^(?:answer|antwort|frage|aufgabe|task|exercise|nr\\.?|q)?\\s*(?:\\d{1,3}\\s*[.]\\s*)?(\\d{1,3})\\s*[).:–-]\\s*(.+)$/i);',
+replaceAny(
+  [
+    'const textAnswer = trimmed.match(/^(?:answer|antwort|frage|aufgabe|task|exercise|nr\\.?|q)?\\s*(\\d{1,3})\\s*[).:–-]\\s*(.+)$/i);',
+    'const textAnswer = trimmed.match(/^(?:answer|antwort|frage|aufgabe|task|exercise|nr\\.?|q)?\\s*(?:\\d{1,3}\\s*[.]\\s*)?(\\d{1,3})\\s*[).:–-]\\s*(.+)$/i);',
+  ],
+  'const textAnswer = trimmed.match(/^(?:answer|antwort|frage|aufgabe|task|exercise|nr\\.?|q)?\\s*(?:\\d{1,3}\\s*[.]\\s*)?(\\d{1,3})\\s*(?:[).:–-]|\\()\\s*(.+)$/i);',
   "numbered text answer parser",
 );
 
@@ -46,5 +49,88 @@ replaceOnce(
   "objective part selection",
 );
 
+const trailingTextRecovery = `function recoverTrailingSequentialTextObjectiveAnswers(studentAnswers, entries, submissionText = "") {
+  if (!(studentAnswers instanceof Map) || !studentAnswers.size || !Array.isArray(entries) || !entries.length) {
+    return studentAnswers;
+  }
+
+  const mappedQuestions = [...studentAnswers.keys()].filter((question) => Number.isInteger(question) && question > 0);
+  if (!mappedQuestions.length) return studentAnswers;
+
+  const highestMappedQuestion = Math.max(...mappedQuestions);
+  if (highestMappedQuestion >= entries.length) return studentAnswers;
+
+  const remainingEntries = entries
+    .map((entry, index) => ({
+      question: getQuestionIndex(entry.key) || index + 1,
+      value: entry.value,
+    }))
+    .filter(({ question }) => question > highestMappedQuestion && !studentAnswers.has(question));
+
+  if (!remainingEntries.length) return studentAnswers;
+
+  const isTextReference = ({ value }) => {
+    const meta = expectedMetadata(value);
+    const normalized = normalizeAnswer(meta.raw);
+    if (normalized === "R" || normalized === "F") return false;
+    return !(meta.correctLetter || extractOptionLetter(meta.raw));
+  };
+
+  // Only infer order when every unanswered item after the last numbered response
+  // is a text-answer question. This keeps the recovery deterministic and avoids
+  // accidentally consuming prose from mixed objective/writing submissions.
+  if (!remainingEntries.every(isTextReference)) return studentAnswers;
+
+  const lines = String(submissionText || "")
+    .split(/\\r?\\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  let anchorIndex = -1;
+  lines.forEach((line, index) => {
+    const numbered = parseNumberedObjectiveLine(line);
+    if (numbered?.question === highestMappedQuestion) anchorIndex = index;
+  });
+  if (anchorIndex < 0) return studentAnswers;
+
+  const trailingCandidates = lines.slice(anchorIndex + 1).filter((line) => {
+    if (!line) return false;
+    if (parseNumberedObjectiveLine(line) || parsePrefixedObjectiveAnswer(line) || isObjectiveOptionAnswer(line)) return false;
+    if (/^(?:teil|part)\\b|^(?:schreiben|lesen|h[oö]ren|hoeren|writing|reading|listening)\\b/i.test(line)) return false;
+    if (/^(?:student submission|reference answer|answer key)\\b/i.test(line)) return false;
+    if (/[?]/.test(line)) return false;
+
+    const normalized = normalizeForCompare(line);
+    if (!normalized) return false;
+    const wordCount = normalized.split(" ").filter(Boolean).length;
+    return wordCount >= 1 && wordCount <= 6 && line.length <= 80;
+  });
+
+  // Without numbering, a missing answer would make later answers ambiguous.
+  // Recover only when the remaining short lines map one-to-one to the remaining
+  // text questions.
+  if (trailingCandidates.length !== remainingEntries.length) return studentAnswers;
+
+  const recovered = new Map(studentAnswers);
+  remainingEntries.forEach(({ question }, index) => {
+    recovered.set(question, trailingCandidates[index]);
+  });
+  return recovered;
+}`;
+
+if (!content.includes("function recoverTrailingSequentialTextObjectiveAnswers(")) {
+  replaceOnce(
+    "const VOCABULARY_ALIASES = {",
+    `${trailingTextRecovery}\n\nconst VOCABULARY_ALIASES = {`,
+    "trailing sequential text objective recovery helper",
+  );
+}
+
+replaceOnce(
+  '  studentAnswers = alignLabeledPartialObjectiveAnswers(studentAnswers, entries, submissionText);',
+  '  studentAnswers = recoverTrailingSequentialTextObjectiveAnswers(studentAnswers, entries, submissionText);\n  studentAnswers = alignLabeledPartialObjectiveAnswers(studentAnswers, entries, submissionText);',
+  "objective text recovery hook",
+);
+
 fs.writeFileSync(file, content, "utf8");
-console.log("Patched numbered text objective sections.");
+console.log("Patched numbered and trailing unnumbered text objective sections.");
