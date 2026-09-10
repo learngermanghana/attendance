@@ -2,23 +2,34 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { checkDeterministicObjectiveAnswers } from "../src/utils/autoMarking.js";
 
+const choice = (letter, text) => ({
+  correctLetter: letter,
+  correctText: text,
+  rawCorrectAnswer: `${letter}) ${text}`,
+});
+
+const textAnswer = (text) => ({
+  correctText: text,
+  rawCorrectAnswer: text,
+});
+
 const referenceEntry = {
   assignmentKey: "A1-0.2",
   level: "A1",
   format: "objective",
   answers: {
-    Answer1: "C) 26",
-    Answer2: "A) A, O, U, B",
-    Answer3: "A) Eszett",
-    Answer4: "A) K",
-    Answer5: "A) A-Umlaut",
-    Answer6: "A) A, O, U, B",
-    Answer7: "B) 4",
-    Answer8: "Wasser",
-    Answer9: "Kaffee",
-    Answer10: "Blume",
-    Answer11: "Schule",
-    Answer12: "Tisch",
+    Answer1: choice("C", "26"),
+    Answer2: choice("A", "A, O, U, B"),
+    Answer3: choice("A", "Eszett"),
+    Answer4: choice("A", "K"),
+    Answer5: choice("A", "A-Umlaut"),
+    Answer6: choice("A", "A, O, U, B"),
+    Answer7: choice("B", "4"),
+    Answer8: textAnswer("Wasser"),
+    Answer9: textAnswer("Kaffee"),
+    Answer10: textAnswer("Blume"),
+    Answer11: textAnswer("Schule"),
+    Answer12: textAnswer("Tisch"),
   },
 };
 
