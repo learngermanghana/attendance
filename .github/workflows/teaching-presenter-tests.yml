@@ -14,7 +14,9 @@ on:
       - "src/pages/TeachingSlidesPage.css"
       - "src/utils/teachingPresenter.js"
       - "src/utils/studentSlidePractice.js"
+      - "src/utils/autoMarking.js"
       - "scripts/patchB2C1SpeakingModels.mjs"
+      - "scripts/patchNumberedTextObjectiveSections.mjs"
       - "scripts/data/b2c1-speaking-models-*.txt"
       - "tests/**"
       - "package.json"
@@ -34,7 +36,9 @@ on:
       - "src/pages/TeachingSlidesPage.css"
       - "src/utils/teachingPresenter.js"
       - "src/utils/studentSlidePractice.js"
+      - "src/utils/autoMarking.js"
       - "scripts/patchB2C1SpeakingModels.mjs"
+      - "scripts/patchNumberedTextObjectiveSections.mjs"
       - "scripts/data/b2c1-speaking-models-*.txt"
       - "tests/**"
       - "package.json"
@@ -55,6 +59,10 @@ jobs:
         run: npm ci
       - name: Apply B2/C1 speaking-model patch
         run: node scripts/patchB2C1SpeakingModels.mjs
+      - name: Apply objective parser patch
+        run: node scripts/patchNumberedTextObjectiveSections.mjs
+      - name: Test A1 objective parser
+        run: node --test tests/a1-02-unnumbered-trailing-objective-text.test.js
       - name: Run teaching slide regression tests
         run: node --test tests/teaching-presenter.test.js tests/teacher-slide-support.test.js tests/a1-workbook-aligned-slides-days1-5.test.js tests/a1-workbook-aligned-slides-days6-10.test.js tests/a2-workbook-aligned-slides.test.js tests/a2-workbook-aligned-slides-days6-10.test.js tests/a2-workbook-aligned-slides-days11-15.test.js tests/a2-workbook-aligned-slides-days16-20.test.js tests/a2-workbook-aligned-slides-days21-24.test.js tests/a2-workbook-aligned-slides-days25-28.test.js tests/b1-workbook-aligned-slides-days1-10.test.js tests/b1-workbook-aligned-slides-days11-20.test.js tests/b1-workbook-aligned-slides-days21-28.test.js tests/teacher-lesson-guidance.test.js tests/*speaking-model-answers.test.js
       - name: Build production bundle
